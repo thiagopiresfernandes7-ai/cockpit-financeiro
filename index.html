@@ -85,6 +85,21 @@
   .section.active:not([data-mobile-ready="1"]){overflow:auto}
 }
 @media(min-width:921px){.mobile-pane{display:block!important}.section{height:auto!important;overflow:visible!important}}
+
+/* FINAL MOBILE FIX: five-tab nav and screen panes */
+.mobile-subtabs{display:none}
+@media(max-width:920px){
+  .nav button[data-view="analysis"],.nav button[data-view="profile"]{display:flex!important}
+  .nav button[data-view="plan"],.nav button[data-view="help"]{display:none!important}
+  .nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important;overflow:visible!important}
+  .nav button{min-width:0!important;flex:1 1 auto!important}
+  .section.active{height:calc(100dvh - 176px);overflow:hidden;display:flex;flex-direction:column;gap:10px}
+  .mobile-subtabs{display:flex;gap:8px;overflow-x:auto;flex:0 0 auto;padding:2px 0 4px}
+  .mobile-subtabs button{flex:0 0 auto;min-height:38px;border-radius:999px;border:1px solid rgba(80,141,199,.45);background:#07192d;color:#dce8fb;padding:0 12px;font-weight:850;font-size:12px;white-space:nowrap}
+  .mobile-subtabs button.active{background:linear-gradient(90deg,var(--blue),var(--green));color:#04101d;border-color:transparent}
+  .mobile-pane{display:none!important}.mobile-pane.active{display:block!important;overflow:auto;min-height:0;flex:1 1 auto;padding-bottom:4px}.mobile-pane.active::-webkit-scrollbar{width:0;height:0}
+}
+@media(min-width:921px){.mobile-pane{display:block!important}.section{height:auto!important;overflow:visible!important}}
 </style>
 </head>
 <body>
@@ -238,7 +253,17 @@ var tut=0;var steps=[['Organize seu mês','Use o seletor de mês para olhar pass
 function showTutorial(){tut=0;el('tutorial').classList.remove('hidden');renderTutorial()}
 function renderTutorial(){el('tutorialTitle').textContent=steps[tut][0];el('tutorialText').textContent=steps[tut][1];el('tutorialProgress').style.width=((tut+1)/steps.length*100)+'%';el('nextTutorial').textContent=tut===steps.length-1?'Concluir':'Continuar'}
 function nextTutorial(){if(tut<steps.length-1){tut++;renderTutorial()}else{state.ui.onboarded=true;el('tutorial').classList.add('hidden');render()}}
-function exportExcel(){var ym=selectedMonth();var sheets=[];function table(name,heads,rows){var h='<table><tr>'+heads.map(function(x){return '<th>'+esc(x)+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+esc(c)+'</td>'}).join('')+'</tr>'}).join('')+'</table>';sheets.push('<h2>'+esc(name)+'</h2>'+h)}table('Movimentações', ['Data','Mês','Tipo','Descrição','Categoria','Valor','Parcela'], monthTransactions(ym).map(function(t){return[t.date,ym,t.type,t.description,categoryNameById(t.categoryId,t.category),Number(t.monthAmount!=null?t.monthAmount:t.value||0).toFixed(2),t.parcelLabel||'']}));table('Investimentos',['Tipo','Ativo','Quantidade','Preço médio','Preço/saldo atual','Valor projetado','Indexador','Taxa anual','Vencimento'],state.investments.map(function(i){return[i.type,i.ticker,i.quantity,i.average,i.current,projectedInvestment(i,ym).toFixed(2),i.indexer,i.annualRate,i.maturity]}));table('Dividendos e rendimentos',['Data','Ativo','Tipo','Valor'],state.dividends.map(function(d){return[d.date,d.ticker,d.type,Number(d.value||0).toFixed(2)]}));table('Orçamentos',['Categoria','Limite'],state.budgets.map(function(b){return[b.category,Number(b.value||0).toFixed(2)]}));table('Independência financeira',['Campo','Valor'],Object.keys(state.freedom||{}).map(function(k){return[k,state.freedom[k]]}));table('Perfil',['Campo','Valor'],Object.keys(state.profile).map(function(k){return[k,state.profile[k]]}));var html='<html><head><meta charset="utf-8"></head><body>'+sheets.join('<br>')+'</body></html>';var blob=new Blob([html],{type:'application/vnd.ms-excel'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cockpit-financeiro-'+ym+'.xls';a.click();URL.revokeObjectURL(a.href)}
+function exportExcel(){var ym=selectedMonth();var sheets=[];function table(name,heads,rows){var h='<table><tr>'+heads.map(function(x){return '<th>'+esc(x)+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+esc(c)+'</td>'}).join('')+'</tr>'}).join('')+'</table>';sheets.push('<h2>'+esc(name)+'</h2>'+h)}table('Movimentações', ['Data','Mês','Tipo','Descrição','Categoria','Valor','Parcela'], monthTransactions(ym).map(function(t){return[t.date,ym,t.type,t.description,categoryNameById(t.categoryId,t.category),Number(t.monthAmount!=null?t.monthAmount:t.value||0).toFixed(2),t.parcelLabel||'']}));table('Investimentos',['Tipo','Ativo','Quantidade','Preço médio','Preço/saldo atual','Valor projetado','Indexador','Taxa anual','Vencimento'],state.investments.map(function(i){return[i.type,i.ticker,i.quantity,i.average,i.current,projectedInvestment(i,ym).toFixed(2),i.indexer,i.annualRate,i.maturity]}));table('Dividendos e rendimentos',['Data','Ativo','Tipo','Valor'],state.dividends.map(function(d){return[d.date,d.ticker,d.type,Number(d.value||0).toFixed(2)]}));table('Orçamentos',['Categoria','Limite'],state.budgets.map(function(b){return[b.category,Number(b.value||0).toFixed(2)]}));table('Independência financeira',['Campo','Valor'],Object.keys(state.freedom||{}).map(function(k){return[k,state.freedom[k]]}));table('Perfil',['Campo','Valor'],Object.keys(state.profile).map(function(k){return[k,state.profile[k]]}));var html='<html><head><meta charset="utf-8"></head><body>'+sheets.join('<br>')+'<script id="final-mobile-panes">
+(function(){
+function label(node,i){var h=node.querySelector&&node.querySelector('h2');if(h&&h.textContent.trim())return h.textContent.trim().slice(0,24);if(node.classList&&node.classList.contains('kpis'))return 'Resumo';return ['Resumo','Ações','Detalhes','Lista','Mais'][i]||('Parte '+(i+1));}
+function reset(section){var nav=section.querySelector(':scope > .mobile-subtabs');if(nav)nav.remove();Array.from(section.children).forEach(function(c){c.classList.remove('mobile-pane','active')});section.removeAttribute('data-mobile-ready')}
+function setup(section){if(!window.matchMedia('(max-width:920px)').matches){reset(section);return}var kids=Array.from(section.children).filter(function(c){return !c.classList.contains('mobile-subtabs')});if(kids.length<=1){section.setAttribute('data-mobile-ready','1');return}var nav=section.querySelector(':scope > .mobile-subtabs');if(!nav){nav=document.createElement('div');nav.className='mobile-subtabs';section.insertBefore(nav,section.firstChild)}nav.innerHTML='';kids.forEach(function(child,i){child.classList.add('mobile-pane');child.classList.toggle('active',i===0);var b=document.createElement('button');b.type='button';b.textContent=label(child,i);b.className=i===0?'active':'';b.onclick=function(){kids.forEach(function(c){c.classList.remove('active')});Array.from(nav.children).forEach(function(x){x.classList.remove('active')});child.classList.add('active');b.classList.add('active')};nav.appendChild(b)});section.setAttribute('data-mobile-ready','1')}
+window.applyMobilePanes=function(){document.querySelectorAll('.section').forEach(setup)};
+window.addEventListener('resize',function(){clearTimeout(window.__mobilePaneResize);window.__mobilePaneResize=setTimeout(window.applyMobilePanes,120)});
+setInterval(window.applyMobilePanes,1200);
+setTimeout(window.applyMobilePanes,300);
+})();
+</script></body><!-- mobile-fix-marker 1783037672365 --></html>';var blob=new Blob([html],{type:'application/vnd.ms-excel'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cockpit-financeiro-'+ym+'.xls';a.click();URL.revokeObjectURL(a.href)}
 setupEvents();load();
 })();
 </script>
