@@ -159,6 +159,437 @@
   color:var(--text,#e7f1ff);
 }
 
+
+/* Cockpit Premium Hotfix v4 — desktop real scale */
+@media(min-width:781px){
+  html{
+    font-size:13px!important;
+  }
+
+  body{
+    overflow:hidden!important;
+  }
+
+  .app,
+  #appView.app{
+    height:100vh!important;
+    min-height:100vh!important;
+    grid-template-columns:176px minmax(0,1fr)!important;
+    overflow:hidden!important;
+  }
+
+  .sidebar{
+    width:176px!important;
+    min-width:176px!important;
+    height:100vh!important;
+    padding:10px 9px!important;
+    gap:8px!important;
+    overflow:hidden!important;
+  }
+
+  .logo{
+    gap:7px!important;
+    margin-bottom:4px!important;
+  }
+
+  .logo .mark,
+  .mark{
+    width:34px!important;
+    height:34px!important;
+    border-radius:12px!important;
+    flex:0 0 34px!important;
+  }
+
+  .brand strong{
+    font-size:15px!important;
+    line-height:.92!important;
+    letter-spacing:-.05em!important;
+  }
+
+  .brand span,
+  .brand small{
+    font-size:9px!important;
+  }
+
+  .status-card{
+    min-height:34px!important;
+    padding:7px 8px!important;
+    border-radius:12px!important;
+    margin:0!important;
+  }
+
+  .status-card .line,
+  #syncStatus{
+    font-size:10px!important;
+  }
+
+  .signal i{
+    width:4px!important;
+  }
+
+  .nav-hub,
+  .desktop-nav,
+  .grouped-nav{
+    gap:3px!important;
+    overflow:hidden!important;
+  }
+
+  .nav-section{
+    margin:0!important;
+  }
+
+  .nav-label{
+    font-size:8px!important;
+    letter-spacing:.12em!important;
+    margin:8px 7px 3px!important;
+  }
+
+  .nav-hub button,
+  .desktop-nav button,
+  .grouped-nav button{
+    height:30px!important;
+    min-height:30px!important;
+    padding:0 7px!important;
+    gap:6px!important;
+    border-radius:10px!important;
+    font-size:10px!important;
+    line-height:1!important;
+  }
+
+  .nav-hub .ico,
+  .desktop-nav .ico,
+  .grouped-nav .ico{
+    width:18px!important;
+    height:18px!important;
+    min-width:18px!important;
+    border-radius:7px!important;
+    font-size:10px!important;
+  }
+
+  .side-footer{
+    display:none!important;
+  }
+
+  #desktopGlobalAddBtn,
+  .side-footer .primary-btn{
+    display:none!important;
+  }
+
+  .main{
+    height:100vh!important;
+    overflow:hidden!important;
+    min-width:0!important;
+  }
+
+  .top{
+    min-height:46px!important;
+    height:46px!important;
+    padding:6px 14px!important;
+    gap:8px!important;
+  }
+
+  .top .title h1,
+  #pageTitle{
+    font-size:18px!important;
+    line-height:1!important;
+    margin:0!important;
+  }
+
+  .top .title p,
+  #monthHint{
+    font-size:9px!important;
+    margin-top:2px!important;
+  }
+
+  .actions,
+  .compact-actions{
+    gap:6px!important;
+  }
+
+  .monthbar{
+    gap:5px!important;
+  }
+
+  .monthbar input{
+    height:30px!important;
+    min-width:136px!important;
+    max-width:136px!important;
+    padding:0 9px!important;
+    font-size:11px!important;
+    border-radius:999px!important;
+  }
+
+  .btn,
+  .ghost-btn,
+  .primary-btn{
+    min-height:30px!important;
+    height:30px!important;
+    padding:0 10px!important;
+    border-radius:10px!important;
+    font-size:10px!important;
+  }
+
+  .icon-btn{
+    width:30px!important;
+    height:30px!important;
+    min-width:30px!important;
+    border-radius:10px!important;
+    font-size:11px!important;
+  }
+
+  #topGlobalAddBtn{
+    height:30px!important;
+    min-height:30px!important;
+    padding:0 11px!important;
+    font-size:10px!important;
+  }
+
+  #userMenuButton{
+    width:32px!important;
+    height:32px!important;
+    min-width:32px!important;
+    max-width:32px!important;
+    border-radius:50%!important;
+  }
+
+  .content{
+    height:calc(100vh - 46px)!important;
+    overflow:auto!important;
+    padding:10px 14px 22px!important;
+    max-width:none!important;
+  }
+
+  .section{
+    padding:0!important;
+  }
+
+  .page-head{
+    margin-bottom:8px!important;
+    gap:8px!important;
+  }
+
+  .page-title .overline{
+    font-size:8px!important;
+    margin-bottom:3px!important;
+  }
+
+  .page-title h1{
+    font-size:22px!important;
+    line-height:1!important;
+  }
+
+  .page-title p{
+    font-size:10px!important;
+    margin-top:4px!important;
+  }
+
+  .grid{
+    gap:9px!important;
+  }
+
+  .grid.kpis,
+  .dashboard-kpis{
+    gap:9px!important;
+    margin-bottom:9px!important;
+  }
+
+  .card,
+  .panel{
+    border-radius:14px!important;
+  }
+
+  .card.kpi,
+  .kpi{
+    min-height:68px!important;
+    height:auto!important;
+    padding:10px 11px!important;
+  }
+
+  .card.kpi span,
+  .kpi span{
+    font-size:7px!important;
+    letter-spacing:.11em!important;
+    line-height:1.15!important;
+  }
+
+  .card.kpi b,
+  .kpi b,
+  [data-money]{
+    font-size:21px!important;
+    line-height:1!important;
+    margin-top:4px!important;
+  }
+
+  .delta{
+    font-size:8.5px!important;
+    margin-top:3px!important;
+  }
+
+  .dashboard-grid-12{
+    gap:9px!important;
+  }
+
+  .panel{
+    padding:11px!important;
+  }
+
+  .panel-head{
+    margin-bottom:8px!important;
+    gap:8px!important;
+  }
+
+  .panel-head h2,
+  .panel h2{
+    font-size:13px!important;
+    line-height:1.1!important;
+    margin:0 0 3px!important;
+  }
+
+  .panel-head p,
+  .panel p,
+  .label,
+  .notice{
+    font-size:9.5px!important;
+    line-height:1.35!important;
+  }
+
+  .compact-list,
+  .list{
+    gap:6px!important;
+  }
+
+  .item{
+    min-height:34px!important;
+    padding:7px 8px!important;
+    border-radius:10px!important;
+    gap:7px!important;
+  }
+
+  .item b{
+    font-size:10px!important;
+    line-height:1.15!important;
+  }
+
+  .item small{
+    font-size:8px!important;
+    line-height:1.2!important;
+    margin-top:2px!important;
+  }
+
+  .amount{
+    font-size:10px!important;
+  }
+
+  .empty{
+    min-height:38px!important;
+    padding:9px!important;
+    border-radius:10px!important;
+    font-size:10px!important;
+  }
+
+  .form-grid{
+    gap:8px!important;
+  }
+
+  .field span{
+    font-size:9px!important;
+  }
+
+  .field input,
+  .field select,
+  .field textarea{
+    min-height:32px!important;
+    padding:7px 9px!important;
+    border-radius:10px!important;
+    font-size:11px!important;
+  }
+
+  .field textarea{
+    min-height:62px!important;
+  }
+
+  .statement-summary-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+
+  .statement-toolbar{
+    gap:8px!important;
+  }
+
+  .chip,
+  .filter-chips button{
+    min-height:28px!important;
+    height:28px!important;
+    padding:0 9px!important;
+    border-radius:999px!important;
+    font-size:10px!important;
+  }
+
+  .statement-tx{
+    min-height:42px!important;
+    padding:7px 9px!important;
+    border-radius:11px!important;
+  }
+
+  .statement-tx-icon{
+    width:28px!important;
+    height:28px!important;
+    border-radius:10px!important;
+    font-size:13px!important;
+  }
+
+  .statement-tx-main b{
+    font-size:10.5px!important;
+  }
+
+  .statement-tx-main small{
+    font-size:8.5px!important;
+  }
+
+  .statement-day-title{
+    font-size:10px!important;
+    margin:8px 0 5px!important;
+  }
+
+  .launch-form{
+    margin-top:9px!important;
+  }
+
+  .dashboard-grid-12 > .panel:nth-child(n+7){
+    margin-bottom:0!important;
+  }
+}
+
+@media(min-width:781px) and (max-height:760px){
+  .content{
+    padding-top:8px!important;
+  }
+
+  .card.kpi,
+  .kpi{
+    min-height:62px!important;
+    padding:8px 10px!important;
+  }
+
+  .card.kpi b,
+  .kpi b,
+  [data-money]{
+    font-size:19px!important;
+  }
+
+  .panel{
+    padding:9px!important;
+  }
+
+  .item{
+    padding:6px 7px!important;
+  }
+
+  .dashboard-grid-12{
+    gap:8px!important;
+  }
+}
+
 @media(max-width:780px){
   body{
     overflow-x:hidden!important;
