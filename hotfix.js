@@ -794,3 +794,365 @@
     setTimeout(boot, 120);
   }, true);
 })();
+
+
+/* ===== MOBILE FORCE PATCH v2 =====
+   Corrige especificamente o problema mostrado no iPhone:
+   - cabeçalho alto demais;
+   - título "Painel" ocupando espaço;
+   - foto do Google gigante/retangular;
+   - 6 cards na Home;
+   - bloco Receita x Despesa aparecendo na Home mobile;
+   - botão + sobrepondo conteúdo.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-mobile-force-v2";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function isMobileLike() {
+    return window.innerWidth <= 900 || window.matchMedia("(max-width: 900px)").matches;
+  }
+
+  function q(selector, root = document) {
+    return root.querySelector(selector);
+  }
+
+  function qa(selector, root = document) {
+    return Array.from(root.querySelectorAll(selector));
+  }
+
+  function injectMobileCss() {
+    if (document.getElementById("cockpit-mobile-force-v2-css")) return;
+
+    const css = `
+html.cockpit-mobile-force,
+html.cockpit-mobile-force body {
+  overflow-x: hidden !important;
+}
+
+/* Header mobile compacto */
+html.cockpit-mobile-force .top {
+  position: relative !important;
+  top: auto !important;
+  min-height: 52px !important;
+  height: 52px !important;
+  padding: 6px 12px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  overflow: visible !important;
+}
+
+html.cockpit-mobile-force .top .title,
+html.cockpit-mobile-force #pageTitle,
+html.cockpit-mobile-force #monthHint {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Ações do topo */
+html.cockpit-mobile-force .actions,
+html.cockpit-mobile-force .compact-actions {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+html.cockpit-mobile-force .monthbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  margin-right: 4px !important;
+}
+
+html.cockpit-mobile-force .monthbar #prevMonth,
+html.cockpit-mobile-force .monthbar #nextMonth,
+html.cockpit-mobile-force .monthbar #todayBtn,
+html.cockpit-mobile-force #exportBtn,
+html.cockpit-mobile-force #topGlobalAddBtn,
+html.cockpit-mobile-force #privacyBtn {
+  display: none !important;
+}
+
+html.cockpit-mobile-force .monthbar input {
+  width: 158px !important;
+  min-width: 158px !important;
+  max-width: 158px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  text-align: center !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+/* Avatar Google: sempre circular e pequeno */
+html.cockpit-mobile-force .user-menu-wrap {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  flex: 0 0 40px !important;
+  position: relative !important;
+  inset: auto !important;
+  overflow: visible !important;
+}
+
+html.cockpit-mobile-force #userMenuButton,
+html.cockpit-mobile-force .user-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+html.cockpit-mobile-force #userMenuButton img,
+html.cockpit-mobile-force .user-avatar img {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  display: block !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+}
+
+/* Conteúdo mobile */
+html.cockpit-mobile-force .content {
+  padding: 10px 12px calc(104px + env(safe-area-inset-bottom)) !important;
+  max-width: none !important;
+}
+
+/* Remove cabeçalho interno da Home */
+html.cockpit-mobile-force #dashboard > .page-head,
+html.cockpit-mobile-force #dashboard .dashboard-head {
+  display: none !important;
+}
+
+/* Home mobile: só 4 indicadores */
+html.cockpit-mobile-force #dashboard .dashboard-kpis {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin: 0 0 12px !important;
+}
+
+html.cockpit-mobile-force #dashboard .dashboard-kpis > *:nth-child(n+5) {
+  display: none !important;
+}
+
+html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi,
+html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi {
+  min-height: 92px !important;
+  padding: 12px !important;
+  border-radius: 18px !important;
+}
+
+html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi span,
+html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi span {
+  font-size: 8px !important;
+  line-height: 1.18 !important;
+  letter-spacing: .11em !important;
+}
+
+html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi b,
+html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi b {
+  font-size: 22px !important;
+  line-height: 1.05 !important;
+  margin-top: 7px !important;
+}
+
+html.cockpit-mobile-force #dashboard .dashboard-kpis .delta {
+  font-size: 10px !important;
+  margin-top: 5px !important;
+}
+
+/* Home mobile: detalhes saem da tela inicial */
+html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .panel {
+  display: none !important;
+}
+
+/* Se houver card de objetivo, pode aparecer compacto */
+html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .goal-mini-card {
+  display: grid !important;
+  min-height: auto !important;
+  padding: 12px !important;
+  border-radius: 18px !important;
+  grid-template-columns: 32px 1fr !important;
+  gap: 10px !important;
+  margin: 0 0 12px !important;
+}
+
+html.cockpit-mobile-force #dashboard .goal-mini-card p,
+html.cockpit-mobile-force #dashboard .goal-mini-card .btn {
+  display: none !important;
+}
+
+html.cockpit-mobile-force #dashboard .goal-mini-card h2 {
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  margin: 1px 0 !important;
+}
+
+/* Botão + sem cobrir o centro da barra */
+html.cockpit-mobile-force .global-add-btn {
+  width: 52px !important;
+  height: 52px !important;
+  right: 18px !important;
+  left: auto !important;
+  bottom: calc(82px + env(safe-area-inset-bottom)) !important;
+  transform: none !important;
+  border-radius: 18px !important;
+  font-size: 30px !important;
+  z-index: 34 !important;
+}
+
+/* Barra inferior menos invasiva */
+html.cockpit-mobile-force .mobile-nav {
+  left: 10px !important;
+  right: 10px !important;
+  bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+  min-height: 62px !important;
+  padding: 6px !important;
+  border-radius: 24px !important;
+}
+
+html.cockpit-mobile-force .mobile-nav button {
+  min-height: 50px !important;
+  font-size: 10px !important;
+}
+
+html.cockpit-mobile-force .mobile-nav .ico {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+}
+
+/* Aba Dívidas no mobile */
+html.cockpit-mobile-force .cockpit-debt-workspace {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+`;
+
+    const style = document.createElement("style");
+    style.id = "cockpit-mobile-force-v2-css";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function forceMobileClass() {
+    document.documentElement.classList.toggle("cockpit-mobile-force", isMobileLike());
+  }
+
+  function forceAvatarSize() {
+    if (!isMobileLike()) return;
+
+    const wrap = q(".user-menu-wrap");
+    const btn = q("#userMenuButton");
+    const img = q("#userMenuButton img, .user-avatar img");
+
+    if (wrap) {
+      Object.assign(wrap.style, {
+        width: "40px",
+        height: "40px",
+        minWidth: "40px",
+        maxWidth: "40px",
+        flex: "0 0 40px",
+        position: "relative",
+        overflow: "visible"
+      });
+    }
+
+    if (btn) {
+      Object.assign(btn.style, {
+        width: "40px",
+        height: "40px",
+        minWidth: "40px",
+        maxWidth: "40px",
+        borderRadius: "50%",
+        overflow: "hidden",
+        padding: "0",
+        position: "relative",
+        transform: "none",
+        inset: "auto"
+      });
+    }
+
+    if (img) {
+      img.setAttribute("referrerpolicy", "no-referrer");
+      Object.assign(img.style, {
+        width: "40px",
+        height: "40px",
+        minWidth: "40px",
+        maxWidth: "40px",
+        objectFit: "cover",
+        borderRadius: "50%",
+        display: "block"
+      });
+    }
+  }
+
+  function simplifyHome() {
+    if (!isMobileLike()) return;
+
+    const title = q(".top .title");
+    if (title) title.style.display = "none";
+
+    qa("#dashboard .dashboard-kpis > *").forEach(function (card, index) {
+      card.style.display = index >= 4 ? "none" : "";
+    });
+
+    qa("#dashboard .dashboard-grid-12 > .panel").forEach(function (panel) {
+      if (panel.classList.contains("goal-mini-card")) {
+        panel.style.display = "grid";
+      } else {
+        panel.style.display = "none";
+      }
+    });
+  }
+
+  function run() {
+    injectMobileCss();
+    forceMobileClass();
+    forceAvatarSize();
+    simplifyHome();
+  }
+
+  run();
+  setTimeout(run, 250);
+  setTimeout(run, 750);
+  setTimeout(run, 1500);
+  setTimeout(run, 3000);
+
+  window.addEventListener("resize", run);
+  window.addEventListener("orientationchange", function () {
+    setTimeout(run, 300);
+  });
+
+  document.addEventListener("click", function () {
+    setTimeout(run, 120);
+  }, true);
+})();
+
