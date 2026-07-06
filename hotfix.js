@@ -3403,3 +3403,370 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
   });
 })();
 
+
+/* ===== DIVIDENDS + MOBILE STABILITY PATCH v9 =====
+   Corrige:
+   - Aba Dividendos presa/errada.
+   - Dividendos mostrando Dívidas ou Investimentos.
+   - Mobile com tela errada ao trocar abas.
+   - Mobile com header/avatar/barra inferior desalinhados.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-dividends-mobile-stability-v9";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function q(selector, root = document) { return root.querySelector(selector); }
+  function qa(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
+  function byId(id) { return document.getElementById(id); }
+  function safe(fn) { try { return fn(); } catch (error) { console.warn("[Cockpit v9]", error); return null; } }
+
+  function st() { return safe(function(){ return state; }) || window.state || {}; }
+  function ym() {
+    return safe(function(){ return selectedMonth(); }) ||
+      (byId("monthPicker") && byId("monthPicker").value) ||
+      new Date().toISOString().slice(0,7);
+  }
+  function money(v) {
+    return Number(v || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+  }
+  function esc(v) {
+    const s = String(v == null ? "" : v);
+    return s.replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function monthLabel(month) {
+    return safe(function(){ return monthName(month); }) || month || "";
+  }
+  function isMobile() {
+    return window.innerWidth <= 900 || window.matchMedia("(max-width:900px)").matches;
+  }
+
+  function isDividendTx(tx) {
+    const type = String(tx && tx.type || "").toLowerCase();
+    const cat = String(tx && tx.category || "").toLowerCase();
+    const desc = String(tx && tx.description || "").toLowerCase();
+    return type === "dividend" ||
+      type === "dividends" ||
+      cat.includes("dividendo") ||
+      cat.includes("rendimento") ||
+      cat.includes("provento") ||
+      desc.includes("dividendo") ||
+      desc.includes("rendimento") ||
+      desc.includes("jcp") ||
+      desc.includes("juros sobre capital");
+  }
+
+  function dividendRows() {
+    return (st().transactions || [])
+      .filter(isDividendTx)
+      .sort(function(a,b){ return String(b.date || "").localeCompare(String(a.date || "")); });
+  }
+
+  function injectCss() {
+    if (byId("cockpit-v9-dividends-mobile-css")) return;
+    const css = `
+#dividends.cockpit-dividends-section{display:none}
+#dividends.cockpit-dividends-section.active{display:block!important}
+.cockpit-dividends-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.cockpit-dividend-kpi{border:1px solid rgba(142,213,255,.18);background:radial-gradient(circle at 90% 0%,rgba(54,228,198,.11),transparent 38%),linear-gradient(180deg,rgba(26,45,71,.84),rgba(13,26,45,.90));border-radius:18px;padding:14px;box-shadow:0 18px 46px rgba(0,0,0,.18)}
+.cockpit-dividend-kpi span{display:block;font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted,#7f94ae);font-weight:1000}
+.cockpit-dividend-kpi b{display:block;margin-top:8px;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:23px;color:var(--text,#e7f1ff);letter-spacing:-.04em}
+.cockpit-dividend-kpi small{display:block;margin-top:4px;color:var(--soft,#bfd0e5);font-size:10px}
+.cockpit-dividends-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:12px;align-items:start}
+.cockpit-dividend-empty{border:1px dashed rgba(142,213,255,.20);background:rgba(255,255,255,.025);border-radius:16px;padding:18px;color:var(--soft,#bfd0e5);line-height:1.45}
+@media(max-width:900px){
+  html.cockpit-mobile-force body{overflow-x:hidden!important}
+  html.cockpit-mobile-force .top{position:relative!important;height:54px!important;min-height:54px!important;padding:7px 12px!important;overflow:visible!important}
+  html.cockpit-mobile-force .top .title{display:none!important}
+  html.cockpit-mobile-force .actions{width:100%!important;justify-content:flex-end!important;gap:8px!important}
+  html.cockpit-mobile-force .monthbar #prevMonth,
+  html.cockpit-mobile-force .monthbar #nextMonth,
+  html.cockpit-mobile-force .monthbar #todayBtn,
+  html.cockpit-mobile-force #exportBtn,
+  html.cockpit-mobile-force #topGlobalAddBtn{display:none!important}
+  html.cockpit-mobile-force .monthbar input{width:158px!important;min-width:158px!important;max-width:158px!important;height:34px!important;text-align:center!important;font-size:13px!important}
+  html.cockpit-mobile-force #userMenuButton,
+  html.cockpit-mobile-force .user-avatar{width:40px!important;height:40px!important;min-width:40px!important;max-width:40px!important;border-radius:50%!important;overflow:hidden!important;padding:0!important}
+  html.cockpit-mobile-force #userMenuButton img,
+  html.cockpit-mobile-force .user-avatar img{width:40px!important;height:40px!important;object-fit:cover!important;border-radius:50%!important}
+  html.cockpit-mobile-force .content{padding:10px 12px calc(108px + env(safe-area-inset-bottom))!important;max-width:none!important}
+  html.cockpit-mobile-force #dashboard>.page-head,
+  html.cockpit-mobile-force #dashboard .dashboard-head{display:none!important}
+  html.cockpit-mobile-force #dashboard .dashboard-kpis{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:0!important}
+  html.cockpit-mobile-force #dashboard .dashboard-kpis>*:nth-child(n+5){display:none!important}
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12,
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12>*{display:none!important}
+  html.cockpit-mobile-force .mobile-nav{left:10px!important;right:10px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;min-height:64px!important;padding:6px!important;border-radius:24px!important}
+  html.cockpit-mobile-force .global-add-btn{width:52px!important;height:52px!important;right:18px!important;left:auto!important;bottom:calc(84px + env(safe-area-inset-bottom))!important;transform:none!important;border-radius:18px!important}
+  .cockpit-dividends-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .cockpit-dividend-kpi{padding:12px;border-radius:17px}
+  .cockpit-dividend-kpi b{font-size:20px}
+  .cockpit-dividends-grid{grid-template-columns:1fr;gap:10px}
+}`;
+    const style = document.createElement("style");
+    style.id = "cockpit-v9-dividends-mobile-css";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function ensureDividendTxOption() {
+    const select = byId("txType");
+    if (!select) return;
+    if (!q('option[value="dividend"]', select)) {
+      const opt = document.createElement("option");
+      opt.value = "dividend";
+      opt.textContent = "Dividendo / rendimento";
+      select.appendChild(opt);
+    }
+  }
+
+  function ensureDividendsSection() {
+    injectCss();
+    const content = q(".content");
+    if (!content) return null;
+
+    let section = byId("dividends");
+    if (!section) {
+      section = document.createElement("section");
+      section.id = "dividends";
+      section.className = "section cockpit-dividends-section";
+      section.innerHTML =
+        '<div class="page-head"><div class="page-title"><div class="overline">Renda passiva</div><h1>Dividendos <span>& Rendimentos</span></h1><p>Acompanhe dividendos, JCP, rendimentos recebidos e evolução da renda passiva.</p></div></div>' +
+        '<div class="cockpit-dividends-kpis" id="dividendKpis"></div>' +
+        '<div class="cockpit-dividends-grid">' +
+          '<div class="panel"><div class="panel-head"><div><h2>Rendimentos do mês</h2><p>Proventos registrados no mês selecionado.</p></div><button class="btn primary" id="addDividendFromTab" type="button">+ Registrar rendimento</button></div><div id="dividendMonthList" class="list"></div></div>' +
+          '<div class="panel"><div class="panel-head"><div><h2>Histórico recente</h2><p>Últimos dividendos e rendimentos cadastrados.</p></div></div><div id="dividendHistoryList" class="list"></div></div>' +
+        '</div>';
+      const wallet = byId("wallet");
+      if (wallet && wallet.nextSibling) content.insertBefore(section, wallet.nextSibling);
+      else content.appendChild(section);
+    }
+    bindDividendButton();
+    renderDividends();
+    return section;
+  }
+
+  function renderDividends() {
+    const section = byId("dividends");
+    if (!section) return;
+    const current = ym();
+    const all = dividendRows();
+    const monthRows = all.filter(function(tx){ return String(tx.date || "").slice(0,7) === current; });
+    const year = String(current).slice(0,4);
+    const yearRows = all.filter(function(tx){ return String(tx.date || "").slice(0,4) === year; });
+    const monthTotal = monthRows.reduce(function(a,t){ return a + Number(t.value || 0); }, 0);
+    const yearTotal = yearRows.reduce(function(a,t){ return a + Number(t.value || 0); }, 0);
+    const avg = yearTotal / 12;
+    const last = all[0];
+
+    const kpis = byId("dividendKpis");
+    if (kpis) {
+      kpis.innerHTML =
+        '<div class="cockpit-dividend-kpi"><span>No mês</span><b>'+money(monthTotal)+'</b><small>'+monthRows.length+' recebimento(s)</small></div>' +
+        '<div class="cockpit-dividend-kpi"><span>No ano</span><b>'+money(yearTotal)+'</b><small>'+year+'</small></div>' +
+        '<div class="cockpit-dividend-kpi"><span>Média mensal</span><b>'+money(avg)+'</b><small>base anual</small></div>' +
+        '<div class="cockpit-dividend-kpi"><span>Último</span><b>'+money(last ? last.value : 0)+'</b><small>'+esc(last ? (last.description || last.category || last.date) : "sem registros")+'</small></div>';
+    }
+
+    const monthList = byId("dividendMonthList");
+    if (monthList) {
+      monthList.innerHTML = monthRows.length ? monthRows.map(function(tx){
+        return '<div class="item"><div><b>'+esc(tx.description || "Rendimento")+'</b><small>'+esc((tx.category || "Dividendos") + " • " + (tx.date || ""))+'</small></div><div class="amount positive">'+money(tx.value)+'</div></div>';
+      }).join("") : '<div class="cockpit-dividend-empty"><b>Nenhum rendimento neste mês.</b><br>Registre dividendos, JCP ou rendimentos para acompanhar a renda passiva.</div>';
+    }
+
+    const history = byId("dividendHistoryList");
+    if (history) {
+      history.innerHTML = all.length ? all.slice(0,8).map(function(tx){
+        return '<div class="item"><div><b>'+esc(tx.description || "Rendimento")+'</b><small>'+esc(monthLabel(String(tx.date || "").slice(0,7)) + " • " + (tx.category || "Dividendos"))+'</small></div><div class="amount positive">'+money(tx.value)+'</div></div>';
+      }).join("") : '<div class="cockpit-dividend-empty"><b>Sem histórico.</b><br>Os dividendos cadastrados aparecerão aqui.</div>';
+    }
+  }
+
+  function openDividends() {
+    const section = ensureDividendsSection();
+    if (!section) return;
+
+    qa(".section").forEach(function(sec){
+      sec.classList.remove("active");
+      sec.style.display = "none";
+    });
+
+    section.classList.add("active");
+    section.style.display = "block";
+
+    qa("#nav button,.nav-hub button,.desktop-nav button,.grouped-nav button,.mobile-nav button").forEach(function(btn){
+      const t = String(btn.textContent || "").toLowerCase();
+      const active = t.includes("dividendo") || btn.dataset.view === "dividends";
+      btn.classList.toggle("active", active);
+    });
+
+    const title = byId("pageTitle");
+    if (title) title.textContent = "Dividendos";
+    const hint = byId("monthHint");
+    if (hint) hint.textContent = "Rendimentos e renda passiva";
+
+    if (isMobile()) {
+      document.documentElement.classList.add("cockpit-mobile-force");
+      window.scrollTo({ top: 0, behavior: "instant" });
+      const content = q(".content");
+      if (content) content.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    renderDividends();
+  }
+
+  function openDividendRegister() {
+    ensureDividendTxOption();
+
+    safe(function(){ setView("register"); });
+
+    setTimeout(function(){
+      ensureDividendTxOption();
+
+      const type = byId("txType");
+      if (type) {
+        type.value = "dividend";
+        type.dispatchEvent(new Event("change", { bubbles:true }));
+      }
+
+      safe(function(){
+        if (typeof fillCategorySelect === "function") fillCategorySelect("txCat", "income");
+      });
+
+      const desc = byId("txDesc");
+      if (desc && !desc.value) desc.value = "Dividendos / rendimentos";
+
+      const form = byId("txFormPanel");
+      if (form) {
+        form.style.display = "block";
+        form.scrollIntoView({ behavior:"smooth", block:"start" });
+      }
+
+      const title = byId("pageTitle");
+      if (title) title.textContent = "Registrar dividendo";
+      const hint = byId("monthHint");
+      if (hint) hint.textContent = "Novo rendimento recebido";
+    }, 160);
+  }
+
+  function bindDividendButton() {
+    const btn = byId("addDividendFromTab");
+    if (btn && btn.dataset.boundV9 !== "1") {
+      btn.dataset.boundV9 = "1";
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        openDividendRegister();
+      });
+    }
+  }
+
+  function normalizeNav() {
+    qa("#nav button,.nav-hub button,.desktop-nav button,.grouped-nav button,.mobile-nav button").forEach(function(btn){
+      const t = String(btn.textContent || "").toLowerCase();
+      if (t.includes("dividendo")) {
+        btn.dataset.view = "dividends";
+        delete btn.dataset.debtNav;
+      }
+      if (t.includes("dívida") || t.includes("divida")) {
+        btn.dataset.view = "debts";
+        btn.dataset.debtNav = "1";
+      }
+      if (t.includes("investimento")) {
+        btn.dataset.view = "wallet";
+        delete btn.dataset.debtNav;
+      }
+      if (t.includes("simulador")) {
+        btn.dataset.view = "simulator";
+        delete btn.dataset.debtNav;
+      }
+    });
+  }
+
+  function interceptClicks() {
+    if (window.__cockpitV9Click) return;
+    window.__cockpitV9Click = true;
+
+    document.addEventListener("click", function(e){
+      const btn = e.target.closest("button[data-view]");
+      if (!btn) return;
+      const view = btn.dataset.view;
+      if (view !== "dividends") return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      openDividends();
+    }, true);
+  }
+
+  function fixMobileRoutes() {
+    if (!isMobile()) return;
+
+    document.documentElement.classList.add("cockpit-mobile-force");
+
+    const activeBtn = q(".mobile-nav button.active");
+    const activeView = activeBtn && activeBtn.dataset && activeBtn.dataset.view;
+
+    if (activeView && activeView !== "debts" && activeView !== "dividends") {
+      const debts = byId("debts");
+      const dividends = byId("dividends");
+      if (debts) debts.style.display = "none";
+      if (dividends) dividends.style.display = "none";
+    }
+
+    const avatar = q("#userMenuButton img,.user-avatar img");
+    if (avatar) {
+      avatar.setAttribute("referrerpolicy", "no-referrer");
+      avatar.style.width = "40px";
+      avatar.style.height = "40px";
+      avatar.style.objectFit = "cover";
+      avatar.style.borderRadius = "50%";
+    }
+  }
+
+  function patchRenderAfterSave() {
+    if (window.__cockpitV9RenderPatch) return;
+    const original = window.render;
+    if (typeof original !== "function") return;
+
+    window.render = function() {
+      const out = original.apply(this, arguments);
+      setTimeout(function(){
+        ensureDividendsSection();
+        renderDividends();
+        fixMobileRoutes();
+      }, 80);
+      return out;
+    };
+
+    safe(function(){ render = window.render; });
+    window.__cockpitV9RenderPatch = true;
+  }
+
+  function boot() {
+    injectCss();
+    ensureDividendTxOption();
+    ensureDividendsSection();
+    normalizeNav();
+    interceptClicks();
+    bindDividendButton();
+    fixMobileRoutes();
+    patchRenderAfterSave();
+  }
+
+  boot();
+  setTimeout(boot, 300);
+  setTimeout(boot, 900);
+  setTimeout(boot, 1800);
+  setTimeout(boot, 3000);
+
+  window.addEventListener("resize", function(){ setTimeout(boot, 120); });
+  window.addEventListener("orientationchange", function(){ setTimeout(boot, 260); });
+  document.addEventListener("click", function(){ setTimeout(boot, 120); }, true);
+})();
+
