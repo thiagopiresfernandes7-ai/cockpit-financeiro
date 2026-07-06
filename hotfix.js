@@ -1040,3 +1040,328 @@
     setTimeout(boot, 300);
   });
 })();
+
+
+/* ===== FATURA / COMPETÊNCIA DO CARTÃO v11 =====
+   Corrige compras feitas em um mês, mas cobradas na fatura de outro mês.
+   Ex.: compra em 25/06 com fatura em julho passa a entrar em 2026-07.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-billing-month-v11";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function q(selector, root = document) { return root.querySelector(selector); }
+  function qa(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
+  function byId(id) { return document.getElementById(id); }
+  function safe(fn, fallback) { try { return fn(); } catch (error) { console.warn("[Cockpit fatura v11]", error); return fallback; } }
+
+  function currentMonth() {
+    return safe(function () { return selectedMonth(); }, null) ||
+      (byId("monthPicker") && byId("monthPicker").value) ||
+      new Date().toISOString().slice(0, 7);
+  }
+
+  function monthFromDate(value) { return String(value || "").slice(0, 7); }
+
+  function addMonthsSafe(ym, delta) {
+    return safe(function () { return addMonths(ym, delta); }, (function () {
+      const parts = String(ym || currentMonth()).split("-");
+      const date = new Date(Number(parts[0]), Number(parts[1]) - 1 + delta, 1);
+      return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+    })());
+  }
+
+  function normalizeMonth(value) {
+    const text = String(value || "").trim();
+    if (/^\d{4}-\d{2}$/.test(text)) return text;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text.slice(0, 7);
+    return "";
+  }
+
+  function isExpenseLike(tx) {
+    const type = String(tx && tx.type || "").toLowerCase();
+    return type === "expense" || type === "debt" || type === "transfer";
+  }
+
+  function isInstallment(tx) {
+    return tx && tx.installments && Number(tx.installments.count || 0) > 1;
+  }
+
+  function billingMonthOf(tx) {
+    if (!tx) return "";
+    return normalizeMonth(tx.billingMonth) ||
+      normalizeMonth(tx.competenceMonth) ||
+      normalizeMonth(tx.invoiceMonth) ||
+      normalizeMonth(tx.cardBillMonth) ||
+      normalizeMonth(tx.firstBillingMonth) ||
+      (tx.installments && normalizeMonth(tx.installments.firstMonth)) ||
+      monthFromDate(tx.date);
+  }
+
+  function injectCss() {
+    if (byId("cockpit-billing-month-v11-css")) return;
+    const css = `
+.cockpit-billing-hint{margin-top:8px;border:1px solid rgba(76,201,255,.14);background:rgba(76,201,255,.055);color:var(--soft,#bfd0e5);border-radius:13px;padding:9px 11px;font-size:11px;line-height:1.4}
+.cockpit-billing-badge{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:2px 7px;border-radius:999px;background:rgba(245,196,81,.12);border:1px solid rgba(245,196,81,.22);color:#f5c451;font-size:9px;font-weight:900;letter-spacing:.03em}
+@media(max-width:900px){.cockpit-billing-hint{font-size:11px;padding:9px 10px}}
+`;
+    const style = document.createElement("style");
+    style.id = "cockpit-billing-month-v11-css";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function ensureBillingField() {
+    const txFirstMonth = byId("txFirstMonth");
+    if (!txFirstMonth) return;
+
+    const firstMonthLabel = txFirstMonth.closest("label");
+    if (firstMonthLabel) {
+      const span = firstMonthLabel.querySelector("span");
+      if (span) span.textContent = "Mês da fatura / 1ª parcela";
+    }
+
+    let field = byId("txBillingMonth");
+    if (!field) {
+      const label = document.createElement("label");
+      label.className = "field";
+      label.id = "txBillingMonthField";
+      label.innerHTML = '<span>Mês da fatura</span><input id="txBillingMonth" type="month"><div class="cockpit-billing-hint">Use quando a compra foi feita em um mês, mas será cobrada em outro. Ex.: compra em 25/06 com fatura em julho.</div>';
+      if (firstMonthLabel && firstMonthLabel.parentNode) firstMonthLabel.parentNode.insertBefore(label, firstMonthLabel.nextSibling);
+      field = byId("txBillingMonth");
+    }
+
+    if (field && !field.value) field.value = (txFirstMonth && txFirstMonth.value) || currentMonth();
+    bindBillingFieldSync();
+  }
+
+  function bindBillingFieldSync() {
+    const billing = byId("txBillingMonth");
+    const first = byId("txFirstMonth");
+    const date = byId("txDate");
+
+    if (billing && billing.dataset.boundV11 !== "1") {
+      billing.dataset.boundV11 = "1";
+      billing.addEventListener("change", function () { if (first) first.value = billing.value || first.value; });
+    }
+
+    if (first && first.dataset.billingBoundV11 !== "1") {
+      first.dataset.billingBoundV11 = "1";
+      first.addEventListener("change", function () { if (billing) billing.value = first.value || billing.value; });
+    }
+
+    if (date && date.dataset.billingDateBoundV11 !== "1") {
+      date.dataset.billingDateBoundV11 = "1";
+      date.addEventListener("change", function () {
+        const dm = monthFromDate(date.value);
+        if (billing && !billing.value) billing.value = dm || currentMonth();
+        if (first && !first.value) first.value = (billing && billing.value) || dm || currentMonth();
+      });
+    }
+  }
+
+  function patchTxForm() {
+    if (window.__cockpitBillingTxFromFormV11) return;
+    const original = window.txFromForm || (typeof txFromForm === "function" ? txFromForm : null);
+    if (typeof original !== "function") return;
+
+    window.__cockpitBillingTxFromFormV11 = true;
+    window.txFromForm = function (existing) {
+      const tx = original.apply(this, arguments);
+      const billing = normalizeMonth((byId("txBillingMonth") && byId("txBillingMonth").value) || "");
+      const first = normalizeMonth((byId("txFirstMonth") && byId("txFirstMonth").value) || "");
+      const dateMonth = monthFromDate(tx.date);
+      const type = String(tx.type || "").toLowerCase();
+
+      if (type === "expense" || type === "debt" || type === "transfer") {
+        const chosen = billing || first || dateMonth || currentMonth();
+        tx.billingMonth = chosen;
+        tx.competenceMonth = chosen;
+        if (tx.installments && Number(tx.installments.count || 0) > 1) tx.installments.firstMonth = chosen;
+      } else {
+        delete tx.billingMonth;
+        delete tx.competenceMonth;
+      }
+      return tx;
+    };
+    safe(function () { txFromForm = window.txFromForm; });
+  }
+
+  function patchClearAndEdit() {
+    if (window.__cockpitBillingClearEditV11) return;
+    window.__cockpitBillingClearEditV11 = true;
+
+    const originalClear = window.clearTxForm || (typeof clearTxForm === "function" ? clearTxForm : null);
+    if (typeof originalClear === "function") {
+      window.clearTxForm = function () {
+        const result = originalClear.apply(this, arguments);
+        setTimeout(function () {
+          ensureBillingField();
+          const billing = byId("txBillingMonth");
+          const first = byId("txFirstMonth");
+          const selected = currentMonth();
+          if (billing) billing.value = selected;
+          if (first) first.value = selected;
+        }, 0);
+        return result;
+      };
+      safe(function () { clearTxForm = window.clearTxForm; });
+    }
+
+    const originalEdit = window.editTx || (typeof editTx === "function" ? editTx : null);
+    if (typeof originalEdit === "function") {
+      window.editTx = function (txId) {
+        const result = originalEdit.apply(this, arguments);
+        setTimeout(function () {
+          ensureBillingField();
+          const stateObj = safe(function () { return window.state || state; }, window.state || {});
+          const tx = (stateObj.transactions || []).find(function (item) { return item.id === txId; });
+          const bm = billingMonthOf(tx);
+          if (byId("txBillingMonth")) byId("txBillingMonth").value = bm || currentMonth();
+          if (byId("txFirstMonth")) byId("txFirstMonth").value = bm || currentMonth();
+        }, 80);
+        return result;
+      };
+      safe(function () { editTx = window.editTx; });
+    }
+  }
+
+  function patchMonthTransactions() {
+    if (window.__cockpitBillingMonthTransactionsV11) return;
+    const original = window.monthTransactions || (typeof monthTransactions === "function" ? monthTransactions : null);
+    if (typeof original !== "function") return;
+
+    window.__cockpitBillingMonthTransactionsV11 = true;
+    window.monthTransactions = function (targetMonth) {
+      const ym = normalizeMonth(targetMonth) || currentMonth();
+      const originalRows = safe(function () { return original.apply(this, arguments) || []; }, []);
+      const stateObj = safe(function () { return window.state || state; }, window.state || {});
+      const txs = stateObj.transactions || [];
+      const blockedIds = new Set();
+
+      txs.forEach(function (tx) {
+        if (!isExpenseLike(tx) || isInstallment(tx)) return;
+        const bm = billingMonthOf(tx);
+        const dm = monthFromDate(tx.date);
+        if (bm && dm && bm !== dm && dm === ym) blockedIds.add(tx.id);
+      });
+
+      let rows = originalRows.filter(function (row) { return !blockedIds.has(row.id); });
+
+      txs.forEach(function (tx) {
+        if (!isExpenseLike(tx)) return;
+        const bm = billingMonthOf(tx);
+        const dm = monthFromDate(tx.date);
+
+        if (isInstallment(tx)) {
+          const first = (tx.installments && normalizeMonth(tx.installments.firstMonth)) || bm || dm;
+          const count = Number(tx.installments && tx.installments.count || 0);
+          const monthlyAmount = Number(tx.installments && tx.installments.monthlyAmount || 0) || (Number(tx.value || 0) / Math.max(1, count));
+
+          for (let index = 0; index < count; index++) {
+            const installmentMonth = addMonthsSafe(first, index);
+            if (installmentMonth === ym) {
+              const already = rows.some(function (row) {
+                return row.id === tx.id && Number(row.installmentNumber || row.parcelNumber || row.installmentIndex || 0) === index + 1;
+              });
+              if (!already) {
+                rows.push(Object.assign({}, tx, {
+                  value: monthlyAmount,
+                  billingMonth: ym,
+                  competenceMonth: ym,
+                  installmentNumber: index + 1,
+                  installmentTotal: count,
+                  installmentLabel: (index + 1) + "/" + count
+                }));
+              }
+            }
+          }
+          return;
+        }
+
+        if (bm && bm === ym && dm !== ym) {
+          const already = rows.some(function (row) { return row.id === tx.id; });
+          if (!already) rows.push(Object.assign({}, tx, { billingMonth: bm, competenceMonth: bm, originalPurchaseDate: tx.date }));
+        }
+      });
+
+      return rows.sort(function (a, b) { return String(b.date || "").localeCompare(String(a.date || "")); });
+    };
+    safe(function () { monthTransactions = window.monthTransactions; });
+  }
+
+  function decorateStatementRows() {
+    const list = byId("txList");
+    if (!list) return;
+    const month = currentMonth();
+    const stateObj = safe(function () { return window.state || state; }, window.state || {});
+    const descriptions = {};
+    (stateObj.transactions || []).forEach(function (tx) {
+      if (!isExpenseLike(tx)) return;
+      const bm = billingMonthOf(tx);
+      const dm = monthFromDate(tx.date);
+      if (bm && bm === month && dm && dm !== bm) descriptions[String(tx.description || "").toLowerCase()] = true;
+    });
+
+    qa(".item, .statement-tx", list).forEach(function (row) {
+      const text = String(row.textContent || "").toLowerCase();
+      const hit = Object.keys(descriptions).some(function (desc) { return desc && text.includes(desc); });
+      if (hit && !q(".cockpit-billing-badge", row)) {
+        const target = q("b", row) || row.firstElementChild || row;
+        const badge = document.createElement("span");
+        badge.className = "cockpit-billing-badge";
+        badge.textContent = "fatura";
+        target.appendChild(badge);
+      }
+    });
+  }
+
+  function addBillingHintToRegister() {
+    const panel = byId("txFormPanel");
+    if (!panel || byId("cockpitBillingRegisterHint")) return;
+    const head = q(".panel-head", panel);
+    if (!head) return;
+    const hint = document.createElement("div");
+    hint.id = "cockpitBillingRegisterHint";
+    hint.className = "cockpit-billing-hint";
+    hint.innerHTML = "<b>Compra no cartão:</b> a data da compra pode ser junho, mas o mês da fatura pode ser julho. O app usará o mês da fatura no Painel, Extrato e Fluxo.";
+    head.insertAdjacentElement("afterend", hint);
+  }
+
+  function rerenderAfterPatch() {
+    safe(function () { if (typeof render === "function") render(); });
+    setTimeout(decorateStatementRows, 120);
+  }
+
+  function boot() {
+    injectCss();
+    ensureBillingField();
+    addBillingHintToRegister();
+    bindBillingFieldSync();
+    patchTxForm();
+    patchClearAndEdit();
+    patchMonthTransactions();
+    decorateStatementRows();
+  }
+
+  boot();
+  setTimeout(boot, 300);
+  setTimeout(boot, 900);
+  setTimeout(boot, 1800);
+  setTimeout(boot, 3000);
+
+  document.addEventListener("click", function () {
+    setTimeout(boot, 120);
+    setTimeout(decorateStatementRows, 240);
+  }, true);
+
+  window.addEventListener("change", function (event) {
+    if (event.target && (event.target.id === "monthPicker" || event.target.id === "txBillingMonth" || event.target.id === "txFirstMonth")) {
+      setTimeout(rerenderAfterPatch, 100);
+    }
+  }, true);
+})();
+
