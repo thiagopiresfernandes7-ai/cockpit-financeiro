@@ -1,35 +1,59 @@
 /*
-  Cockpit Financeiro — Hotfix seguro v1
-  Mantém o index premium estável e aplica apenas ajustes por fora.
-  Não usa document.write, não carrega outro HTML, não altera dados do usuário.
+  Cockpit Financeiro — HOTFIX LIMPO v10
+  Objetivo: destravar navegação e estabilizar mobile sem empilhar patches antigos.
+
+  IMPORTANTE:
+  - Substitua TODO o conteúdo atual de hotfix.js por este arquivo.
+  - Não cole por cima. Apague tudo antes.
+  - No index.html use: <script src="./hotfix.js?v=10" defer></script>
 */
 
 (function () {
   "use strict";
 
-  const HOTFIX_ID = "cockpit-hotfix-safe-v1";
-  if (window[HOTFIX_ID]) return;
-  window[HOTFIX_ID] = true;
+  const FLAG = "cockpit-clean-router-v10";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
 
-  function $(selector, root = document) {
+  const CUSTOM_VIEWS = new Set(["debts", "dividends", "simulator"]);
+
+  function q(selector, root = document) {
     return root.querySelector(selector);
   }
 
-  function $all(selector, root = document) {
+  function qa(selector, root = document) {
     return Array.from(root.querySelectorAll(selector));
   }
 
-  function byId(id) {
-    return document.getElementById(id);
+  function id(name) {
+    return document.getElementById(name);
   }
 
-  function safe(fn) {
+  function safe(fn, fallback) {
     try {
       return fn();
     } catch (error) {
-      console.warn("[Cockpit hotfix]", error);
-      return null;
+      console.warn("[Cockpit v10]", error);
+      return fallback;
     }
+  }
+
+  function getState() {
+    return safe(function () { return state; }, window.state || {});
+  }
+
+  function getMonth() {
+    return safe(function () { return selectedMonth(); }, null) ||
+      (id("monthPicker") && id("monthPicker").value) ||
+      new Date().toISOString().slice(0, 7);
+  }
+
+  function today() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function uid() {
+    return "id_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2);
   }
 
   function brl(value) {
@@ -39,3336 +63,839 @@
     });
   }
 
-  function moneyFromInput(id) {
-    const node = byId(id);
-    return Math.max(0, Number(String((node && node.value) || "0").replace(",", ".")) || 0);
-  }
-
-  function selectedMonthSafe() {
-    return safe(() => selectedMonth()) ||
-      (byId("monthPicker") && byId("monthPicker").value) ||
-      new Date().toISOString().slice(0, 7);
-  }
-
-  function injectCss() {
-    if (byId("cockpit-hotfix-safe-css")) return;
-
-    const css = `
-/* === Cockpit Hotfix Seguro v1 === */
-
-/* Avatar Google correto */
-#userMenuButton,
-.user-avatar,
-.profile-avatar {
-  overflow: hidden !important;
-  flex: 0 0 auto !important;
-}
-
-#userMenuButton img,
-.user-avatar img,
-.profile-avatar img {
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-  object-fit: cover !important;
-  border-radius: inherit !important;
-}
-
-/* Desktop: escala real para notebook comum */
-@media (min-width: 781px) {
-  body {
-    overflow: hidden !important;
-  }
-
-  #appView.app {
-    height: 100vh !important;
-    min-height: 100vh !important;
-    grid-template-columns: 180px minmax(0, 1fr) !important;
-    overflow: hidden !important;
-  }
-
-  .sidebar {
-    width: 180px !important;
-    min-width: 180px !important;
-    height: 100vh !important;
-    padding: 10px 9px !important;
-    gap: 8px !important;
-    overflow: hidden !important;
-  }
-
-  #desktopGlobalAddBtn,
-  .side-footer {
-    display: none !important;
-  }
-
-  .logo {
-    gap: 7px !important;
-    margin-bottom: 4px !important;
-  }
-
-  .logo .mark,
-  .mark {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-    border-radius: 12px !important;
-  }
-
-  .brand strong {
-    font-size: 15px !important;
-    line-height: .92 !important;
-  }
-
-  .brand span {
-    font-size: 9px !important;
-  }
-
-  .status-card {
-    min-height: 34px !important;
-    padding: 7px 8px !important;
-    border-radius: 12px !important;
-  }
-
-  .nav-label {
-    font-size: 8px !important;
-    letter-spacing: .12em !important;
-    margin: 8px 7px 3px !important;
-  }
-
-  .nav-hub button,
-  .desktop-nav button,
-  .grouped-nav button {
-    height: 30px !important;
-    min-height: 30px !important;
-    padding: 0 7px !important;
-    gap: 6px !important;
-    border-radius: 10px !important;
-    font-size: 10px !important;
-    line-height: 1 !important;
-  }
-
-  .nav-hub .ico,
-  .desktop-nav .ico,
-  .grouped-nav .ico {
-    width: 18px !important;
-    height: 18px !important;
-    min-width: 18px !important;
-    border-radius: 7px !important;
-    font-size: 10px !important;
-  }
-
-  .main {
-    height: 100vh !important;
-    overflow: hidden !important;
-  }
-
-  .top {
-    min-height: 46px !important;
-    height: 46px !important;
-    padding: 6px 14px !important;
-    gap: 8px !important;
-  }
-
-  #pageTitle,
-  .top .title h1 {
-    font-size: 18px !important;
-    line-height: 1 !important;
-    margin: 0 !important;
-  }
-
-  #monthHint,
-  .top .title p {
-    font-size: 9px !important;
-    margin-top: 2px !important;
-  }
-
-  .monthbar input {
-    height: 30px !important;
-    min-width: 136px !important;
-    max-width: 136px !important;
-    padding: 0 9px !important;
-    font-size: 11px !important;
-  }
-
-  .btn,
-  .ghost-btn,
-  .primary-btn {
-    min-height: 30px !important;
-    height: 30px !important;
-    padding: 0 10px !important;
-    border-radius: 10px !important;
-    font-size: 10px !important;
-  }
-
-  .icon-btn {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    border-radius: 10px !important;
-    font-size: 11px !important;
-  }
-
-  #topGlobalAddBtn {
-    height: 30px !important;
-    min-height: 30px !important;
-    padding: 0 11px !important;
-    font-size: 10px !important;
-  }
-
-  #userMenuButton {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    max-width: 32px !important;
-    border-radius: 50% !important;
-  }
-
-  .content {
-    height: calc(100vh - 46px) !important;
-    overflow: auto !important;
-    padding: 10px 14px 22px !important;
-    max-width: none !important;
-  }
-
-  .grid {
-    gap: 9px !important;
-  }
-
-  .dashboard-kpis,
-  .grid.kpis {
-    gap: 9px !important;
-    margin-bottom: 9px !important;
-  }
-
-  .card,
-  .panel {
-    border-radius: 14px !important;
-  }
-
-  .card.kpi,
-  .kpi {
-    min-height: 68px !important;
-    padding: 10px 11px !important;
-  }
-
-  .card.kpi span,
-  .kpi span {
-    font-size: 7px !important;
-    letter-spacing: .11em !important;
-    line-height: 1.15 !important;
-  }
-
-  .card.kpi b,
-  .kpi b,
-  [data-money] {
-    font-size: 21px !important;
-    line-height: 1 !important;
-    margin-top: 4px !important;
-  }
-
-  .delta {
-    font-size: 8.5px !important;
-    margin-top: 3px !important;
-  }
-
-  .dashboard-grid-12 {
-    gap: 9px !important;
-  }
-
-  .panel {
-    padding: 11px !important;
-  }
-
-  .panel-head {
-    margin-bottom: 8px !important;
-    gap: 8px !important;
-  }
-
-  .panel-head h2,
-  .panel h2 {
-    font-size: 13px !important;
-    line-height: 1.1 !important;
-    margin: 0 0 3px !important;
-  }
-
-  .panel-head p,
-  .panel p,
-  .label,
-  .notice {
-    font-size: 9.5px !important;
-    line-height: 1.35 !important;
-  }
-
-  .compact-list,
-  .list {
-    gap: 6px !important;
-  }
-
-  .item {
-    min-height: 34px !important;
-    padding: 7px 8px !important;
-    border-radius: 10px !important;
-    gap: 7px !important;
-  }
-
-  .item b {
-    font-size: 10px !important;
-    line-height: 1.15 !important;
-  }
-
-  .item small {
-    font-size: 8px !important;
-    line-height: 1.2 !important;
-    margin-top: 2px !important;
-  }
-
-  .empty {
-    min-height: 38px !important;
-    padding: 9px !important;
-    border-radius: 10px !important;
-    font-size: 10px !important;
-  }
-
-  .field span {
-    font-size: 9px !important;
-  }
-
-  .field input,
-  .field select,
-  .field textarea {
-    min-height: 32px !important;
-    padding: 7px 9px !important;
-    border-radius: 10px !important;
-    font-size: 11px !important;
-  }
-
-  .field textarea {
-    min-height: 62px !important;
-  }
-
-  .cockpit-debt-workspace {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr) !important;
-    gap: 10px !important;
-    align-items: start !important;
-  }
-
-  .cockpit-debt-workspace #debtFormPanel,
-  .cockpit-debt-workspace #debtListPanel {
-    margin-top: 0 !important;
-  }
-}
-
-/* Mobile: início mais limpo sem destruir visual premium */
-@media (max-width: 780px) {
-  .top {
-    position: relative !important;
-    top: auto !important;
-    min-height: 58px !important;
-    height: 58px !important;
-    padding: 8px 14px !important;
-  }
-
-  .top .title {
-    display: none !important;
-  }
-
-  .actions {
-    width: 100% !important;
-    justify-content: flex-end !important;
-    gap: 8px !important;
-  }
-
-  .monthbar #prevMonth,
-  .monthbar #nextMonth,
-  .monthbar #todayBtn,
-  #exportBtn,
-  #topGlobalAddBtn {
-    display: none !important;
-  }
-
-  .monthbar input {
-    width: 174px !important;
-    min-width: 174px !important;
-    max-width: 174px !important;
-    height: 36px !important;
-    text-align: center !important;
-    font-size: 14px !important;
-    white-space: nowrap !important;
-  }
-
-  #userMenuButton {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    max-width: 40px !important;
-    border-radius: 50% !important;
-    position: relative !important;
-    inset: auto !important;
-    transform: none !important;
-    z-index: 2 !important;
-  }
-
-  #dashboard > .page-head,
-  #dashboard .dashboard-head {
-    display: none !important;
-  }
-
-  .content {
-    padding: 12px 12px calc(122px + env(safe-area-inset-bottom)) !important;
-    max-width: none !important;
-  }
-
-  .dashboard-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-    margin: 0 0 12px !important;
-  }
-
-  #dashboard .dashboard-kpis .kpi:nth-child(n+5) {
-    display: none !important;
-  }
-
-  #dashboard .kpi {
-    min-height: 104px !important;
-    padding: 14px !important;
-    border-radius: 20px !important;
-  }
-
-  #dashboard .kpi span {
-    font-size: 9px !important;
-    letter-spacing: .11em !important;
-    line-height: 1.25 !important;
-  }
-
-  #dashboard .kpi b,
-  #dashboard .kpi .value {
-    font-size: 24px !important;
-    line-height: 1.08 !important;
-    margin-top: 8px !important;
-  }
-
-  #dashboard .dashboard-grid-12 > .panel {
-    display: none !important;
-  }
-
-  #dashboard .dashboard-grid-12 > .goal-mini-card {
-    display: grid !important;
-    min-height: auto !important;
-    padding: 13px !important;
-    border-radius: 20px !important;
-    grid-template-columns: 34px 1fr !important;
-    gap: 10px !important;
-    margin-bottom: 12px !important;
-  }
-
-  #dashboard .goal-mini-card p,
-  #dashboard .goal-mini-card .btn {
-    display: none !important;
-  }
-
-  .global-add-btn {
-    width: 52px !important;
-    height: 52px !important;
-    right: 18px !important;
-    left: auto !important;
-    bottom: calc(92px + env(safe-area-inset-bottom)) !important;
-    transform: none !important;
-    border-radius: 18px !important;
-    font-size: 30px !important;
-    z-index: 34 !important;
-  }
-
-  .mobile-nav {
-    left: 10px !important;
-    right: 10px !important;
-    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
-    border-radius: 26px !important;
-    padding: 7px !important;
-    min-height: 66px !important;
-  }
-
-  .cockpit-debt-workspace {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 10px !important;
-  }
-}
-`;
-
-    const style = document.createElement("style");
-    style.id = "cockpit-hotfix-safe-css";
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
-
-  function patchAvatar() {
-    $all("#userMenuButton img, .user-avatar img, .profile-avatar img").forEach(function (img) {
-      img.setAttribute("referrerpolicy", "no-referrer");
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char];
     });
   }
 
-  function patchNavigation() {
-    $all("#nav button, .nav-hub button").forEach(function (button) {
-      const text = (button.textContent || "").toLowerCase();
-
-      if (text.includes("dívida") || text.includes("divida")) {
-        button.dataset.view = "debts";
-      }
-
-      if (text.includes("simulador")) {
-        button.dataset.view = "simulator";
-      }
-    });
-  }
-
-  function createDebtSection() {
-    const content = $(".content");
-    if (!content) return;
-
-    let section = byId("debts");
-
-    if (!section) {
-      section = document.createElement("section");
-      section.id = "debts";
-      section.className = "section cockpit-debts-section";
-      section.innerHTML =
-        '<div class="page-head">' +
-          '<div class="page-title">' +
-            '<div class="overline">Debt control</div>' +
-            '<h1>Dívidas <span>& Parcelas</span></h1>' +
-            '<p>Cadastre financiamentos, empréstimos e parcelamentos diretamente por aqui. As parcelas continuam entrando no Extrato, no Painel e no Fluxo de Caixa.</p>' +
-          '</div>' +
-        '</div>' +
-        '<div class="cockpit-debt-workspace"></div>';
-
-      const register = byId("register");
-      if (register && register.nextSibling) {
-        content.insertBefore(section, register.nextSibling);
-      } else {
-        content.appendChild(section);
-      }
-    }
-
-    const workspace = $(".cockpit-debt-workspace", section);
-    if (!workspace) return;
-
-    const debtForm = byId("debtFormPanel");
-    const debtList = byId("debtListPanel");
-
-    if (debtForm && debtForm.parentNode !== workspace) {
-      workspace.appendChild(debtForm);
-      debtForm.style.marginTop = "0";
-
-      const title = byId("debtFormTitle");
-      if (title) title.textContent = "Cadastrar dívida";
-
-      const paragraph = $(".panel-head p", debtForm);
-      if (paragraph) {
-        paragraph.textContent = "Cadastre direto nesta aba. Depois de salvar, as parcelas entram automaticamente no Extrato e nas projeções.";
-      }
-    }
-
-    if (debtList && debtList.parentNode !== workspace) {
-      workspace.appendChild(debtList);
-      debtList.style.marginTop = "0";
-
-      const paragraph = $(".panel-head p", debtList);
-      if (paragraph) {
-        paragraph.textContent = "Obrigações ativas, próximas parcelas e saldo devedor.";
-      }
-    }
-  }
-
-  function patchDebtSaveFlow() {
-    const saveDebt = byId("saveDebt");
-    if (!saveDebt || saveDebt.dataset.hotfixDebtBound === "1") return;
-
-    saveDebt.dataset.hotfixDebtBound = "1";
-    saveDebt.addEventListener("click", function () {
-      setTimeout(function () {
-        safe(function () { renderDebts(selectedMonthSafe()); });
-        safe(function () { renderDashboard(selectedMonthSafe()); });
-        safe(function () { renderTxList(selectedMonthSafe()); });
-        safe(function () { setView("debts"); });
-        safe(function () { toast("Dívida salva. Parcelas atualizadas no Extrato e no Fluxo de Caixa."); });
-      }, 250);
-    });
-  }
-
-  function createSimulatorSection() {
-    const content = $(".content");
-    if (!content) return;
-
-    let section = byId("simulator");
-
-    if (!section) {
-      section = document.createElement("section");
-      section.id = "simulator";
-      section.className = "section cockpit-simulator-section";
-      content.appendChild(section);
-    }
-
-    if (section.dataset.hotfixReady === "1") return;
-    section.dataset.hotfixReady = "1";
-
-    section.innerHTML =
-      '<div class="page-head">' +
-        '<div class="page-title">' +
-          '<div class="overline">Planejamento financeiro</div>' +
-          '<h1>Simulador</h1>' +
-          '<p>Projete patrimônio, aportes mensais, juros compostos, inflação, renda passiva e tempo até a meta.</p>' +
-        '</div>' +
-      '</div>' +
-      '<div class="grid cards2">' +
-        '<div class="panel">' +
-          '<h2>Parâmetros da simulação</h2>' +
-          '<p>Use para testar cenários antes de decidir aportes, metas ou quitação de dívidas.</p>' +
-          '<div class="form-grid">' +
-            '<label class="field"><span>Valor inicial</span><input id="simInitial" type="number" min="0" step="0.01" value="0"></label>' +
-            '<label class="field"><span>Aporte mensal</span><input id="simMonthly" type="number" min="0" step="0.01" value="1000"></label>' +
-            '<label class="field"><span>Rentabilidade anual (%)</span><input id="simAnnualRate" type="number" min="0" step="0.01" value="8"></label>' +
-            '<label class="field"><span>Prazo em anos</span><input id="simYears" type="number" min="1" step="1" value="10"></label>' +
-            '<label class="field"><span>Inflação anual estimada (%)</span><input id="simInflation" type="number" min="0" step="0.01" value="4"></label>' +
-            '<label class="field"><span>Meta patrimonial</span><input id="simTarget" type="number" min="0" step="0.01" value="1000000"></label>' +
-          '</div>' +
-          '<div class="split" style="margin-top:14px">' +
-            '<button class="btn primary" id="runCockpitSimulation" type="button">Simular cenário</button>' +
-            '<button class="btn" id="simConservative" type="button">Conservador</button>' +
-            '<button class="btn" id="simAggressive" type="button">Agressivo</button>' +
-          '</div>' +
-          '<div class="notice" style="margin-top:12px">Simulação educativa. Não é promessa de rentabilidade nem recomendação de investimento.</div>' +
-        '</div>' +
-        '<div class="panel">' +
-          '<h2>Resultado projetado</h2>' +
-          '<div id="simResult" class="list"></div>' +
-          '<h2 style="margin-top:14px">Evolução anual</h2>' +
-          '<div id="simRows" class="list"></div>' +
-        '</div>' +
-      '</div>';
-
-    bindSimulator();
-  }
-
-  function runSimulation() {
-    const initial = moneyFromInput("simInitial");
-    const monthly = moneyFromInput("simMonthly");
-    const annualRate = moneyFromInput("simAnnualRate") / 100;
-    const years = Math.max(1, Math.floor(moneyFromInput("simYears") || 1));
-    const inflation = moneyFromInput("simInflation") / 100;
-    const target = moneyFromInput("simTarget");
-
-    const monthlyRate = Math.pow(1 + annualRate, 1 / 12) - 1;
-    const months = years * 12;
-
-    let balance = initial;
-    let invested = initial;
-    const rows = [];
-
-    for (let monthIndex = 1; monthIndex <= months; monthIndex++) {
-      balance = balance * (1 + monthlyRate) + monthly;
-      invested += monthly;
-
-      if (monthIndex % 12 === 0) {
-        const year = monthIndex / 12;
-        rows.push({
-          year,
-          invested,
-          balance,
-          real: balance / Math.pow(1 + inflation, year)
-        });
-      }
-    }
-
-    const gains = balance - invested;
-    const realValue = balance / Math.pow(1 + inflation, years);
-    const passiveMonthly = (balance * 0.04) / 12;
-
-    let targetMonths = null;
-
-    if (target > 0) {
-      let targetBalance = initial;
-      for (let i = 1; i <= 1200; i++) {
-        targetBalance = targetBalance * (1 + monthlyRate) + monthly;
-        if (targetBalance >= target) {
-          targetMonths = i;
-          break;
-        }
-      }
-    }
-
-    const result = byId("simResult");
-    if (result) {
-      const timeText = targetMonths
-        ? Math.floor(targetMonths / 12) + "a " + (targetMonths % 12) + "m"
-        : "acima de 100 anos";
-
-      result.innerHTML = [
-        ["Patrimônio futuro", brl(balance), "positive"],
-        ["Total aportado", brl(invested), "neutral"],
-        ["Juros acumulados", brl(gains), "positive"],
-        ["Valor real estimado", brl(realValue), "neutral"],
-        ["Renda passiva 4% a.a.", brl(passiveMonthly) + "/mês", "cyan"],
-        ["Tempo até a meta", timeText, "warn"]
-      ].map(function (row) {
-        return '<div class="item">' +
-          '<div><b>' + row[0] + '</b><small>Simulação educativa</small></div>' +
-          '<div class="amount ' + row[2] + '">' + row[1] + '</div>' +
-        '</div>';
-      }).join("");
-    }
-
-    const table = byId("simRows");
-    if (table) {
-      table.innerHTML = rows.map(function (row) {
-        return '<div class="item">' +
-          '<div><b>Ano ' + row.year + '</b><small>Aportado: ' + brl(row.invested) + ' • Valor real: ' + brl(row.real) + '</small></div>' +
-          '<div class="amount positive">' + brl(row.balance) + '</div>' +
-        '</div>';
-      }).join("");
-    }
-  }
-
-  function bindSimulator() {
-    const runButton = byId("runCockpitSimulation");
-    if (runButton && runButton.dataset.bound !== "1") {
-      runButton.dataset.bound = "1";
-      runButton.addEventListener("click", runSimulation);
-    }
-
-    ["simInitial", "simMonthly", "simAnnualRate", "simYears", "simInflation", "simTarget"].forEach(function (id) {
-      const input = byId(id);
-      if (input && input.dataset.bound !== "1") {
-        input.dataset.bound = "1";
-        input.addEventListener("input", runSimulation);
-      }
-    });
-
-    const conservative = byId("simConservative");
-    if (conservative && conservative.dataset.bound !== "1") {
-      conservative.dataset.bound = "1";
-      conservative.addEventListener("click", function () {
-        byId("simAnnualRate").value = 6;
-        byId("simInflation").value = 4;
-        runSimulation();
-      });
-    }
-
-    const aggressive = byId("simAggressive");
-    if (aggressive && aggressive.dataset.bound !== "1") {
-      aggressive.dataset.bound = "1";
-      aggressive.addEventListener("click", function () {
-        byId("simAnnualRate").value = 10;
-        byId("simInflation").value = 4;
-        runSimulation();
-      });
-    }
-
-    runSimulation();
-  }
-
-  function boot() {
-    injectCss();
-    patchAvatar();
-    patchNavigation();
-    createDebtSection();
-    patchDebtSaveFlow();
-    createSimulatorSection();
-  }
-
-  function scheduleBoots() {
-    boot();
-    setTimeout(boot, 300);
-    setTimeout(boot, 900);
-    setTimeout(boot, 1800);
-    setTimeout(boot, 3000);
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", scheduleBoots);
-  } else {
-    scheduleBoots();
-  }
-
-  document.addEventListener("click", function () {
-    setTimeout(boot, 120);
-  }, true);
-})();
-
-
-/* ===== MOBILE FORCE PATCH v2 =====
-   Corrige especificamente o problema mostrado no iPhone:
-   - cabeçalho alto demais;
-   - título "Painel" ocupando espaço;
-   - foto do Google gigante/retangular;
-   - 6 cards na Home;
-   - bloco Receita x Despesa aparecendo na Home mobile;
-   - botão + sobrepondo conteúdo.
-*/
-(function () {
-  "use strict";
-
-  const FLAG = "cockpit-mobile-force-v2";
-  if (window[FLAG]) return;
-  window[FLAG] = true;
-
-  function isMobileLike() {
-    return window.innerWidth <= 900 || window.matchMedia("(max-width: 900px)").matches;
-  }
-
-  function q(selector, root = document) {
-    return root.querySelector(selector);
-  }
-
-  function qa(selector, root = document) {
-    return Array.from(root.querySelectorAll(selector));
-  }
-
-  function injectMobileCss() {
-    if (document.getElementById("cockpit-mobile-force-v2-css")) return;
-
-    const css = `
-html.cockpit-mobile-force,
-html.cockpit-mobile-force body {
-  overflow-x: hidden !important;
-}
-
-/* Header mobile compacto */
-html.cockpit-mobile-force .top {
-  position: relative !important;
-  top: auto !important;
-  min-height: 52px !important;
-  height: 52px !important;
-  padding: 6px 12px !important;
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  gap: 8px !important;
-  overflow: visible !important;
-}
-
-html.cockpit-mobile-force .top .title,
-html.cockpit-mobile-force #pageTitle,
-html.cockpit-mobile-force #monthHint {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-}
-
-/* Ações do topo */
-html.cockpit-mobile-force .actions,
-html.cockpit-mobile-force .compact-actions {
-  width: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  gap: 8px !important;
-  margin: 0 !important;
-}
-
-html.cockpit-mobile-force .monthbar {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0 !important;
-  margin-right: 4px !important;
-}
-
-html.cockpit-mobile-force .monthbar #prevMonth,
-html.cockpit-mobile-force .monthbar #nextMonth,
-html.cockpit-mobile-force .monthbar #todayBtn,
-html.cockpit-mobile-force #exportBtn,
-html.cockpit-mobile-force #topGlobalAddBtn,
-html.cockpit-mobile-force #privacyBtn {
-  display: none !important;
-}
-
-html.cockpit-mobile-force .monthbar input {
-  width: 158px !important;
-  min-width: 158px !important;
-  max-width: 158px !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  padding: 0 10px !important;
-  border-radius: 999px !important;
-  text-align: center !important;
-  font-size: 13px !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-}
-
-/* Avatar Google: sempre circular e pequeno */
-html.cockpit-mobile-force .user-menu-wrap {
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
-  flex: 0 0 40px !important;
-  position: relative !important;
-  inset: auto !important;
-  overflow: visible !important;
-}
-
-html.cockpit-mobile-force #userMenuButton,
-html.cockpit-mobile-force .user-avatar {
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  overflow: hidden !important;
-  position: relative !important;
-  inset: auto !important;
-  transform: none !important;
-  display: grid !important;
-  place-items: center !important;
-}
-
-html.cockpit-mobile-force #userMenuButton img,
-html.cockpit-mobile-force .user-avatar img {
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
-  display: block !important;
-  object-fit: cover !important;
-  border-radius: 50% !important;
-}
-
-/* Conteúdo mobile */
-html.cockpit-mobile-force .content {
-  padding: 10px 12px calc(104px + env(safe-area-inset-bottom)) !important;
-  max-width: none !important;
-}
-
-/* Remove cabeçalho interno da Home */
-html.cockpit-mobile-force #dashboard > .page-head,
-html.cockpit-mobile-force #dashboard .dashboard-head {
-  display: none !important;
-}
-
-/* Home mobile: só 4 indicadores */
-html.cockpit-mobile-force #dashboard .dashboard-kpis {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 10px !important;
-  margin: 0 0 12px !important;
-}
-
-html.cockpit-mobile-force #dashboard .dashboard-kpis > *:nth-child(n+5) {
-  display: none !important;
-}
-
-html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi,
-html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi {
-  min-height: 92px !important;
-  padding: 12px !important;
-  border-radius: 18px !important;
-}
-
-html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi span,
-html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi span {
-  font-size: 8px !important;
-  line-height: 1.18 !important;
-  letter-spacing: .11em !important;
-}
-
-html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi b,
-html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi b {
-  font-size: 22px !important;
-  line-height: 1.05 !important;
-  margin-top: 7px !important;
-}
-
-html.cockpit-mobile-force #dashboard .dashboard-kpis .delta {
-  font-size: 10px !important;
-  margin-top: 5px !important;
-}
-
-/* Home mobile: detalhes saem da tela inicial */
-html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .panel {
-  display: none !important;
-}
-
-/* Se houver card de objetivo, pode aparecer compacto */
-html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .goal-mini-card {
-  display: grid !important;
-  min-height: auto !important;
-  padding: 12px !important;
-  border-radius: 18px !important;
-  grid-template-columns: 32px 1fr !important;
-  gap: 10px !important;
-  margin: 0 0 12px !important;
-}
-
-html.cockpit-mobile-force #dashboard .goal-mini-card p,
-html.cockpit-mobile-force #dashboard .goal-mini-card .btn {
-  display: none !important;
-}
-
-html.cockpit-mobile-force #dashboard .goal-mini-card h2 {
-  font-size: 13px !important;
-  line-height: 1.2 !important;
-  margin: 1px 0 !important;
-}
-
-/* Botão + sem cobrir o centro da barra */
-html.cockpit-mobile-force .global-add-btn {
-  width: 52px !important;
-  height: 52px !important;
-  right: 18px !important;
-  left: auto !important;
-  bottom: calc(82px + env(safe-area-inset-bottom)) !important;
-  transform: none !important;
-  border-radius: 18px !important;
-  font-size: 30px !important;
-  z-index: 34 !important;
-}
-
-/* Barra inferior menos invasiva */
-html.cockpit-mobile-force .mobile-nav {
-  left: 10px !important;
-  right: 10px !important;
-  bottom: calc(8px + env(safe-area-inset-bottom)) !important;
-  min-height: 62px !important;
-  padding: 6px !important;
-  border-radius: 24px !important;
-}
-
-html.cockpit-mobile-force .mobile-nav button {
-  min-height: 50px !important;
-  font-size: 10px !important;
-}
-
-html.cockpit-mobile-force .mobile-nav .ico {
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-}
-
-/* Aba Dívidas no mobile */
-html.cockpit-mobile-force .cockpit-debt-workspace {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 10px !important;
-}
-`;
-
-    const style = document.createElement("style");
-    style.id = "cockpit-mobile-force-v2-css";
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
-
-  function forceMobileClass() {
-    document.documentElement.classList.toggle("cockpit-mobile-force", isMobileLike());
-  }
-
-  function forceAvatarSize() {
-    if (!isMobileLike()) return;
-
-    const wrap = q(".user-menu-wrap");
-    const btn = q("#userMenuButton");
-    const img = q("#userMenuButton img, .user-avatar img");
-
-    if (wrap) {
-      Object.assign(wrap.style, {
-        width: "40px",
-        height: "40px",
-        minWidth: "40px",
-        maxWidth: "40px",
-        flex: "0 0 40px",
-        position: "relative",
-        overflow: "visible"
-      });
-    }
-
-    if (btn) {
-      Object.assign(btn.style, {
-        width: "40px",
-        height: "40px",
-        minWidth: "40px",
-        maxWidth: "40px",
-        borderRadius: "50%",
-        overflow: "hidden",
-        padding: "0",
-        position: "relative",
-        transform: "none",
-        inset: "auto"
-      });
-    }
-
-    if (img) {
-      img.setAttribute("referrerpolicy", "no-referrer");
-      Object.assign(img.style, {
-        width: "40px",
-        height: "40px",
-        minWidth: "40px",
-        maxWidth: "40px",
-        objectFit: "cover",
-        borderRadius: "50%",
-        display: "block"
-      });
-    }
-  }
-
-  function simplifyHome() {
-    if (!isMobileLike()) return;
-
-    const title = q(".top .title");
-    if (title) title.style.display = "none";
-
-    qa("#dashboard .dashboard-kpis > *").forEach(function (card, index) {
-      card.style.display = index >= 4 ? "none" : "";
-    });
-
-    qa("#dashboard .dashboard-grid-12 > .panel").forEach(function (panel) {
-      if (panel.classList.contains("goal-mini-card")) {
-        panel.style.display = "grid";
-      } else {
-        panel.style.display = "none";
-      }
-    });
-  }
-
-  function run() {
-    injectMobileCss();
-    forceMobileClass();
-    forceAvatarSize();
-    simplifyHome();
-  }
-
-  run();
-  setTimeout(run, 250);
-  setTimeout(run, 750);
-  setTimeout(run, 1500);
-  setTimeout(run, 3000);
-
-  window.addEventListener("resize", run);
-  window.addEventListener("orientationchange", function () {
-    setTimeout(run, 300);
-  });
-
-  document.addEventListener("click", function () {
-    setTimeout(run, 120);
-  }, true);
-})();
-
-
-/* ===== DEBT WORKFLOW FORCE PATCH v3 =====
-   Corrige:
-   - clicar em Dívidas abria Extrato;
-   - tentar lançar dívida pelo + abria Extrato;
-   - após salvar dívida voltava para Extrato.
-*/
-(function () {
-  "use strict";
-
-  const FLAG = "cockpit-debt-workflow-force-v3";
-  if (window[FLAG]) return;
-  window[FLAG] = true;
-
-  function q(selector, root = document) { return root.querySelector(selector); }
-  function qa(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
-  function byId(id) { return document.getElementById(id); }
-  function safe(fn) { try { return fn(); } catch (error) { console.warn("[Cockpit debt v3]", error); return null; } }
-
-  function selectedMonthSafe() {
-    return safe(function () { return selectedMonth(); }) ||
-      (byId("monthPicker") && byId("monthPicker").value) ||
-      new Date().toISOString().slice(0, 7);
-  }
-
-  function injectDebtCss() {
-    if (byId("cockpit-debt-workflow-force-v3-css")) return;
-
-    const css = `
-#debts.cockpit-debts-section{display:none}
-#debts.cockpit-debts-section.active{display:block!important}
-.cockpit-debt-workspace{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:14px;align-items:start}
-.cockpit-debt-workspace #debtFormPanel,.cockpit-debt-workspace #debtListPanel{margin-top:0!important}
-.cockpit-debt-helper{margin-bottom:14px;border:1px solid rgba(142,213,255,.18);background:rgba(76,201,255,.06);border-radius:18px;padding:12px 14px;color:var(--soft,#bfd0e5);font-size:13px;line-height:1.45}
-.cockpit-debt-helper b{color:var(--text,#e7f1ff)}
-@media(max-width:780px){.cockpit-debt-workspace{grid-template-columns:1fr!important;gap:10px!important}.cockpit-debt-helper{font-size:12px;padding:11px 12px;border-radius:16px}}
-`;
-
-    const style = document.createElement("style");
-    style.id = "cockpit-debt-workflow-force-v3-css";
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
-
-  function createDebtSection() {
-    const content = q(".content");
-    if (!content) return null;
-
-    let section = byId("debts");
-
-    if (!section) {
-      section = document.createElement("section");
-      section.id = "debts";
-      section.className = "section cockpit-debts-section";
-      section.innerHTML =
-        '<div class="page-head">' +
-          '<div class="page-title">' +
-            '<div class="overline">Debt control</div>' +
-            '<h1>Dívidas <span>& Parcelas</span></h1>' +
-            '<p>Cadastre financiamentos, empréstimos, parcelamentos e compromissos recorrentes diretamente por aqui.</p>' +
-          '</div>' +
-        '</div>' +
-        '<div class="cockpit-debt-helper"><b>Fluxo correto:</b> cadastre a dívida nesta aba. Depois de salvar, as parcelas entram automaticamente no Painel, no Extrato e no Fluxo de Caixa.</div>' +
-        '<div class="cockpit-debt-workspace"></div>';
-
-      const register = byId("register");
-      if (register && register.nextSibling) content.insertBefore(section, register.nextSibling);
-      else content.appendChild(section);
-    }
-
-    const workspace = q(".cockpit-debt-workspace", section);
-    if (!workspace) return section;
-
-    const debtForm = byId("debtFormPanel");
-    const debtList = byId("debtListPanel");
-
-    if (debtForm && debtForm.parentNode !== workspace) {
-      workspace.appendChild(debtForm);
-      debtForm.style.marginTop = "0";
-
-      const title = byId("debtFormTitle");
-      if (title) title.textContent = "Cadastrar dívida";
-
-      const paragraph = q(".panel-head p", debtForm);
-      if (paragraph) paragraph.textContent = "Preencha aqui. Você não precisa passar por Novo Lançamento para cadastrar uma dívida.";
-    }
-
-    if (debtList && debtList.parentNode !== workspace) {
-      workspace.appendChild(debtList);
-      debtList.style.marginTop = "0";
-
-      const paragraph = q(".panel-head p", debtList);
-      if (paragraph) paragraph.textContent = "Dívidas ativas, próximas parcelas e compromissos futuros.";
-    }
-
-    return section;
-  }
-
-  function forceOpenDebts() {
-    injectDebtCss();
-
-    const section = createDebtSection();
-    if (!section) return;
-
-    qa(".section").forEach(function (node) {
-      node.classList.remove("active");
-      node.style.display = "none";
-    });
-
-    section.classList.add("active");
-    section.style.display = "block";
-
-    qa("#nav button,.nav-hub button,.mobile-nav button").forEach(function (button) {
-      const text = (button.textContent || "").toLowerCase();
-      const isDebt = text.includes("dívida") || text.includes("divida") || button.dataset.view === "debts";
-      button.classList.toggle("active", isDebt);
-    });
-
-    const pageTitle = byId("pageTitle");
-    if (pageTitle) pageTitle.textContent = "Dívidas";
-
-    const monthHint = byId("monthHint");
-    if (monthHint) monthHint.textContent = "Cadastro e acompanhamento de parcelas";
-
-    safe(function () { renderDebts(selectedMonthSafe()); });
-
-    const debtForm = byId("debtFormPanel");
-    if (debtForm) setTimeout(function () { debtForm.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80);
-
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }
-
-  function patchNavAttributes() {
-    qa("#nav button,.nav-hub button,.desktop-nav button,.grouped-nav button,.mobile-nav button").forEach(function (button) {
-      const text = (button.textContent || "").toLowerCase();
-
-      if (text.includes("dívida") || text.includes("divida")) {
-        button.dataset.view = "debts";
-        button.setAttribute("data-debt-nav", "1");
-      }
-
-      if (text.includes("simulador")) button.dataset.view = "simulator";
-    });
-  }
-
-  function addDebtOptionToActionSheet() {
-    const grid = q("#registerActionSheet .sheet-grid");
-    if (!grid || q('[data-register-action="debt"]', grid)) return;
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.registerAction = "debt";
-    button.innerHTML = '<span>⚠</span><b>Dívida / financiamento</b><small>Parcelas, empréstimos e financiamentos</small>';
-
-    grid.appendChild(button);
-  }
-
-  function closeRegisterSheetSafely() {
-    const sheet = byId("registerActionSheet");
-    if (sheet) {
-      sheet.classList.add("hidden");
-      sheet.setAttribute("aria-hidden", "true");
-    }
-
-    safe(function () { closeRegisterSheet(); });
-  }
-
-  function interceptDebtClicks() {
-    if (window.__cockpitDebtV3ClickInterceptor) return;
-    window.__cockpitDebtV3ClickInterceptor = true;
-
-    document.addEventListener("click", function (event) {
-      const button = event.target.closest("button");
-      if (!button) return;
-
-      const text = (button.textContent || "").toLowerCase();
-      const action = button.dataset.registerAction;
-      const view = button.dataset.view;
-
-      const isDebtNav =
-        button.dataset.debtNav === "1" ||
-        view === "debts" ||
-        ((text.includes("dívida") || text.includes("divida")) && button.closest("#nav,.nav-hub,.desktop-nav,.mobile-nav"));
-
-      const isDebtAction =
-        action === "debt" ||
-        ((text.includes("dívida") || text.includes("divida") || text.includes("financiamento")) && button.closest("#registerActionSheet"));
-
-      if (!isDebtNav && !isDebtAction) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-
-      closeRegisterSheetSafely();
-      forceOpenDebts();
-    }, true);
-  }
-
-  function patchSaveDebtReturn() {
-    const saveDebt = byId("saveDebt");
-    if (!saveDebt || saveDebt.dataset.debtForceV3 === "1") return;
-
-    saveDebt.dataset.debtForceV3 = "1";
-
-    saveDebt.addEventListener("click", function () {
-      setTimeout(function () {
-        createDebtSection();
-        safe(function () { renderDebts(selectedMonthSafe()); });
-        safe(function () { renderDashboard(selectedMonthSafe()); });
-        safe(function () { renderTxList(selectedMonthSafe()); });
-        forceOpenDebts();
-        safe(function () { toast("Dívida salva. Parcelas atualizadas no Extrato, Painel e Fluxo de Caixa."); });
-      }, 350);
-    });
-  }
-
-  function patchEditDebt() {
-    if (window.__cockpitDebtV3EditPatch) return;
-
-    const original = window.editDebt;
-    if (typeof original !== "function") return;
-
-    window.editDebt = function (id) {
-      original(id);
-      setTimeout(function () { forceOpenDebts(); }, 120);
-    };
-
-    safe(function () { editDebt = window.editDebt; });
-    window.__cockpitDebtV3EditPatch = true;
-  }
-
-  function patchOpenRegisterSheet() {
-    qa("#globalAddBtn,#desktopGlobalAddBtn,#topGlobalAddBtn,#statementAddBtn").forEach(function (button) {
-      if (button.dataset.debtV3SheetPatched === "1") return;
-      button.dataset.debtV3SheetPatched = "1";
-      button.addEventListener("click", function () {
-        setTimeout(addDebtOptionToActionSheet, 80);
-        setTimeout(addDebtOptionToActionSheet, 250);
-      });
-    });
-  }
-
-  function bootDebtV3() {
-    injectDebtCss();
-    patchNavAttributes();
-    createDebtSection();
-    addDebtOptionToActionSheet();
-    interceptDebtClicks();
-    patchSaveDebtReturn();
-    patchEditDebt();
-    patchOpenRegisterSheet();
-  }
-
-  bootDebtV3();
-  setTimeout(bootDebtV3, 300);
-  setTimeout(bootDebtV3, 900);
-  setTimeout(bootDebtV3, 1800);
-  setTimeout(bootDebtV3, 3000);
-
-  document.addEventListener("click", function () { setTimeout(bootDebtV3, 120); }, true);
-})();
-
-
-/* ===== MOBILE HOME ACTION PATCH v4 =====
-   Feedback de usuário:
-   "Ficou bom! Só estou achando muita informação.
-    Seria bom se na tela de início eu conseguisse clicar nas Despesas, por exemplo, e já entrar nelas."
-
-   Resultado:
-   - Home mobile vira uma porta de entrada.
-   - 4 cards principais clicáveis.
-   - Despesas abre Extrato filtrado por saídas.
-   - Receitas abre Extrato filtrado por entradas.
-   - Saldo abre Extrato geral.
-   - Patrimônio abre Carteira.
-*/
-(function () {
-  "use strict";
-
-  const FLAG = "cockpit-mobile-home-action-v4";
-  if (window[FLAG]) return;
-  window[FLAG] = true;
-
-  function q(selector, root = document) {
-    return root.querySelector(selector);
-  }
-
-  function qa(selector, root = document) {
-    return Array.from(root.querySelectorAll(selector));
-  }
-
-  function byId(id) {
-    return document.getElementById(id);
-  }
-
-  function safe(fn) {
-    try {
-      return fn();
-    } catch (error) {
-      console.warn("[Cockpit mobile home v4]", error);
-      return null;
-    }
-  }
-
-  function isMobileLike() {
-    return window.innerWidth <= 900 || window.matchMedia("(max-width: 900px)").matches;
-  }
-
-  function selectedMonthSafe() {
-    return safe(function () { return selectedMonth(); }) ||
-      (byId("monthPicker") && byId("monthPicker").value) ||
-      new Date().toISOString().slice(0, 7);
-  }
-
-  function injectCss() {
-    if (byId("cockpit-mobile-home-action-v4-css")) return;
-
-    const css = `
-@media (max-width: 900px) {
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12,
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > *,
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .panel,
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .goal-mini-card {
-    display: none !important;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis {
-    margin-bottom: 0 !important;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi {
-    position: relative !important;
-    cursor: pointer !important;
-    user-select: none !important;
-    transition: transform .14s ease, border-color .14s ease, background .14s ease !important;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi:active,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi:active {
-    transform: scale(.985) !important;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi::after,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi::after {
-    content: "toque para ver";
-    position: absolute;
-    right: 12px;
-    bottom: 9px;
-    font-size: 8px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: rgba(190, 210, 232, .52);
-    pointer-events: none;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi[data-home-action="expense"]::after,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi[data-home-action="expense"]::after {
-    content: "ver saídas";
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi[data-home-action="income"]::after,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi[data-home-action="income"]::after {
-    content: "ver entradas";
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi[data-home-action="statement"]::after,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi[data-home-action="statement"]::after {
-    content: "ver extrato";
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi[data-home-action="wallet"]::after,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi[data-home-action="wallet"]::after {
-    content: "ver carteira";
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi .delta,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi .delta {
-    padding-right: 62px !important;
-  }
-}
-`;
-
-    const style = document.createElement("style");
-    style.id = "cockpit-mobile-home-action-v4-css";
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
-
-  function markCards() {
-    const cards = qa("#dashboard .dashboard-kpis > *");
-
-    if (cards[0]) {
-      cards[0].dataset.homeAction = "wallet";
-      cards[0].setAttribute("role", "button");
-      cards[0].setAttribute("tabindex", "0");
-      cards[0].setAttribute("aria-label", "Abrir patrimônio e carteira");
-    }
-
-    if (cards[1]) {
-      cards[1].dataset.homeAction = "statement";
-      cards[1].setAttribute("role", "button");
-      cards[1].setAttribute("tabindex", "0");
-      cards[1].setAttribute("aria-label", "Abrir extrato geral");
-    }
-
-    if (cards[2]) {
-      cards[2].dataset.homeAction = "income";
-      cards[2].setAttribute("role", "button");
-      cards[2].setAttribute("tabindex", "0");
-      cards[2].setAttribute("aria-label", "Abrir entradas no extrato");
-    }
-
-    if (cards[3]) {
-      cards[3].dataset.homeAction = "expense";
-      cards[3].setAttribute("role", "button");
-      cards[3].setAttribute("tabindex", "0");
-      cards[3].setAttribute("aria-label", "Abrir saídas no extrato");
-    }
-
-    cards.forEach(function (card, index) {
-      card.style.display = index >= 4 ? "none" : "";
-    });
-
-    qa("#dashboard .dashboard-grid-12, #dashboard .dashboard-grid-12 > *").forEach(function (node) {
-      node.style.display = "none";
-    });
-  }
-
-  function activateStatementFilter(filter) {
-    safe(function () {
-      txFilter = filter;
-    });
-
-    qa("[data-tx-filter]").forEach(function (button) {
-      const active = button.dataset.txFilter === filter;
-      button.classList.toggle("active", active);
-    });
-
-    safe(function () {
-      renderTxList(selectedMonthSafe());
-    });
-
-    const search = byId("txSearch");
-    if (search && filter !== "all") {
-      search.blur();
-    }
-  }
-
-  function goToFilteredStatement(filter) {
-    safe(function () {
-      setView("register");
-    });
-
-    setTimeout(function () {
-      activateStatementFilter(filter);
-
-      const title = byId("pageTitle");
-      if (title) {
-        title.textContent =
-          filter === "expense" ? "Despesas" :
-          filter === "income" ? "Receitas" :
-          "Extrato";
-      }
-
-      const hint = byId("monthHint");
-      if (hint) {
-        hint.textContent =
-          filter === "expense" ? "Saídas do mês selecionado" :
-          filter === "income" ? "Entradas do mês selecionado" :
-          "Movimentações do mês";
-      }
-
-      const target =
-        q('[data-tx-filter="' + filter + '"]') ||
-        byId("txList") ||
-        byId("register");
-
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 90);
-  }
-
-  function goToWallet() {
-    safe(function () {
-      setView("wallet");
-    });
-
-    setTimeout(function () {
-      const title = byId("pageTitle");
-      if (title) title.textContent = "Patrimônio";
-
-      const hint = byId("monthHint");
-      if (hint) hint.textContent = "Carteira, investimentos e patrimônio";
-
-      const target = byId("wallet") || q(".section.active");
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 90);
-  }
-
-  function handleAction(action) {
-    if (!isMobileLike()) return;
-
-    if (action === "wallet") {
-      goToWallet();
-      return;
-    }
-
-    if (action === "statement") {
-      goToFilteredStatement("all");
-      return;
-    }
-
-    if (action === "income") {
-      goToFilteredStatement("income");
-      return;
-    }
-
-    if (action === "expense") {
-      goToFilteredStatement("expense");
-    }
-  }
-
-  function bindEvents() {
-    if (window.__cockpitMobileHomeActionV4Click) return;
-    window.__cockpitMobileHomeActionV4Click = true;
-
-    document.addEventListener("click", function (event) {
-      const card = event.target.closest("#dashboard .dashboard-kpis > *[data-home-action]");
-      if (!card) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      handleAction(card.dataset.homeAction);
-    }, true);
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key !== "Enter" && event.key !== " ") return;
-
-      const card = event.target.closest && event.target.closest("#dashboard .dashboard-kpis > *[data-home-action]");
-      if (!card) return;
-
-      event.preventDefault();
-      handleAction(card.dataset.homeAction);
-    }, true);
-  }
-
-  function run() {
-    injectCss();
-
-    if (isMobileLike()) {
-      document.documentElement.classList.add("cockpit-mobile-force");
-      markCards();
-      bindEvents();
-    }
-  }
-
-  run();
-  setTimeout(run, 300);
-  setTimeout(run, 900);
-  setTimeout(run, 1800);
-  setTimeout(run, 3000);
-
-  window.addEventListener("resize", run);
-  window.addEventListener("orientationchange", function () {
-    setTimeout(run, 300);
-  });
-
-  document.addEventListener("click", function () {
-    setTimeout(run, 120);
-  }, true);
-})();
-
-
-/* ===== DEBT DIRECT FORM PATCH v5 =====
-   Corrige definitivamente:
-   - aba Dívidas abre, mas não mostra formulário;
-   - usuário não consegue cadastrar dívida no desktop nem mobile.
-
-   Solução:
-   - cria um formulário próprio e independente dentro da aba Dívidas;
-   - salva diretamente em state.debts no mesmo formato do app original;
-   - atualiza lista de dívidas, painel, extrato e fluxo;
-   - não depende do formulário antigo do Extrato aparecer.
-*/
-(function () {
-  "use strict";
-
-  const FLAG = "cockpit-debt-direct-form-v5";
-  if (window[FLAG]) return;
-  window[FLAG] = true;
-
-  function q(selector, root = document) {
-    return root.querySelector(selector);
-  }
-
-  function qa(selector, root = document) {
-    return Array.from(root.querySelectorAll(selector));
-  }
-
-  function byId(id) {
-    return document.getElementById(id);
-  }
-
-  function safe(fn) {
-    try {
-      return fn();
-    } catch (error) {
-      console.warn("[Cockpit debt v5]", error);
-      return null;
-    }
-  }
-
-  function uidSafe() {
-    return safe(function () { return uid(); }) || ("debt_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2));
-  }
-
-  function todaySafe() {
-    return safe(function () { return today(); }) || new Date().toISOString().slice(0, 10);
-  }
-
-  function selectedMonthSafe() {
-    return safe(function () { return selectedMonth(); }) ||
-      (byId("monthPicker") && byId("monthPicker").value) ||
-      new Date().toISOString().slice(0, 7);
-  }
-
-  function numSafe(value) {
+  function num(value) {
     return Math.max(0, Number(String(value || "0").replace(",", ".")) || 0);
   }
 
-  function getStateSafe() {
-    return safe(function () { return state; }) || window.state || null;
+  function isMobile() {
+    return window.innerWidth <= 900 || window.matchMedia("(max-width: 900px)").matches;
   }
 
-  function setValue(id, value) {
-    const node = byId(id);
-    if (node) node.value = value == null ? "" : String(value);
+  function monthNameSafe(month) {
+    return safe(function () { return monthName(month); }, month || "");
   }
 
-  function getValue(id) {
-    const node = byId(id);
-    return node ? node.value : "";
+  function setTopTitle(title, hint) {
+    const titleNode = id("pageTitle");
+    const hintNode = id("monthHint");
+    if (titleNode) titleNode.textContent = title || "Cockpit";
+    if (hintNode && hint) hintNode.textContent = hint;
   }
 
-  function injectDebtDirectCss() {
-    if (byId("cockpit-debt-direct-form-v5-css")) return;
+  function showOnly(sectionId) {
+    qa(".section").forEach(function (section) {
+      const active = section.id === sectionId;
+      section.classList.toggle("active", active);
+      section.style.display = active ? "block" : "none";
+    });
 
-    const css = `
-.cockpit-debt-direct-panel {
-  margin-bottom: 14px !important;
-}
-
-.cockpit-debt-direct-panel .form-grid {
-  align-items: end;
-}
-
-.cockpit-debt-direct-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 12px 0 0;
-}
-
-.cockpit-debt-direct-summary .mini-result {
-  border: 1px solid rgba(142,213,255,.13);
-  background: rgba(255,255,255,.035);
-  border-radius: 14px;
-  padding: 10px 12px;
-}
-
-.cockpit-debt-direct-summary .mini-result span {
-  display: block;
-  font-size: 9px;
-  letter-spacing: .11em;
-  text-transform: uppercase;
-  color: var(--muted, #7f94ae);
-  font-weight: 900;
-}
-
-.cockpit-debt-direct-summary .mini-result b {
-  display: block;
-  margin-top: 5px;
-  font-size: 15px;
-  color: var(--text, #e7f1ff);
-}
-
-@media (max-width: 780px) {
-  .cockpit-debt-direct-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .cockpit-debt-direct-panel {
-    margin-bottom: 10px !important;
-  }
-}
-`;
-
-    const style = document.createElement("style");
-    style.id = "cockpit-debt-direct-form-v5-css";
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
-
-  function createDebtSectionIfNeeded() {
     const content = q(".content");
-    if (!content) return null;
-
-    let section = byId("debts");
-
-    if (!section) {
-      section = document.createElement("section");
-      section.id = "debts";
-      section.className = "section cockpit-debts-section";
-      section.innerHTML =
-        '<div class="page-head">' +
-          '<div class="page-title">' +
-            '<div class="overline">Debt control</div>' +
-            '<h1>Dívidas <span>& Parcelas</span></h1>' +
-            '<p>Cadastre financiamentos, empréstimos, parcelamentos e compromissos recorrentes diretamente por aqui.</p>' +
-          '</div>' +
-        '</div>' +
-        '<div class="cockpit-debt-workspace"></div>';
-
-      const register = byId("register");
-      if (register && register.nextSibling) content.insertBefore(section, register.nextSibling);
-      else content.appendChild(section);
-    }
-
-    let workspace = q(".cockpit-debt-workspace", section);
-    if (!workspace) {
-      workspace = document.createElement("div");
-      workspace.className = "cockpit-debt-workspace";
-      section.appendChild(workspace);
-    }
-
-    return section;
+    if (content) content.scrollTo({ top: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
-  function buildDirectDebtForm() {
-    const panel = document.createElement("div");
-    panel.id = "debtDirectFormPanel";
-    panel.className = "panel cockpit-debt-direct-panel";
-    panel.innerHTML =
-      '<div class="panel-head">' +
-        '<div>' +
-          '<h2>Cadastrar dívida</h2>' +
-          '<p>Cadastro direto. A dívida salva aqui entra nas parcelas, no Extrato, no Painel e no Fluxo de Caixa.</p>' +
-        '</div>' +
-      '</div>' +
-      '<div class="form-grid">' +
-        '<label class="field"><span>Nome da dívida</span><input id="directDebtName" placeholder="Ex.: financiamento do apartamento"></label>' +
-        '<label class="field"><span>Tipo</span><select id="directDebtType">' +
-          '<option value="real_estate_financing">Financiamento imobiliário</option>' +
-          '<option value="vehicle_financing">Financiamento de veículo</option>' +
-          '<option value="credit_card_installment">Parcelamento de cartão</option>' +
-          '<option value="personal_loan">Empréstimo pessoal</option>' +
-          '<option value="payroll_loan">Consignado</option>' +
-          '<option value="consortium">Consórcio</option>' +
-          '<option value="student_loan">Financiamento estudantil</option>' +
-          '<option value="informal_debt">Dívida informal</option>' +
-          '<option value="other">Outra dívida</option>' +
-        '</select></label>' +
-        '<label class="field"><span>Banco, loja ou credor</span><input id="directDebtCreditor" placeholder="Ex.: Caixa, Nubank, C6"></label>' +
-        '<label class="field"><span>Valor original</span><input id="directDebtOriginal" type="number" min="0" step="0.01" placeholder="0,00"></label>' +
-        '<label class="field"><span>Valor financiado</span><input id="directDebtFinanced" type="number" min="0" step="0.01" placeholder="0,00"></label>' +
-        '<label class="field"><span>Entrada paga</span><input id="directDebtDownPayment" type="number" min="0" step="0.01" placeholder="0,00"></label>' +
-        '<label class="field"><span>Juros (%)</span><input id="directDebtInterest" type="number" min="0" step="0.0001" placeholder="Ex.: 0.89"></label>' +
-        '<label class="field"><span>Periodicidade dos juros</span><select id="directDebtRatePeriod"><option value="monthly">Ao mês</option><option value="annual">Ao ano</option></select></label>' +
-        '<label class="field"><span>Sistema de cálculo</span><select id="directDebtSystem"><option value="fixed_installment">Sem juros / parcela fixa</option><option value="price">Price</option><option value="sac">SAC</option><option value="manual">Manual</option></select></label>' +
-        '<label class="field"><span>Total de parcelas</span><input id="directDebtInstallmentsTotal" type="number" min="1" step="1" value="12"></label>' +
-        '<label class="field"><span>Parcelas já pagas</span><input id="directDebtInstallmentsPaid" type="number" min="0" step="1" value="0"></label>' +
-        '<label class="field"><span>Valor da parcela manual</span><input id="directDebtManualPayment" type="number" min="0" step="0.01" placeholder="Use quando souber o valor exato"></label>' +
-        '<label class="field"><span>Saldo devedor atual</span><input id="directDebtCurrentBalance" type="number" min="0" step="0.01" placeholder="Opcional"></label>' +
-        '<label class="field"><span>Primeira parcela</span><input id="directDebtFirstPayment" type="date"></label>' +
-        '<label class="field"><span>Dia de vencimento</span><input id="directDebtDueDay" type="number" min="1" max="31"></label>' +
-        '<label class="field"><span>Observações</span><textarea id="directDebtNotes" placeholder="Detalhes opcionais"></textarea></label>' +
-      '</div>' +
-      '<div class="cockpit-debt-direct-summary">' +
-        '<div class="mini-result"><span>Parcela estimada</span><b id="directDebtPreviewPayment">R$ 0,00</b></div>' +
-        '<div class="mini-result"><span>Saldo base</span><b id="directDebtPreviewBase">R$ 0,00</b></div>' +
-        '<div class="mini-result"><span>Prazo restante</span><b id="directDebtPreviewTerm">0 meses</b></div>' +
-      '</div>' +
-      '<div class="split" style="margin-top:14px">' +
-        '<button class="btn primary" id="saveDirectDebt" type="button">Salvar dívida</button>' +
-        '<button class="btn ghost" id="clearDirectDebt" type="button">Limpar</button>' +
-      '</div>';
+  function normalizeViewName(view, buttonText) {
+    const text = String(buttonText || "").toLowerCase();
 
-    return panel;
+    if (view === "debts" || text.includes("dívida") || text.includes("divida")) return "debts";
+    if (view === "dividends" || text.includes("dividendo")) return "dividends";
+    if (view === "simulator" || text.includes("simulador")) return "simulator";
+    if (text.includes("investimento")) return "wallet";
+    if (text.includes("patrimônio") || text.includes("patrimonio")) return "wallet";
+    if (text.includes("extrato")) return "register";
+    if (text.includes("início") || text.includes("inicio")) return "dashboard";
+    if (text.includes("análise") || text.includes("analise")) return "analysis";
+    if (text.includes("fluxo")) return "projection";
+    if (text.includes("orçamento") || text.includes("orcamento")) return "budget";
+    if (text.includes("perfil")) return "profile";
+    if (text.includes("configura")) return "settings";
+    if (text.includes("categoria")) return "categories";
+    if (text.includes("ajuda")) return "help";
+
+    return view || "";
   }
 
-  function ensureDebtListPanel(workspace) {
-    let list = byId("debtListPanel");
-
-    if (!list) {
-      list = document.createElement("div");
-      list.id = "debtListPanel";
-      list.className = "panel statement-debts";
-      list.innerHTML =
-        '<div class="panel-head"><div><h2>Dívidas ativas e parcelas futuras</h2><p>Obrigações que impactam seu fluxo de caixa.</p></div></div>' +
-        '<div id="debtList" class="list"></div>';
-    }
-
-    if (list.parentNode !== workspace) workspace.appendChild(list);
-    list.style.marginTop = "0";
-  }
-
-  function ensureDebtFormVisible() {
-    injectDebtDirectCss();
-
-    const section = createDebtSectionIfNeeded();
-    if (!section) return;
-
-    const workspace = q(".cockpit-debt-workspace", section);
-    if (!workspace) return;
-
-    let directForm = byId("debtDirectFormPanel");
-
-    if (!directForm) {
-      directForm = buildDirectDebtForm();
-      workspace.insertBefore(directForm, workspace.firstChild);
-    } else if (directForm.parentNode !== workspace) {
-      workspace.insertBefore(directForm, workspace.firstChild);
-    }
-
-    directForm.style.display = "block";
-
-    const oldForm = byId("debtFormPanel");
-    if (oldForm) oldForm.style.display = "none";
-
-    ensureDebtListPanel(workspace);
-    bindDirectDebtForm();
-    setDefaultDirectDebtDates();
-    updateDebtPreview();
-  }
-
-  function setDefaultDirectDebtDates() {
-    const firstPayment = byId("directDebtFirstPayment");
-    if (firstPayment && !firstPayment.value) firstPayment.value = todaySafe();
-
-    const dueDay = byId("directDebtDueDay");
-    if (dueDay && !dueDay.value) dueDay.value = String(new Date().getDate());
-
-    const total = byId("directDebtInstallmentsTotal");
-    if (total && !total.value) total.value = "12";
-
-    const paid = byId("directDebtInstallmentsPaid");
-    if (paid && !paid.value) paid.value = "0";
-  }
-
-  function formatMoney(value) {
-    return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }
-
-  function directDebtBaseValue() {
-    const financed = numSafe(getValue("directDebtFinanced"));
-    const original = numSafe(getValue("directDebtOriginal"));
-    const down = numSafe(getValue("directDebtDownPayment"));
-    return financed || Math.max(0, original - down) || original;
-  }
-
-  function estimateDirectPayment() {
-    const manual = numSafe(getValue("directDebtManualPayment"));
-    if (manual > 0) return manual;
-
-    const base = directDebtBaseValue();
-    const total = Math.max(1, Math.floor(numSafe(getValue("directDebtInstallmentsTotal")) || 1));
-    const paid = Math.max(0, Math.floor(numSafe(getValue("directDebtInstallmentsPaid")) || 0));
-    const remaining = Math.max(1, total - paid);
-
-    const annualOrMonthlyRate = numSafe(getValue("directDebtInterest")) / 100;
-    const period = getValue("directDebtRatePeriod") || "monthly";
-    const monthlyRate = period === "annual"
-      ? Math.pow(1 + annualOrMonthlyRate, 1 / 12) - 1
-      : annualOrMonthlyRate;
-
-    if (!base) return 0;
-
-    if (monthlyRate > 0) {
-      return base * (monthlyRate * Math.pow(1 + monthlyRate, remaining)) / (Math.pow(1 + monthlyRate, remaining) - 1);
-    }
-
-    return base / remaining;
-  }
-
-  function updateDebtPreview() {
-    const base = directDebtBaseValue();
-    const total = Math.max(1, Math.floor(numSafe(getValue("directDebtInstallmentsTotal")) || 1));
-    const paid = Math.max(0, Math.floor(numSafe(getValue("directDebtInstallmentsPaid")) || 0));
-    const remaining = Math.max(0, total - paid);
-
-    const paymentNode = byId("directDebtPreviewPayment");
-    const baseNode = byId("directDebtPreviewBase");
-    const termNode = byId("directDebtPreviewTerm");
-
-    if (paymentNode) paymentNode.textContent = formatMoney(estimateDirectPayment());
-    if (baseNode) baseNode.textContent = formatMoney(base);
-    if (termNode) termNode.textContent = remaining + " meses";
-  }
-
-  function debtFromDirectForm() {
-    const now = new Date().toISOString();
-    const original = numSafe(getValue("directDebtOriginal"));
-    const financed = numSafe(getValue("directDebtFinanced"));
-    const down = numSafe(getValue("directDebtDownPayment"));
-    const current = numSafe(getValue("directDebtCurrentBalance"));
-    const base = directDebtBaseValue();
-
-    return {
-      id: uidSafe(),
-      name: getValue("directDebtName").trim(),
-      debtType: getValue("directDebtType") || "other",
-      creditor: getValue("directDebtCreditor").trim(),
-      original: original || base,
-      financed: financed || base,
-      downPayment: down,
-      interestRate: numSafe(getValue("directDebtInterest")),
-      ratePeriod: getValue("directDebtRatePeriod") || "monthly",
-      fees: 0,
-      insurance: 0,
-      totalInstallments: Math.max(1, Math.floor(numSafe(getValue("directDebtInstallmentsTotal")) || 1)),
-      paidInstallments: Math.max(0, Math.floor(numSafe(getValue("directDebtInstallmentsPaid")) || 0)),
-      startDate: getValue("directDebtFirstPayment") || todaySafe(),
-      firstPaymentDate: getValue("directDebtFirstPayment") || todaySafe(),
-      dueDay: Math.max(1, Math.min(31, Math.floor(numSafe(getValue("directDebtDueDay")) || 1))),
-      amortizationSystem: getValue("directDebtSystem") || "fixed_installment",
-      manualPayment: numSafe(getValue("directDebtManualPayment")),
-      currentBalance: current || base,
-      notes: getValue("directDebtNotes"),
-      status: "active",
-      createdAt: now,
-      updatedAt: now
-    };
-  }
-
-  function clearDirectDebtForm() {
-    [
-      "directDebtName",
-      "directDebtCreditor",
-      "directDebtOriginal",
-      "directDebtFinanced",
-      "directDebtDownPayment",
-      "directDebtInterest",
-      "directDebtManualPayment",
-      "directDebtCurrentBalance",
-      "directDebtNotes"
-    ].forEach(function (id) {
-      setValue(id, "");
-    });
-
-    setValue("directDebtType", "real_estate_financing");
-    setValue("directDebtRatePeriod", "monthly");
-    setValue("directDebtSystem", "fixed_installment");
-    setValue("directDebtInstallmentsTotal", "12");
-    setValue("directDebtInstallmentsPaid", "0");
-    setValue("directDebtFirstPayment", todaySafe());
-    setValue("directDebtDueDay", String(new Date().getDate()));
-
-    updateDebtPreview();
-  }
-
-  function saveDirectDebt() {
-    const stateObj = getStateSafe();
-    if (!stateObj) {
-      alert("Não foi possível acessar os dados do app. Recarregue a página e tente novamente.");
-      return;
-    }
-
-    const debt = debtFromDirectForm();
-
-    if (!debt.name) {
-      alert("Informe o nome da dívida.");
-      return;
-    }
-
-    if (!debt.original && !debt.financed && !debt.currentBalance) {
-      alert("Informe o valor original ou financiado da dívida.");
-      return;
-    }
-
-    stateObj.debts = Array.isArray(stateObj.debts) ? stateObj.debts : [];
-    stateObj.debts.push(debt);
-
-    clearDirectDebtForm();
-
-    safe(function () { renderDebts(selectedMonthSafe()); });
-    safe(function () { renderDashboard(selectedMonthSafe()); });
-    safe(function () { renderTxList(selectedMonthSafe()); });
-    safe(function () { render(); });
-    safe(function () { saveNow(); });
-    safe(function () { toast("Dívida cadastrada. Parcelas atualizadas no Painel, Extrato e Fluxo de Caixa."); });
-
-    ensureDebtFormVisible();
-    forceOpenDebtsV5();
-  }
-
-  function bindDirectDebtForm() {
-    const save = byId("saveDirectDebt");
-    if (save && save.dataset.bound !== "1") {
-      save.dataset.bound = "1";
-      save.addEventListener("click", saveDirectDebt);
-    }
-
-    const clear = byId("clearDirectDebt");
-    if (clear && clear.dataset.bound !== "1") {
-      clear.dataset.bound = "1";
-      clear.addEventListener("click", clearDirectDebtForm);
-    }
-
-    [
-      "directDebtOriginal",
-      "directDebtFinanced",
-      "directDebtDownPayment",
-      "directDebtInterest",
-      "directDebtRatePeriod",
-      "directDebtInstallmentsTotal",
-      "directDebtInstallmentsPaid",
-      "directDebtManualPayment",
-      "directDebtCurrentBalance",
-      "directDebtSystem"
-    ].forEach(function (id) {
-      const node = byId(id);
-      if (node && node.dataset.previewBound !== "1") {
-        node.dataset.previewBound = "1";
-        node.addEventListener("input", updateDebtPreview);
-        node.addEventListener("change", updateDebtPreview);
-      }
-    });
-  }
-
-  function forceOpenDebtsV5() {
-    ensureDebtFormVisible();
-
-    const section = byId("debts");
-    if (!section) return;
-
-    qa(".section").forEach(function (node) {
-      node.classList.remove("active");
-      node.style.display = "none";
-    });
-
-    section.classList.add("active");
-    section.style.display = "block";
-
-    qa("#nav button, .nav-hub button, .mobile-nav button").forEach(function (button) {
-      const text = (button.textContent || "").toLowerCase();
-      const isDebt = text.includes("dívida") || text.includes("divida") || button.dataset.view === "debts";
-      button.classList.toggle("active", isDebt);
-    });
-
-    const pageTitle = byId("pageTitle");
-    if (pageTitle) pageTitle.textContent = "Dívidas";
-
-    const monthHint = byId("monthHint");
-    if (monthHint) monthHint.textContent = "Cadastro e acompanhamento de parcelas";
-  }
-
-  function patchDebtNavV5() {
+  function markNavActive(view) {
     qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button, .mobile-nav button").forEach(function (button) {
-      const text = (button.textContent || "").toLowerCase();
+      const normalized = normalizeViewName(button.dataset.view, button.textContent);
+      button.dataset.view = normalized || button.dataset.view || "";
+      button.classList.toggle("active", normalized === view);
+    });
+  }
 
-      if (text.includes("dívida") || text.includes("divida")) {
-        button.dataset.view = "debts";
-        button.dataset.debtNav = "1";
+  function cleanupCustomSectionsUnless(view) {
+    CUSTOM_VIEWS.forEach(function (customView) {
+      if (customView === view) return;
+      const section = id(customView);
+      if (section) {
+        section.classList.remove("active");
+        section.style.display = "none";
       }
     });
   }
 
-  function patchDebtClickV5() {
-    if (window.__cockpitDebtDirectClickV5) return;
-    window.__cockpitDebtDirectClickV5 = true;
+  function callOriginalSetView(view) {
+    if (typeof window.__cockpitOriginalSetViewV10 !== "function") return false;
+    return safe(function () {
+      window.__cockpitOriginalSetViewV10(view);
+      return true;
+    }, false);
+  }
 
-    document.addEventListener("click", function (event) {
-      const button = event.target.closest("button");
-      if (!button) return;
+  function openOriginalView(view) {
+    cleanupCustomSectionsUnless(view);
 
-      const text = (button.textContent || "").toLowerCase();
-      const action = button.dataset.registerAction;
-      const isDebtNav = button.dataset.debtNav === "1" || button.dataset.view === "debts";
-      const isDebtSheet = action === "debt" || ((text.includes("dívida") || text.includes("divida") || text.includes("financiamento")) && button.closest("#registerActionSheet"));
+    const usedOriginal = callOriginalSetView(view);
 
-      if (!isDebtNav && !isDebtSheet) return;
+    setTimeout(function () {
+      cleanupCustomSectionsUnless(view);
 
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-
-      const sheet = byId("registerActionSheet");
-      if (sheet) {
-        sheet.classList.add("hidden");
-        sheet.setAttribute("aria-hidden", "true");
+      const section = id(view);
+      if (section) {
+        showOnly(view);
       }
 
-      forceOpenDebtsV5();
-    }, true);
+      markNavActive(view);
+      syncTitle(view);
+      fixMobileChrome();
+    }, usedOriginal ? 80 : 0);
   }
 
-  function addDebtOptionToSheetV5() {
-    const grid = q("#registerActionSheet .sheet-grid");
-    if (!grid || q('[data-register-action="debt"]', grid)) return;
+  function syncTitle(view) {
+    const map = {
+      dashboard: ["Início", "Resumo do mês"],
+      analysis: ["Análise", "Diagnóstico financeiro"],
+      register: ["Extrato", "Movimentações do mês"],
+      wallet: ["Investimentos", "Carteira e patrimônio"],
+      debts: ["Dívidas", "Parcelas e financiamentos"],
+      dividends: ["Dividendos", "Rendimentos e renda passiva"],
+      simulator: ["Simulador", "Projeções financeiras"],
+      projection: ["Fluxo de caixa", "Projeção dos próximos meses"],
+      budget: ["Orçamento", "Limites e categorias"],
+      profile: ["Perfil", "Dados da conta"],
+      settings: ["Configurações", "Preferências do app"],
+      categories: ["Categorias", "Organização dos lançamentos"],
+      help: ["Ajuda", "Tutoriais e suporte"]
+    };
 
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.registerAction = "debt";
-    button.innerHTML = '<span>⚠</span><b>Dívida / financiamento</b><small>Parcelas, empréstimos e financiamentos</small>';
-    grid.appendChild(button);
-  }
-
-  function bootDebtDirectV5() {
-    injectDebtDirectCss();
-    patchDebtNavV5();
-    ensureDebtFormVisible();
-    patchDebtClickV5();
-    addDebtOptionToSheetV5();
-  }
-
-  bootDebtDirectV5();
-  setTimeout(bootDebtDirectV5, 300);
-  setTimeout(bootDebtDirectV5, 900);
-  setTimeout(bootDebtDirectV5, 1800);
-  setTimeout(bootDebtDirectV5, 3000);
-
-  document.addEventListener("click", function () {
-    setTimeout(bootDebtDirectV5, 120);
-  }, true);
-})();
-
-
-/* ===== DESKTOP SIDEBAR ACCOUNT PATCH v6 =====
-   Corrige:
-   - os itens da seção "Conta" ficam escondidos no desktop;
-   - sidebar cortava Perfil, Configurações, Categorias e Ajuda.
-*/
-(function () {
-  "use strict";
-
-  const FLAG = "cockpit-desktop-sidebar-account-v6";
-  if (window[FLAG]) return;
-  window[FLAG] = true;
-
-  function q(selector, root = document) {
-    return root.querySelector(selector);
-  }
-
-  function qa(selector, root = document) {
-    return Array.from(root.querySelectorAll(selector));
-  }
-
-  function byId(id) {
-    return document.getElementById(id);
+    const pair = map[view];
+    if (pair) setTopTitle(pair[0], pair[1]);
   }
 
   function injectCss() {
-    if (byId("cockpit-desktop-sidebar-account-v6-css")) return;
+    if (id("cockpit-clean-router-v10-css")) return;
 
     const css = `
+/* ===== Cockpit Hotfix Limpo v10 ===== */
+
+#debts.cockpit-custom-section,
+#dividends.cockpit-custom-section,
+#simulator.cockpit-custom-section {
+  display: none;
+}
+
+#debts.cockpit-custom-section.active,
+#dividends.cockpit-custom-section.active,
+#simulator.cockpit-custom-section.active {
+  display: block !important;
+}
+
+.cockpit-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.cockpit-kpis-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.cockpit-kpi {
+  border: 1px solid rgba(142,213,255,.18);
+  background: radial-gradient(circle at 90% 0%,rgba(54,228,198,.10),transparent 38%),linear-gradient(180deg,rgba(26,45,71,.84),rgba(13,26,45,.90));
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.cockpit-kpi span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--muted,#7f94ae);
+  font-weight: 1000;
+}
+
+.cockpit-kpi b {
+  display: block;
+  margin-top: 8px;
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: 22px;
+  color: var(--text,#e7f1ff);
+  letter-spacing: -.04em;
+}
+
+.cockpit-kpi small {
+  display: block;
+  margin-top: 4px;
+  color: var(--soft,#bfd0e5);
+  font-size: 10px;
+}
+
+.cockpit-empty {
+  border: 1px dashed rgba(142,213,255,.20);
+  background: rgba(255,255,255,.025);
+  border-radius: 16px;
+  padding: 18px;
+  color: var(--soft,#bfd0e5);
+  line-height: 1.45;
+}
+
+.cockpit-direct-form .form-grid {
+  align-items: end;
+}
+
 @media (min-width: 781px) {
   .sidebar {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     scrollbar-width: thin !important;
-    scrollbar-color: rgba(76,201,255,.38) rgba(255,255,255,.04) !important;
-    padding-bottom: 14px !important;
   }
 
-  .sidebar::-webkit-scrollbar {
-    width: 6px !important;
-  }
-
-  .sidebar::-webkit-scrollbar-track {
-    background: rgba(255,255,255,.04) !important;
-    border-radius: 999px !important;
-  }
-
-  .sidebar::-webkit-scrollbar-thumb {
-    background: rgba(76,201,255,.38) !important;
-    border-radius: 999px !important;
-  }
-
-  .nav-hub,
-  .desktop-nav,
-  .grouped-nav,
-  #nav {
-    overflow: visible !important;
-    padding-bottom: 10px !important;
-  }
-
-  .nav-section:last-child,
-  .nav-label:last-of-type {
-    margin-bottom: 4px !important;
-  }
-
-  .nav-hub button:last-child,
-  .desktop-nav button:last-child,
-  .grouped-nav button:last-child,
-  #nav button:last-child {
-    margin-bottom: 8px !important;
-  }
-
-  .side-footer {
+  .side-footer,
+  #desktopGlobalAddBtn {
     display: none !important;
-  }
-}
-
-/* Em notebooks mais baixos, compacta um pouco mais a navegação */
-@media (min-width: 781px) and (max-height: 760px) {
-  .sidebar {
-    padding-top: 8px !important;
-    padding-bottom: 10px !important;
-  }
-
-  .nav-label {
-    margin-top: 6px !important;
-    margin-bottom: 2px !important;
-  }
-
-  .nav-hub button,
-  .desktop-nav button,
-  .grouped-nav button,
-  #nav button {
-    height: 28px !important;
-    min-height: 28px !important;
-  }
-
-  .status-card {
-    min-height: 30px !important;
-  }
-}
-`;
-
-    const style = document.createElement("style");
-    style.id = "cockpit-desktop-sidebar-account-v6-css";
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
-
-  function scrollActiveIntoView() {
-    const sidebar = q(".sidebar");
-    const active =
-      q("#nav button.active") ||
-      q(".nav-hub button.active") ||
-      q(".desktop-nav button.active") ||
-      q(".grouped-nav button.active");
-
-    if (!sidebar || !active) return;
-
-    const sidebarRect = sidebar.getBoundingClientRect();
-    const activeRect = active.getBoundingClientRect();
-
-    if (activeRect.bottom > sidebarRect.bottom || activeRect.top < sidebarRect.top) {
-      active.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }
-  }
-
-  function makeAccountItemsReachable() {
-    const sidebar = q(".sidebar");
-    if (!sidebar) return;
-
-    sidebar.style.overflowY = "auto";
-    sidebar.style.overflowX = "hidden";
-
-    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button").forEach(function (button) {
-      if (button.dataset.sidebarScrollBound === "1") return;
-      button.dataset.sidebarScrollBound = "1";
-      button.addEventListener("click", function () {
-        setTimeout(scrollActiveIntoView, 120);
-      });
-    });
-  }
-
-  function run() {
-    injectCss();
-    makeAccountItemsReachable();
-    setTimeout(scrollActiveIntoView, 250);
-  }
-
-  run();
-  setTimeout(run, 500);
-  setTimeout(run, 1500);
-
-  window.addEventListener("resize", function () {
-    setTimeout(run, 150);
-  });
-
-  document.addEventListener("click", function () {
-    setTimeout(run, 120);
-  }, true);
-})();
-
-
-/* ===== LAYOUT AUDIT PATCH v7 =====
-   Revisão global de layout:
-   - equilibra tamanhos no desktop;
-   - evita texto/botões pequenos demais;
-   - reduz componentes grandes demais;
-   - mantém visual premium;
-   - remove redundâncias visuais sem remover funções centrais;
-   - preserva dívidas, simulador, home mobile clicável e sidebar com rolagem.
-*/
-(function () {
-  "use strict";
-
-  const FLAG = "cockpit-layout-audit-v7";
-  if (window[FLAG]) return;
-  window[FLAG] = true;
-
-  function q(selector, root = document) {
-    return root.querySelector(selector);
-  }
-
-  function qa(selector, root = document) {
-    return Array.from(root.querySelectorAll(selector));
-  }
-
-  function byId(id) {
-    return document.getElementById(id);
-  }
-
-  function injectLayoutAuditCss() {
-    if (byId("cockpit-layout-audit-v7-css")) return;
-
-    const css = `
-/* ========= V7 TOKENS ========= */
-:root {
-  --v7-sidebar: 198px;
-  --v7-top: 52px;
-  --v7-radius-card: 18px;
-  --v7-radius-panel: 18px;
-  --v7-font-ui: 12px;
-  --v7-font-small: 11px;
-  --v7-font-label: 9px;
-  --v7-font-title: 20px;
-  --v7-font-panel-title: 15px;
-  --v7-font-money: 25px;
-}
-
-/* ========= DESKTOP: escala equilibrada ========= */
-@media (min-width: 781px) {
-  html {
-    font-size: 14px !important;
-  }
-
-  body {
-    overflow: hidden !important;
   }
 
   #appView.app,
   .app {
-    grid-template-columns: var(--v7-sidebar) minmax(0, 1fr) !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    overflow: hidden !important;
-  }
-
-  .sidebar {
-    width: var(--v7-sidebar) !important;
-    min-width: var(--v7-sidebar) !important;
-    height: 100vh !important;
-    padding: 12px 11px 14px !important;
-    gap: 9px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    scrollbar-width: thin !important;
-  }
-
-  .logo {
-    gap: 9px !important;
-    margin-bottom: 6px !important;
-  }
-
-  .logo .mark,
-  .mark {
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    border-radius: 13px !important;
-  }
-
-  .brand strong {
-    font-size: 16px !important;
-    line-height: .94 !important;
-    letter-spacing: -.05em !important;
-  }
-
-  .brand span,
-  .brand small {
-    font-size: 10px !important;
-    line-height: 1.15 !important;
-  }
-
-  .status-card {
-    min-height: 38px !important;
-    padding: 8px 9px !important;
-    border-radius: 13px !important;
-  }
-
-  .status-card .line,
-  #syncStatus {
-    font-size: 10.5px !important;
-  }
-
-  .nav-label {
-    font-size: 8.5px !important;
-    letter-spacing: .13em !important;
-    margin: 10px 8px 4px !important;
-  }
-
-  .nav-hub button,
-  .desktop-nav button,
-  .grouped-nav button,
-  #nav button {
-    height: 34px !important;
-    min-height: 34px !important;
-    padding: 0 9px !important;
-    gap: 8px !important;
-    border-radius: 12px !important;
-    font-size: 11px !important;
-    line-height: 1.05 !important;
-  }
-
-  .nav-hub .ico,
-  .desktop-nav .ico,
-  .grouped-nav .ico,
-  #nav .ico {
-    width: 20px !important;
-    height: 20px !important;
-    min-width: 20px !important;
-    border-radius: 8px !important;
-    font-size: 11px !important;
-  }
-
-  .main {
-    height: 100vh !important;
-    overflow: hidden !important;
-    min-width: 0 !important;
+    grid-template-columns: 198px minmax(0,1fr) !important;
   }
 
   .top {
-    height: var(--v7-top) !important;
-    min-height: var(--v7-top) !important;
-    padding: 7px 16px !important;
-    gap: 10px !important;
+    min-height: 52px !important;
+    height: 52px !important;
   }
 
-  #pageTitle,
-  .top .title h1 {
-    font-size: 20px !important;
-    line-height: 1 !important;
-    margin: 0 !important;
-    letter-spacing: -.04em !important;
-  }
-
-  #monthHint,
-  .top .title p {
-    font-size: 10.5px !important;
-    margin-top: 3px !important;
-  }
-
-  .actions,
-  .compact-actions,
-  .monthbar {
-    gap: 7px !important;
-  }
-
-  .monthbar input {
-    height: 34px !important;
-    min-width: 148px !important;
-    max-width: 148px !important;
-    padding: 0 11px !important;
-    border-radius: 999px !important;
-    font-size: 12px !important;
-  }
-
-  .btn,
-  .ghost-btn,
-  .primary-btn {
-    min-height: 34px !important;
-    height: 34px !important;
-    padding: 0 12px !important;
-    border-radius: 12px !important;
-    font-size: 11px !important;
-    font-weight: 900 !important;
-  }
-
-  .icon-btn {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-    border-radius: 12px !important;
-    font-size: 12px !important;
-  }
-
-  #topGlobalAddBtn {
-    height: 34px !important;
-    min-height: 34px !important;
-    padding: 0 14px !important;
-    font-size: 11px !important;
+  .content {
+    height: calc(100vh - 52px) !important;
+    overflow: auto !important;
   }
 
   #userMenuButton {
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    max-width: 36px !important;
+    width: 38px !important;
+    height: 38px !important;
     border-radius: 50% !important;
     overflow: hidden !important;
   }
 
   #userMenuButton img {
-    width: 36px !important;
-    height: 36px !important;
+    width: 38px !important;
+    height: 38px !important;
     object-fit: cover !important;
     border-radius: 50% !important;
   }
+}
 
-  .content {
-    height: calc(100vh - var(--v7-top)) !important;
-    overflow: auto !important;
-    padding: 14px 16px 28px !important;
-    max-width: none !important;
+@media (max-width: 900px) {
+  html.cockpit-mobile-stable,
+  html.cockpit-mobile-stable body {
+    overflow-x: hidden !important;
   }
 
-  .section {
-    padding: 0 !important;
+  html.cockpit-mobile-stable .top {
+    position: relative !important;
+    top: auto !important;
+    min-height: 54px !important;
+    height: 54px !important;
+    padding: 7px 12px !important;
+    overflow: visible !important;
   }
 
-  .page-head {
-    margin-bottom: 12px !important;
-    gap: 10px !important;
+  html.cockpit-mobile-stable .top .title,
+  html.cockpit-mobile-stable #pageTitle,
+  html.cockpit-mobile-stable #monthHint {
+    display: none !important;
   }
 
-  .page-title .overline {
-    font-size: 9px !important;
-    margin-bottom: 4px !important;
-    letter-spacing: .16em !important;
-  }
-
-  .page-title h1 {
-    font-size: 25px !important;
-    line-height: 1 !important;
-    letter-spacing: -.05em !important;
-  }
-
-  .page-title p {
-    font-size: 12px !important;
-    margin-top: 5px !important;
-    line-height: 1.35 !important;
-  }
-
-  .grid,
-  .dashboard-grid-12,
-  .grid.kpis,
-  .dashboard-kpis {
-    gap: 12px !important;
-  }
-
-  .dashboard-kpis,
-  .grid.kpis {
-    margin-bottom: 12px !important;
-  }
-
-  .card,
-  .panel {
-    border-radius: var(--v7-radius-panel) !important;
-  }
-
-  .card.kpi,
-  .kpi {
-    min-height: 82px !important;
-    padding: 13px 14px !important;
-    border-radius: var(--v7-radius-card) !important;
-  }
-
-  .card.kpi span,
-  .kpi span {
-    font-size: 8px !important;
-    letter-spacing: .12em !important;
-    line-height: 1.15 !important;
-  }
-
-  .card.kpi b,
-  .kpi b,
-  [data-money] {
-    font-size: var(--v7-font-money) !important;
-    line-height: 1 !important;
-    margin-top: 7px !important;
-  }
-
-  .delta {
-    font-size: 10px !important;
-    margin-top: 5px !important;
-  }
-
-  .panel {
-    padding: 14px !important;
-  }
-
-  .panel-head {
-    margin-bottom: 11px !important;
-    gap: 10px !important;
-  }
-
-  .panel-head h2,
-  .panel h2 {
-    font-size: var(--v7-font-panel-title) !important;
-    line-height: 1.15 !important;
-    margin: 0 0 5px !important;
-    letter-spacing: -.03em !important;
-  }
-
-  .panel-head p,
-  .panel p,
-  .label,
-  .notice {
-    font-size: 11px !important;
-    line-height: 1.42 !important;
-  }
-
-  .compact-list,
-  .list {
+  html.cockpit-mobile-stable .actions {
+    width: 100% !important;
+    justify-content: flex-end !important;
     gap: 8px !important;
   }
 
-  .item {
-    min-height: 42px !important;
-    padding: 9px 10px !important;
-    border-radius: 13px !important;
-    gap: 9px !important;
+  html.cockpit-mobile-stable .monthbar #prevMonth,
+  html.cockpit-mobile-stable .monthbar #nextMonth,
+  html.cockpit-mobile-stable .monthbar #todayBtn,
+  html.cockpit-mobile-stable #exportBtn,
+  html.cockpit-mobile-stable #topGlobalAddBtn {
+    display: none !important;
   }
 
-  .item b {
-    font-size: 11.5px !important;
-    line-height: 1.2 !important;
-  }
-
-  .item small {
-    font-size: 9.5px !important;
-    line-height: 1.25 !important;
-    margin-top: 3px !important;
-  }
-
-  .amount {
-    font-size: 12px !important;
-  }
-
-  .empty {
-    min-height: 44px !important;
-    padding: 11px 12px !important;
-    border-radius: 13px !important;
-    font-size: 11px !important;
-  }
-
-  .form-grid {
-    gap: 10px !important;
-  }
-
-  .field span {
-    font-size: 10px !important;
-    margin-bottom: 5px !important;
-  }
-
-  .field input,
-  .field select,
-  .field textarea {
-    min-height: 38px !important;
-    padding: 9px 11px !important;
-    border-radius: 13px !important;
-    font-size: 12px !important;
-  }
-
-  .field textarea {
-    min-height: 76px !important;
-  }
-
-  .statement-tx {
-    min-height: 50px !important;
-    padding: 9px 11px !important;
-    border-radius: 14px !important;
-  }
-
-  .statement-tx-icon {
-    width: 34px !important;
-    height: 34px !important;
-    border-radius: 12px !important;
-    font-size: 14px !important;
-  }
-
-  .statement-tx-main b {
-    font-size: 12px !important;
-  }
-
-  .statement-tx-main small {
-    font-size: 10px !important;
-  }
-
-  .chip,
-  .filter-chips button {
-    min-height: 31px !important;
-    height: 31px !important;
-    padding: 0 11px !important;
-    border-radius: 999px !important;
-    font-size: 11px !important;
-  }
-
-  .cockpit-debt-workspace {
-    display: grid !important;
-    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr) !important;
-    gap: 14px !important;
-    align-items: start !important;
-  }
-
-  .cockpit-debt-direct-panel .form-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-
-  .cockpit-debt-direct-panel textarea {
-    min-height: 80px !important;
-  }
-
-  .simulator-hotfix-grid,
-  #simulator .grid.cards2 {
-    gap: 14px !important;
-  }
-}
-
-/* Notebooks baixos: compacto, mas legível */
-@media (min-width: 781px) and (max-height: 760px) {
-  :root {
-    --v7-sidebar: 190px;
-    --v7-top: 48px;
-    --v7-font-money: 23px;
-  }
-
-  .sidebar {
-    padding-top: 9px !important;
-  }
-
-  .nav-hub button,
-  .desktop-nav button,
-  .grouped-nav button,
-  #nav button {
-    height: 31px !important;
-    min-height: 31px !important;
-  }
-
-  .card.kpi,
-  .kpi {
-    min-height: 72px !important;
-    padding: 11px 12px !important;
-  }
-
-  .panel {
-    padding: 12px !important;
-  }
-
-  .item {
-    min-height: 38px !important;
-    padding: 8px 9px !important;
-  }
-}
-
-/* ========= MOBILE: Home limpa, clicável e sem planilha comprimida ========= */
-@media (max-width: 780px) {
-  html.cockpit-mobile-force .content {
-    padding: 10px 12px calc(108px + env(safe-area-inset-bottom)) !important;
-  }
-
-  html.cockpit-mobile-force .top {
-    height: 54px !important;
-    min-height: 54px !important;
-    padding: 7px 12px !important;
-  }
-
-  html.cockpit-mobile-force .monthbar input {
+  html.cockpit-mobile-stable .monthbar input {
     width: 158px !important;
     min-width: 158px !important;
     max-width: 158px !important;
     height: 34px !important;
+    text-align: center !important;
     font-size: 13px !important;
   }
 
-  html.cockpit-mobile-force #userMenuButton,
-  html.cockpit-mobile-force .user-avatar,
-  html.cockpit-mobile-force #userMenuButton img,
-  html.cockpit-mobile-force .user-avatar img {
+  html.cockpit-mobile-stable #userMenuButton,
+  html.cockpit-mobile-stable .user-avatar {
     width: 40px !important;
     height: 40px !important;
     min-width: 40px !important;
     max-width: 40px !important;
     border-radius: 50% !important;
-    object-fit: cover !important;
+    overflow: hidden !important;
+    padding: 0 !important;
   }
 
-  html.cockpit-mobile-force #dashboard .dashboard-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  html.cockpit-mobile-stable #userMenuButton img,
+  html.cockpit-mobile-stable .user-avatar img {
+    width: 40px !important;
+    height: 40px !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+  }
+
+  html.cockpit-mobile-stable .content {
+    padding: 10px 12px calc(108px + env(safe-area-inset-bottom)) !important;
+    max-width: none !important;
+  }
+
+  html.cockpit-mobile-stable #dashboard > .page-head,
+  html.cockpit-mobile-stable #dashboard .dashboard-head {
+    display: none !important;
+  }
+
+  html.cockpit-mobile-stable #dashboard .dashboard-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
     gap: 10px !important;
     margin: 0 !important;
   }
 
-  html.cockpit-mobile-force #dashboard .dashboard-kpis > *:nth-child(n+5) {
+  html.cockpit-mobile-stable #dashboard .dashboard-kpis > *:nth-child(n+5),
+  html.cockpit-mobile-stable #dashboard .dashboard-grid-12,
+  html.cockpit-mobile-stable #dashboard .dashboard-grid-12 > * {
     display: none !important;
   }
 
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi {
-    min-height: 96px !important;
-    padding: 13px !important;
-    border-radius: 19px !important;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi span,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi span {
-    font-size: 8px !important;
-    letter-spacing: .11em !important;
-    line-height: 1.2 !important;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi b,
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi b {
-    font-size: 23px !important;
-    line-height: 1.05 !important;
-    margin-top: 7px !important;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-kpis .delta {
-    font-size: 10.5px !important;
-    margin-top: 5px !important;
-  }
-
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12,
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > *,
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .panel,
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .goal-mini-card {
-    display: none !important;
-  }
-
-  html.cockpit-mobile-force .mobile-nav {
+  html.cockpit-mobile-stable .mobile-nav {
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
     min-height: 64px !important;
     padding: 6px !important;
     border-radius: 24px !important;
   }
 
-  html.cockpit-mobile-force .mobile-nav button {
-    min-height: 50px !important;
-    font-size: 10px !important;
-  }
-
-  html.cockpit-mobile-force .global-add-btn {
+  html.cockpit-mobile-stable .global-add-btn {
     width: 52px !important;
     height: 52px !important;
-    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
     right: 18px !important;
+    left: auto !important;
+    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+    transform: none !important;
     border-radius: 18px !important;
   }
 
-  html.cockpit-mobile-force .panel {
-    border-radius: 18px !important;
-    padding: 13px !important;
+  .cockpit-grid-2,
+  .cockpit-kpis-4 {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
   }
-
-  html.cockpit-mobile-force .field input,
-  html.cockpit-mobile-force .field select,
-  html.cockpit-mobile-force .field textarea {
-    min-height: 42px !important;
-    font-size: 14px !important;
-  }
-}
-
-/* ========= REDUNDÂNCIAS ========= */
-.cockpit-hidden-redundant {
-  display: none !important;
 }
 `;
 
     const style = document.createElement("style");
-    style.id = "cockpit-layout-audit-v7-css";
+    style.id = "cockpit-clean-router-v10-css";
     style.textContent = css;
     document.head.appendChild(style);
   }
 
-  function textOf(node) {
-    return String(node && node.textContent || "").trim().toLowerCase();
-  }
+  function ensureDebtSection() {
+    const content = q(".content");
+    if (!content) return null;
 
-  function hideRedundantNavigation() {
-    const topAdd = q("#topGlobalAddBtn") || q("#desktopGlobalAddBtn") || q("#globalAddBtn");
-
-    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button").forEach(function (button) {
-      const t = textOf(button);
-
-      if (t.includes("importar extrato")) {
-        button.classList.add("cockpit-hidden-redundant");
-      }
-
-      if (topAdd && (t === "lançamentos" || t === "lancamentos" || t === "lançar" || t === "lancar")) {
-        button.classList.add("cockpit-hidden-redundant");
-      }
-    });
-
-    /* Mobile: se existe botão global +, não precisa de aba "Lançar" ocupando espaço. */
-    qa(".mobile-nav button").forEach(function (button) {
-      const t = textOf(button);
-      if (q("#globalAddBtn") && (t.includes("lançar") || t.includes("lancar"))) {
-        button.classList.add("cockpit-hidden-redundant");
-      }
-    });
-  }
-
-  function hideRedundantInlineButtons() {
-    qa("button, .btn").forEach(function (button) {
-      const t = textOf(button);
-
-      if (t === "adicionar lançamento" || t === "adicionar lancamento") {
-        const dashboard = button.closest("#dashboard");
-        if (dashboard && q("#topGlobalAddBtn, #globalAddBtn")) {
-          button.classList.add("cockpit-hidden-redundant");
-        }
-      }
-    });
-  }
-
-  function normalizePageTitles() {
-    const title = q("#pageTitle");
-    const active = q(".section.active");
-    if (!title || !active) return;
-
-    const id = active.id;
-
-    const map = {
-      dashboard: "Início",
-      register: "Extrato",
-      wallet: "Patrimônio",
-      debts: "Dívidas",
-      simulator: "Simulador",
-      projection: "Fluxo de caixa",
-      budget: "Orçamento",
-      profile: "Perfil",
-      help: "Ajuda",
-      more: "Mais"
-    };
-
-    if (map[id]) title.textContent = map[id];
-  }
-
-  function markPrimaryActions() {
-    const topAdd = q("#topGlobalAddBtn");
-    if (topAdd) {
-      topAdd.textContent = "+ Novo";
-      topAdd.title = "Novo lançamento";
+    let section = id("debts");
+    if (!section) {
+      section = document.createElement("section");
+      section.id = "debts";
+      section.className = "section cockpit-custom-section";
+      section.innerHTML =
+        '<div class="page-head"><div class="page-title"><div class="overline">Debt control</div><h1>Dívidas <span>& Parcelas</span></h1><p>Financiamentos, empréstimos e compromissos futuros.</p></div></div>' +
+        '<div class="cockpit-grid-2" id="cockpitDebtGrid"></div>';
+      content.appendChild(section);
     }
 
-    const exportBtn = q("#exportBtn");
-    if (exportBtn) {
-      exportBtn.textContent = "Exportar";
-    }
+    section.classList.add("cockpit-custom-section");
+
+    const grid = id("cockpitDebtGrid") || q(".cockpit-grid-2", section);
+    if (!grid) return section;
+
+    const form = ensureDebtDirectForm();
+    const list = ensureDebtList();
+
+    if (form.parentNode !== grid) grid.appendChild(form);
+    if (list.parentNode !== grid) grid.appendChild(list);
+
+    renderDebtList();
+
+    return section;
   }
 
-  function runLayoutAudit() {
-    injectLayoutAuditCss();
-    hideRedundantNavigation();
-    hideRedundantInlineButtons();
-    normalizePageTitles();
-    markPrimaryActions();
-  }
+  function ensureDebtDirectForm() {
+    let panel = id("cockpitDebtDirectPanel");
+    if (panel) return panel;
 
-  runLayoutAudit();
-  setTimeout(runLayoutAudit, 300);
-  setTimeout(runLayoutAudit, 900);
-  setTimeout(runLayoutAudit, 1800);
-  setTimeout(runLayoutAudit, 3000);
-
-  window.addEventListener("resize", function () {
-    setTimeout(runLayoutAudit, 160);
-  });
-
-  document.addEventListener("click", function () {
-    setTimeout(runLayoutAudit, 120);
-  }, true);
-})();
-
-
-/* ===== ROUTE ISOLATION PATCH v8 =====
-   Corrige bug da v7:
-   - Dívidas ficou presa e aparece em Investimentos, Dividendos e Simulador.
-   - Este patch isola a tela de Dívidas.
-   - Ao clicar em qualquer aba que NÃO seja Dívidas, remove o #debts da tela
-     e restaura a section correta do app original.
-*/
-(function () {
-  "use strict";
-
-  const FLAG = "cockpit-route-isolation-v8";
-  if (window[FLAG]) return;
-  window[FLAG] = true;
-
-  function q(selector, root = document) {
-    return root.querySelector(selector);
-  }
-
-  function qa(selector, root = document) {
-    return Array.from(root.querySelectorAll(selector));
-  }
-
-  function byId(id) {
-    return document.getElementById(id);
-  }
-
-  function safe(fn) {
-    try {
-      return fn();
-    } catch (error) {
-      console.warn("[Cockpit route v8]", error);
-      return null;
-    }
-  }
-
-  const viewTitleMap = {
-    dashboard: ["Início", "Visualizando julho de 2026"],
-    analysis: ["Análise", "Diagnóstico financeiro do mês"],
-    register: ["Extrato", "Movimentações do mês"],
-    wallet: ["Patrimônio", "Carteira, investimentos e patrimônio"],
-    investments: ["Investimentos", "Carteira, ativos e rendimentos"],
-    dividends: ["Dividendos", "Rendimentos recebidos e previstos"],
-    simulator: ["Simulador", "Projeções financeiras e liberdade financeira"],
-    budget: ["Orçamento", "Limites por categoria"],
-    projection: ["Fluxo de caixa", "Projeção dos próximos meses"],
-    decisions: ["Decisões de compra", "Análise antes de comprar"],
-    week: ["Plano da Semana", "Ações financeiras da semana"],
-    profile: ["Perfil", "Dados da conta"],
-    settings: ["Configurações", "Preferências do app"],
-    categories: ["Categorias", "Organização dos lançamentos"],
-    help: ["Ajuda", "Tutoriais e suporte"]
-  };
-
-  function titleForView(view) {
-    return viewTitleMap[view] || [view || "Cockpit", ""];
-  }
-
-  function findSectionForView(view) {
-    if (!view) return null;
-
-    const direct = byId(view);
-    if (direct) return direct;
-
-    const aliases = {
-      investments: ["wallet", "investments"],
-      dividend: ["dividends"],
-      dividents: ["dividends"],
-      debts: ["debts"],
-      cashflow: ["projection"],
-      flow: ["projection"],
-      decisions: ["decisions"],
-      week: ["week"],
-      settings: ["settings"],
-      categories: ["categories"],
-      help: ["help"]
-    };
-
-    const list = aliases[view] || [];
-    for (const id of list) {
-      const node = byId(id);
-      if (node) return node;
-    }
-
-    return null;
-  }
-
-  function clearDebtOverlay() {
-    const debts = byId("debts");
-    if (!debts) return;
-
-    debts.classList.remove("active");
-    debts.style.display = "none";
-  }
-
-  function restoreOriginalView(view) {
-    if (!view || view === "debts") return;
-
-    clearDebtOverlay();
-
-    const section = findSectionForView(view);
-
-    if (section) {
-      qa(".section").forEach(function (node) {
-        node.classList.remove("active");
-        node.style.display = "none";
-      });
-
-      section.classList.add("active");
-      section.style.display = "block";
-    }
-
-    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button, .mobile-nav button").forEach(function (button) {
-      const active = button.dataset.view === view ||
-        (view === "wallet" && /investimentos|patrimônio|patrimonio/i.test(button.textContent || "")) ||
-        (view === "dividends" && /dividendos/i.test(button.textContent || "")) ||
-        (view === "simulator" && /simulador/i.test(button.textContent || ""));
-
-      button.classList.toggle("active", active);
-    });
-
-    const title = byId("pageTitle");
-    const hint = byId("monthHint");
-    const pair = titleForView(view);
-
-    if (title) title.textContent = pair[0];
-    if (hint && pair[1]) hint.textContent = pair[1];
-
-    safe(function () {
-      if (typeof render === "function") render();
-    });
+    panel = document.createElement("div");
+    panel.id = "cockpitDebtDirectPanel";
+    panel.className = "panel cockpit-direct-form";
+    panel.innerHTML =
+      '<div class="panel-head"><div><h2>Cadastrar dívida</h2><p>Cadastro direto. As parcelas entram no fluxo e no extrato.</p></div></div>' +
+      '<div class="form-grid">' +
+        '<label class="field"><span>Nome da dívida</span><input id="v10DebtName" placeholder="Ex.: financiamento do apartamento"></label>' +
+        '<label class="field"><span>Credor</span><input id="v10DebtCreditor" placeholder="Banco, loja ou pessoa"></label>' +
+        '<label class="field"><span>Valor financiado</span><input id="v10DebtValue" type="number" min="0" step="0.01" placeholder="0,00"></label>' +
+        '<label class="field"><span>Total de parcelas</span><input id="v10DebtTotal" type="number" min="1" step="1" value="12"></label>' +
+        '<label class="field"><span>Parcelas pagas</span><input id="v10DebtPaid" type="number" min="0" step="1" value="0"></label>' +
+        '<label class="field"><span>Valor da parcela</span><input id="v10DebtPayment" type="number" min="0" step="0.01" placeholder="Opcional"></label>' +
+        '<label class="field"><span>Primeira parcela</span><input id="v10DebtDate" type="date"></label>' +
+        '<label class="field"><span>Vencimento</span><input id="v10DebtDue" type="number" min="1" max="31"></label>' +
+        '<label class="field"><span>Observações</span><textarea id="v10DebtNotes" placeholder="Opcional"></textarea></label>' +
+      '</div>' +
+      '<div class="split" style="margin-top:14px">' +
+        '<button class="btn primary" id="v10SaveDebt" type="button">Salvar dívida</button>' +
+        '<button class="btn ghost" id="v10ClearDebt" type="button">Limpar</button>' +
+      '</div>';
 
     setTimeout(function () {
-      clearDebtOverlay();
-      const sectionAgain = findSectionForView(view);
-      if (sectionAgain) {
-        sectionAgain.classList.add("active");
-        sectionAgain.style.display = "block";
+      const date = id("v10DebtDate");
+      const due = id("v10DebtDue");
+      if (date && !date.value) date.value = today();
+      if (due && !due.value) due.value = String(new Date().getDate());
+
+      const save = id("v10SaveDebt");
+      const clear = id("v10ClearDebt");
+
+      if (save && save.dataset.bound !== "1") {
+        save.dataset.bound = "1";
+        save.addEventListener("click", saveDebtFromV10Form);
       }
-    }, 80);
+
+      if (clear && clear.dataset.bound !== "1") {
+        clear.dataset.bound = "1";
+        clear.addEventListener("click", clearDebtV10Form);
+      }
+    }, 0);
+
+    return panel;
   }
 
-  function normalizeKnownNavViews() {
-    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button, .mobile-nav button").forEach(function (button) {
-      const text = String(button.textContent || "").trim().toLowerCase();
+  function ensureDebtList() {
+    let panel = id("cockpitDebtListPanel");
+    if (panel) return panel;
 
-      if (text.includes("dívida") || text.includes("divida")) {
-        button.dataset.view = "debts";
-        button.dataset.debtNav = "1";
-      } else if (text.includes("investimento")) {
-        button.dataset.view = "wallet";
-        delete button.dataset.debtNav;
-      } else if (text.includes("dividendo")) {
-        button.dataset.view = "dividends";
-        delete button.dataset.debtNav;
-      } else if (text.includes("simulador")) {
-        button.dataset.view = "simulator";
-        delete button.dataset.debtNav;
-      } else if (text.includes("início") || text.includes("inicio") || text.includes("dashboard")) {
-        button.dataset.view = "dashboard";
-        delete button.dataset.debtNav;
-      } else if (text.includes("extrato")) {
-        button.dataset.view = "register";
-        delete button.dataset.debtNav;
+    panel = document.createElement("div");
+    panel.id = "cockpitDebtListPanel";
+    panel.className = "panel";
+    panel.innerHTML =
+      '<div class="panel-head"><div><h2>Dívidas ativas</h2><p>Parcelas e saldo devedor.</p></div></div>' +
+      '<div id="cockpitDebtList" class="list"></div>';
+
+    return panel;
+  }
+
+  function saveDebtFromV10Form() {
+    const state = getState();
+    state.debts = Array.isArray(state.debts) ? state.debts : [];
+
+    const name = (id("v10DebtName") && id("v10DebtName").value.trim()) || "";
+    const value = num(id("v10DebtValue") && id("v10DebtValue").value);
+    const total = Math.max(1, Math.floor(num(id("v10DebtTotal") && id("v10DebtTotal").value) || 1));
+    const paid = Math.max(0, Math.floor(num(id("v10DebtPaid") && id("v10DebtPaid").value) || 0));
+    const manualPayment = num(id("v10DebtPayment") && id("v10DebtPayment").value);
+    const firstDate = (id("v10DebtDate") && id("v10DebtDate").value) || today();
+    const dueDay = Math.max(1, Math.min(31, Math.floor(num(id("v10DebtDue") && id("v10DebtDue").value) || 1)));
+
+    if (!name) {
+      alert("Informe o nome da dívida.");
+      return;
+    }
+
+    if (!value) {
+      alert("Informe o valor financiado.");
+      return;
+    }
+
+    state.debts.push({
+      id: uid(),
+      name: name,
+      creditor: (id("v10DebtCreditor") && id("v10DebtCreditor").value.trim()) || "",
+      debtType: "other",
+      original: value,
+      financed: value,
+      currentBalance: value,
+      totalInstallments: total,
+      paidInstallments: paid,
+      manualPayment: manualPayment || value / Math.max(1, total - paid),
+      startDate: firstDate,
+      firstPaymentDate: firstDate,
+      dueDay: dueDay,
+      amortizationSystem: "manual",
+      status: "active",
+      notes: (id("v10DebtNotes") && id("v10DebtNotes").value) || "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    safe(function () { if (typeof saveNow === "function") saveNow(); });
+    safe(function () { if (typeof render === "function") render(); });
+    clearDebtV10Form();
+    renderDebtList();
+    alert("Dívida cadastrada.");
+  }
+
+  function clearDebtV10Form() {
+    ["v10DebtName", "v10DebtCreditor", "v10DebtValue", "v10DebtPayment", "v10DebtNotes"].forEach(function (field) {
+      if (id(field)) id(field).value = "";
+    });
+    if (id("v10DebtTotal")) id("v10DebtTotal").value = "12";
+    if (id("v10DebtPaid")) id("v10DebtPaid").value = "0";
+    if (id("v10DebtDate")) id("v10DebtDate").value = today();
+    if (id("v10DebtDue")) id("v10DebtDue").value = String(new Date().getDate());
+  }
+
+  function renderDebtList() {
+    const list = id("cockpitDebtList");
+    if (!list) return;
+
+    const debts = (getState().debts || []).filter(function (debt) {
+      return debt.status !== "settled";
+    });
+
+    if (!debts.length) {
+      list.innerHTML = '<div class="cockpit-empty"><b>Nenhuma dívida cadastrada.</b><br>Cadastre financiamentos, empréstimos ou parcelas recorrentes.</div>';
+      return;
+    }
+
+    list.innerHTML = debts.map(function (debt) {
+      const total = Number(debt.totalInstallments || 0);
+      const paid = Number(debt.paidInstallments || 0);
+      const remaining = Math.max(0, total - paid);
+      const payment = Number(debt.manualPayment || 0) || (Number(debt.financed || debt.original || 0) / Math.max(1, remaining || total || 1));
+
+      return '<div class="item">' +
+        '<div><b>' + esc(debt.name || "Dívida") + '</b><small>' + esc((debt.creditor || "credor não informado") + " • " + remaining + " parcela(s) restantes") + '</small></div>' +
+        '<div class="amount negative">' + brl(payment) + '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function ensureDividendsSection() {
+    const content = q(".content");
+    if (!content) return null;
+
+    let section = id("dividends");
+    if (!section) {
+      section = document.createElement("section");
+      section.id = "dividends";
+      section.className = "section cockpit-custom-section";
+      section.innerHTML =
+        '<div class="page-head"><div class="page-title"><div class="overline">Renda passiva</div><h1>Dividendos <span>& Rendimentos</span></h1><p>Dividendos, JCP e rendimentos recebidos.</p></div></div>' +
+        '<div id="cockpitDividendKpis" class="cockpit-kpis-4"></div>' +
+        '<div class="cockpit-grid-2">' +
+          '<div class="panel"><div class="panel-head"><div><h2>Rendimentos do mês</h2><p>Recebidos no mês selecionado.</p></div><button class="btn primary" id="v10AddDividend" type="button">+ Registrar rendimento</button></div><div id="cockpitDividendMonthList" class="list"></div></div>' +
+          '<div class="panel"><div class="panel-head"><div><h2>Histórico recente</h2><p>Últimos rendimentos cadastrados.</p></div></div><div id="cockpitDividendHistory" class="list"></div></div>' +
+        '</div>';
+      content.appendChild(section);
+    }
+
+    section.classList.add("cockpit-custom-section");
+    bindDividendButton();
+    renderDividends();
+
+    return section;
+  }
+
+  function isDividend(tx) {
+    const type = String(tx && tx.type || "").toLowerCase();
+    const cat = String(tx && tx.category || "").toLowerCase();
+    const desc = String(tx && tx.description || "").toLowerCase();
+
+    return type === "dividend" ||
+      cat.includes("dividendo") ||
+      cat.includes("rendimento") ||
+      cat.includes("provento") ||
+      desc.includes("dividendo") ||
+      desc.includes("rendimento") ||
+      desc.includes("jcp");
+  }
+
+  function dividendRows() {
+    return (getState().transactions || [])
+      .filter(isDividend)
+      .sort(function (a, b) {
+        return String(b.date || "").localeCompare(String(a.date || ""));
+      });
+  }
+
+  function renderDividends() {
+    const rows = dividendRows();
+    const month = getMonth();
+    const year = month.slice(0, 4);
+
+    const monthRows = rows.filter(function (tx) {
+      return String(tx.date || "").slice(0, 7) === month;
+    });
+
+    const yearRows = rows.filter(function (tx) {
+      return String(tx.date || "").slice(0, 4) === year;
+    });
+
+    const monthTotal = monthRows.reduce(function (sum, tx) { return sum + Number(tx.value || 0); }, 0);
+    const yearTotal = yearRows.reduce(function (sum, tx) { return sum + Number(tx.value || 0); }, 0);
+    const avg = yearTotal / 12;
+    const last = rows[0];
+
+    const kpis = id("cockpitDividendKpis");
+    if (kpis) {
+      kpis.innerHTML =
+        '<div class="cockpit-kpi"><span>No mês</span><b>' + brl(monthTotal) + '</b><small>' + monthRows.length + ' recebimento(s)</small></div>' +
+        '<div class="cockpit-kpi"><span>No ano</span><b>' + brl(yearTotal) + '</b><small>' + esc(year) + '</small></div>' +
+        '<div class="cockpit-kpi"><span>Média mensal</span><b>' + brl(avg) + '</b><small>base anual</small></div>' +
+        '<div class="cockpit-kpi"><span>Último</span><b>' + brl(last ? last.value : 0) + '</b><small>' + esc(last ? (last.description || last.date) : "sem registros") + '</small></div>';
+    }
+
+    const monthList = id("cockpitDividendMonthList");
+    if (monthList) {
+      monthList.innerHTML = monthRows.length ? monthRows.map(function (tx) {
+        return '<div class="item"><div><b>' + esc(tx.description || "Rendimento") + '</b><small>' + esc((tx.category || "Dividendos") + " • " + (tx.date || "")) + '</small></div><div class="amount positive">' + brl(tx.value) + '</div></div>';
+      }).join("") : '<div class="cockpit-empty"><b>Nenhum rendimento neste mês.</b><br>Registre dividendos, JCP ou rendimentos.</div>';
+    }
+
+    const history = id("cockpitDividendHistory");
+    if (history) {
+      history.innerHTML = rows.length ? rows.slice(0, 8).map(function (tx) {
+        return '<div class="item"><div><b>' + esc(tx.description || "Rendimento") + '</b><small>' + esc(monthNameSafe(String(tx.date || "").slice(0, 7))) + '</small></div><div class="amount positive">' + brl(tx.value) + '</div></div>';
+      }).join("") : '<div class="cockpit-empty"><b>Sem histórico.</b><br>Os rendimentos registrados aparecerão aqui.</div>';
+    }
+  }
+
+  function bindDividendButton() {
+    const button = id("v10AddDividend");
+    if (!button || button.dataset.bound === "1") return;
+    button.dataset.bound = "1";
+    button.addEventListener("click", openDividendRegister);
+  }
+
+  function ensureDividendOption() {
+    const select = id("txType");
+    if (!select) return;
+
+    if (!q('option[value="dividend"]', select)) {
+      const option = document.createElement("option");
+      option.value = "dividend";
+      option.textContent = "Dividendo / rendimento";
+      select.appendChild(option);
+    }
+  }
+
+  function openDividendRegister() {
+    openOriginalView("register");
+
+    setTimeout(function () {
+      ensureDividendOption();
+
+      const type = id("txType");
+      if (type) {
+        type.value = "dividend";
+        type.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+
+      const desc = id("txDesc");
+      if (desc && !desc.value) desc.value = "Dividendos / rendimentos";
+
+      const form = id("txFormPanel");
+      if (form) {
+        form.style.display = "block";
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      setTopTitle("Registrar rendimento", "Novo dividendo ou rendimento");
+    }, 150);
+  }
+
+  function ensureSimulatorSection() {
+    const content = q(".content");
+    if (!content) return null;
+
+    let section = id("simulator");
+    if (!section) {
+      section = document.createElement("section");
+      section.id = "simulator";
+      section.className = "section cockpit-custom-section";
+      section.innerHTML =
+        '<div class="page-head"><div class="page-title"><div class="overline">Planejamento financeiro</div><h1>Simulador</h1><p>Projeção de patrimônio, aportes e renda passiva.</p></div></div>' +
+        '<div class="cockpit-grid-2">' +
+          '<div class="panel"><h2>Parâmetros</h2><div class="form-grid">' +
+            '<label class="field"><span>Valor inicial</span><input id="v10SimInitial" type="number" min="0" step="0.01" value="0"></label>' +
+            '<label class="field"><span>Aporte mensal</span><input id="v10SimMonthly" type="number" min="0" step="0.01" value="1000"></label>' +
+            '<label class="field"><span>Rentabilidade anual (%)</span><input id="v10SimRate" type="number" min="0" step="0.01" value="8"></label>' +
+            '<label class="field"><span>Prazo em anos</span><input id="v10SimYears" type="number" min="1" step="1" value="10"></label>' +
+          '</div><div class="split" style="margin-top:14px"><button class="btn primary" id="v10RunSim" type="button">Simular</button></div></div>' +
+          '<div class="panel"><h2>Resultado</h2><div id="v10SimResult" class="list"></div></div>' +
+        '</div>';
+      content.appendChild(section);
+    }
+
+    section.classList.add("cockpit-custom-section");
+    bindSimulator();
+    runSimulator();
+
+    return section;
+  }
+
+  function simNum(field) {
+    return num(id(field) && id(field).value);
+  }
+
+  function runSimulator() {
+    const initial = simNum("v10SimInitial");
+    const monthly = simNum("v10SimMonthly");
+    const rate = simNum("v10SimRate") / 100;
+    const years = Math.max(1, Math.floor(simNum("v10SimYears") || 1));
+    const monthlyRate = Math.pow(1 + rate, 1 / 12) - 1;
+
+    let balance = initial;
+    let invested = initial;
+
+    for (let i = 1; i <= years * 12; i++) {
+      balance = balance * (1 + monthlyRate) + monthly;
+      invested += monthly;
+    }
+
+    const gains = balance - invested;
+    const passive = balance * 0.04 / 12;
+
+    const result = id("v10SimResult");
+    if (result) {
+      result.innerHTML =
+        '<div class="item"><div><b>Patrimônio futuro</b><small>Resultado nominal</small></div><div class="amount positive">' + brl(balance) + '</div></div>' +
+        '<div class="item"><div><b>Total aportado</b><small>Capital próprio</small></div><div class="amount neutral">' + brl(invested) + '</div></div>' +
+        '<div class="item"><div><b>Juros acumulados</b><small>Resultado dos juros compostos</small></div><div class="amount positive">' + brl(gains) + '</div></div>' +
+        '<div class="item"><div><b>Renda passiva estimada</b><small>Regra de 4% ao ano</small></div><div class="amount positive">' + brl(passive) + '/mês</div></div>';
+    }
+  }
+
+  function bindSimulator() {
+    const run = id("v10RunSim");
+    if (run && run.dataset.bound !== "1") {
+      run.dataset.bound = "1";
+      run.addEventListener("click", runSimulator);
+    }
+
+    ["v10SimInitial", "v10SimMonthly", "v10SimRate", "v10SimYears"].forEach(function (field) {
+      const input = id(field);
+      if (input && input.dataset.bound !== "1") {
+        input.dataset.bound = "1";
+        input.addEventListener("input", runSimulator);
       }
     });
   }
 
-  function interceptNonDebtNavigation() {
-    if (window.__cockpitRouteV8Click) return;
-    window.__cockpitRouteV8Click = true;
+  function openCustomView(view) {
+    injectCss();
+
+    let section = null;
+
+    if (view === "debts") section = ensureDebtSection();
+    if (view === "dividends") section = ensureDividendsSection();
+    if (view === "simulator") section = ensureSimulatorSection();
+
+    if (!section) return;
+
+    showOnly(view);
+    markNavActive(view);
+    syncTitle(view);
+    fixMobileChrome();
+  }
+
+  function normalizeNavigationButtons() {
+    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button, .mobile-nav button").forEach(function (button) {
+      const view = normalizeViewName(button.dataset.view, button.textContent);
+      if (view) button.dataset.view = view;
+    });
+  }
+
+  function interceptNavigation() {
+    if (window.__cockpitV10NavigationBound) return;
+    window.__cockpitV10NavigationBound = true;
 
     document.addEventListener("click", function (event) {
       const button = event.target.closest("button[data-view]");
       if (!button) return;
 
-      const view = button.dataset.view;
-      if (!view || view === "debts") return;
+      const view = normalizeViewName(button.dataset.view, button.textContent);
+      if (!view) return;
 
-      /*
-        Captura antes dos patches de dívida, mas NÃO bloqueia totalmente o app.
-        Deixa o handler original rodar e depois limpa qualquer sobra da tela Dívidas.
-      */
-      setTimeout(function () {
-        restoreOriginalView(view);
-      }, 40);
+      if (CUSTOM_VIEWS.has(view)) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        openCustomView(view);
+        return;
+      }
 
       setTimeout(function () {
-        restoreOriginalView(view);
-      }, 180);
+        cleanupCustomSectionsUnless(view);
+        markNavActive(view);
+        syncTitle(view);
+        fixMobileChrome();
+      }, 100);
     }, true);
   }
 
-  function protectAgainstDebtLeak() {
-    const activeButton =
-      q("#nav button.active") ||
-      q(".nav-hub button.active") ||
-      q(".desktop-nav button.active") ||
-      q(".grouped-nav button.active") ||
-      q(".mobile-nav button.active");
+  function patchSetView() {
+    if (window.__cockpitOriginalSetViewV10 || typeof window.setView !== "function") return;
 
-    const activeView = activeButton && activeButton.dataset && activeButton.dataset.view;
-
-    if (activeView && activeView !== "debts") {
-      const debts = byId("debts");
-      const real = findSectionForView(activeView);
-
-      if (debts && debts.style.display !== "none" && real && real.id !== "debts") {
-        restoreOriginalView(activeView);
-      }
-    }
-  }
-
-  function patchSetViewIfPossible() {
-    if (window.__cockpitRouteV8SetViewPatch) return;
-
-    const original = window.setView;
-    if (typeof original !== "function") return;
+    window.__cockpitOriginalSetViewV10 = window.setView;
 
     window.setView = function (view) {
-      const result = original.apply(this, arguments);
+      view = normalizeViewName(view, "");
 
-      if (view && view !== "debts") {
-        setTimeout(function () {
-          restoreOriginalView(view);
-        }, 60);
+      if (CUSTOM_VIEWS.has(view)) {
+        openCustomView(view);
+        return;
       }
+
+      const result = window.__cockpitOriginalSetViewV10.apply(this, arguments);
+
+      setTimeout(function () {
+        cleanupCustomSectionsUnless(view);
+        markNavActive(view);
+        syncTitle(view);
+        fixMobileChrome();
+      }, 80);
 
       return result;
     };
@@ -3376,350 +903,49 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
     safe(function () {
       setView = window.setView;
     });
-
-    window.__cockpitRouteV8SetViewPatch = true;
   }
 
-  function bootRouteV8() {
-    normalizeKnownNavViews();
-    interceptNonDebtNavigation();
-    patchSetViewIfPossible();
-    protectAgainstDebtLeak();
+  function addDebtOptionToSheet() {
+    const grid = q("#registerActionSheet .sheet-grid");
+    if (!grid || q('[data-register-action="debt"]', grid)) return;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.registerAction = "debt";
+    button.innerHTML = '<span>⚠</span><b>Dívida / financiamento</b><small>Parcelas, empréstimos e financiamentos</small>';
+    grid.appendChild(button);
   }
 
-  bootRouteV8();
-  setTimeout(bootRouteV8, 300);
-  setTimeout(bootRouteV8, 900);
-  setTimeout(bootRouteV8, 1800);
-  setTimeout(bootRouteV8, 3000);
+  function interceptRegisterActions() {
+    if (window.__cockpitV10RegisterActionsBound) return;
+    window.__cockpitV10RegisterActionsBound = true;
 
-  document.addEventListener("click", function () {
-    setTimeout(bootRouteV8, 120);
-    setTimeout(protectAgainstDebtLeak, 260);
-  }, true);
+    document.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-register-action]");
+      if (!button) return;
 
-  window.addEventListener("hashchange", function () {
-    setTimeout(bootRouteV8, 120);
-  });
-})();
+      if (button.dataset.registerAction === "debt") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
 
+        const sheet = id("registerActionSheet");
+        if (sheet) {
+          sheet.classList.add("hidden");
+          sheet.setAttribute("aria-hidden", "true");
+        }
 
-/* ===== DIVIDENDS + MOBILE STABILITY PATCH v9 =====
-   Corrige:
-   - Aba Dividendos presa/errada.
-   - Dividendos mostrando Dívidas ou Investimentos.
-   - Mobile com tela errada ao trocar abas.
-   - Mobile com header/avatar/barra inferior desalinhados.
-*/
-(function () {
-  "use strict";
-
-  const FLAG = "cockpit-dividends-mobile-stability-v9";
-  if (window[FLAG]) return;
-  window[FLAG] = true;
-
-  function q(selector, root = document) { return root.querySelector(selector); }
-  function qa(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
-  function byId(id) { return document.getElementById(id); }
-  function safe(fn) { try { return fn(); } catch (error) { console.warn("[Cockpit v9]", error); return null; } }
-
-  function st() { return safe(function(){ return state; }) || window.state || {}; }
-  function ym() {
-    return safe(function(){ return selectedMonth(); }) ||
-      (byId("monthPicker") && byId("monthPicker").value) ||
-      new Date().toISOString().slice(0,7);
-  }
-  function money(v) {
-    return Number(v || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
-  }
-  function esc(v) {
-    const s = String(v == null ? "" : v);
-    return s.replace(/[&<>"']/g, function(c){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
-    });
-  }
-  function monthLabel(month) {
-    return safe(function(){ return monthName(month); }) || month || "";
-  }
-  function isMobile() {
-    return window.innerWidth <= 900 || window.matchMedia("(max-width:900px)").matches;
-  }
-
-  function isDividendTx(tx) {
-    const type = String(tx && tx.type || "").toLowerCase();
-    const cat = String(tx && tx.category || "").toLowerCase();
-    const desc = String(tx && tx.description || "").toLowerCase();
-    return type === "dividend" ||
-      type === "dividends" ||
-      cat.includes("dividendo") ||
-      cat.includes("rendimento") ||
-      cat.includes("provento") ||
-      desc.includes("dividendo") ||
-      desc.includes("rendimento") ||
-      desc.includes("jcp") ||
-      desc.includes("juros sobre capital");
-  }
-
-  function dividendRows() {
-    return (st().transactions || [])
-      .filter(isDividendTx)
-      .sort(function(a,b){ return String(b.date || "").localeCompare(String(a.date || "")); });
-  }
-
-  function injectCss() {
-    if (byId("cockpit-v9-dividends-mobile-css")) return;
-    const css = `
-#dividends.cockpit-dividends-section{display:none}
-#dividends.cockpit-dividends-section.active{display:block!important}
-.cockpit-dividends-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
-.cockpit-dividend-kpi{border:1px solid rgba(142,213,255,.18);background:radial-gradient(circle at 90% 0%,rgba(54,228,198,.11),transparent 38%),linear-gradient(180deg,rgba(26,45,71,.84),rgba(13,26,45,.90));border-radius:18px;padding:14px;box-shadow:0 18px 46px rgba(0,0,0,.18)}
-.cockpit-dividend-kpi span{display:block;font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted,#7f94ae);font-weight:1000}
-.cockpit-dividend-kpi b{display:block;margin-top:8px;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:23px;color:var(--text,#e7f1ff);letter-spacing:-.04em}
-.cockpit-dividend-kpi small{display:block;margin-top:4px;color:var(--soft,#bfd0e5);font-size:10px}
-.cockpit-dividends-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:12px;align-items:start}
-.cockpit-dividend-empty{border:1px dashed rgba(142,213,255,.20);background:rgba(255,255,255,.025);border-radius:16px;padding:18px;color:var(--soft,#bfd0e5);line-height:1.45}
-@media(max-width:900px){
-  html.cockpit-mobile-force body{overflow-x:hidden!important}
-  html.cockpit-mobile-force .top{position:relative!important;height:54px!important;min-height:54px!important;padding:7px 12px!important;overflow:visible!important}
-  html.cockpit-mobile-force .top .title{display:none!important}
-  html.cockpit-mobile-force .actions{width:100%!important;justify-content:flex-end!important;gap:8px!important}
-  html.cockpit-mobile-force .monthbar #prevMonth,
-  html.cockpit-mobile-force .monthbar #nextMonth,
-  html.cockpit-mobile-force .monthbar #todayBtn,
-  html.cockpit-mobile-force #exportBtn,
-  html.cockpit-mobile-force #topGlobalAddBtn{display:none!important}
-  html.cockpit-mobile-force .monthbar input{width:158px!important;min-width:158px!important;max-width:158px!important;height:34px!important;text-align:center!important;font-size:13px!important}
-  html.cockpit-mobile-force #userMenuButton,
-  html.cockpit-mobile-force .user-avatar{width:40px!important;height:40px!important;min-width:40px!important;max-width:40px!important;border-radius:50%!important;overflow:hidden!important;padding:0!important}
-  html.cockpit-mobile-force #userMenuButton img,
-  html.cockpit-mobile-force .user-avatar img{width:40px!important;height:40px!important;object-fit:cover!important;border-radius:50%!important}
-  html.cockpit-mobile-force .content{padding:10px 12px calc(108px + env(safe-area-inset-bottom))!important;max-width:none!important}
-  html.cockpit-mobile-force #dashboard>.page-head,
-  html.cockpit-mobile-force #dashboard .dashboard-head{display:none!important}
-  html.cockpit-mobile-force #dashboard .dashboard-kpis{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:0!important}
-  html.cockpit-mobile-force #dashboard .dashboard-kpis>*:nth-child(n+5){display:none!important}
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12,
-  html.cockpit-mobile-force #dashboard .dashboard-grid-12>*{display:none!important}
-  html.cockpit-mobile-force .mobile-nav{left:10px!important;right:10px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;min-height:64px!important;padding:6px!important;border-radius:24px!important}
-  html.cockpit-mobile-force .global-add-btn{width:52px!important;height:52px!important;right:18px!important;left:auto!important;bottom:calc(84px + env(safe-area-inset-bottom))!important;transform:none!important;border-radius:18px!important}
-  .cockpit-dividends-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .cockpit-dividend-kpi{padding:12px;border-radius:17px}
-  .cockpit-dividend-kpi b{font-size:20px}
-  .cockpit-dividends-grid{grid-template-columns:1fr;gap:10px}
-}`;
-    const style = document.createElement("style");
-    style.id = "cockpit-v9-dividends-mobile-css";
-    style.textContent = css;
-    document.head.appendChild(style);
-  }
-
-  function ensureDividendTxOption() {
-    const select = byId("txType");
-    if (!select) return;
-    if (!q('option[value="dividend"]', select)) {
-      const opt = document.createElement("option");
-      opt.value = "dividend";
-      opt.textContent = "Dividendo / rendimento";
-      select.appendChild(opt);
-    }
-  }
-
-  function ensureDividendsSection() {
-    injectCss();
-    const content = q(".content");
-    if (!content) return null;
-
-    let section = byId("dividends");
-    if (!section) {
-      section = document.createElement("section");
-      section.id = "dividends";
-      section.className = "section cockpit-dividends-section";
-      section.innerHTML =
-        '<div class="page-head"><div class="page-title"><div class="overline">Renda passiva</div><h1>Dividendos <span>& Rendimentos</span></h1><p>Acompanhe dividendos, JCP, rendimentos recebidos e evolução da renda passiva.</p></div></div>' +
-        '<div class="cockpit-dividends-kpis" id="dividendKpis"></div>' +
-        '<div class="cockpit-dividends-grid">' +
-          '<div class="panel"><div class="panel-head"><div><h2>Rendimentos do mês</h2><p>Proventos registrados no mês selecionado.</p></div><button class="btn primary" id="addDividendFromTab" type="button">+ Registrar rendimento</button></div><div id="dividendMonthList" class="list"></div></div>' +
-          '<div class="panel"><div class="panel-head"><div><h2>Histórico recente</h2><p>Últimos dividendos e rendimentos cadastrados.</p></div></div><div id="dividendHistoryList" class="list"></div></div>' +
-        '</div>';
-      const wallet = byId("wallet");
-      if (wallet && wallet.nextSibling) content.insertBefore(section, wallet.nextSibling);
-      else content.appendChild(section);
-    }
-    bindDividendButton();
-    renderDividends();
-    return section;
-  }
-
-  function renderDividends() {
-    const section = byId("dividends");
-    if (!section) return;
-    const current = ym();
-    const all = dividendRows();
-    const monthRows = all.filter(function(tx){ return String(tx.date || "").slice(0,7) === current; });
-    const year = String(current).slice(0,4);
-    const yearRows = all.filter(function(tx){ return String(tx.date || "").slice(0,4) === year; });
-    const monthTotal = monthRows.reduce(function(a,t){ return a + Number(t.value || 0); }, 0);
-    const yearTotal = yearRows.reduce(function(a,t){ return a + Number(t.value || 0); }, 0);
-    const avg = yearTotal / 12;
-    const last = all[0];
-
-    const kpis = byId("dividendKpis");
-    if (kpis) {
-      kpis.innerHTML =
-        '<div class="cockpit-dividend-kpi"><span>No mês</span><b>'+money(monthTotal)+'</b><small>'+monthRows.length+' recebimento(s)</small></div>' +
-        '<div class="cockpit-dividend-kpi"><span>No ano</span><b>'+money(yearTotal)+'</b><small>'+year+'</small></div>' +
-        '<div class="cockpit-dividend-kpi"><span>Média mensal</span><b>'+money(avg)+'</b><small>base anual</small></div>' +
-        '<div class="cockpit-dividend-kpi"><span>Último</span><b>'+money(last ? last.value : 0)+'</b><small>'+esc(last ? (last.description || last.category || last.date) : "sem registros")+'</small></div>';
-    }
-
-    const monthList = byId("dividendMonthList");
-    if (monthList) {
-      monthList.innerHTML = monthRows.length ? monthRows.map(function(tx){
-        return '<div class="item"><div><b>'+esc(tx.description || "Rendimento")+'</b><small>'+esc((tx.category || "Dividendos") + " • " + (tx.date || ""))+'</small></div><div class="amount positive">'+money(tx.value)+'</div></div>';
-      }).join("") : '<div class="cockpit-dividend-empty"><b>Nenhum rendimento neste mês.</b><br>Registre dividendos, JCP ou rendimentos para acompanhar a renda passiva.</div>';
-    }
-
-    const history = byId("dividendHistoryList");
-    if (history) {
-      history.innerHTML = all.length ? all.slice(0,8).map(function(tx){
-        return '<div class="item"><div><b>'+esc(tx.description || "Rendimento")+'</b><small>'+esc(monthLabel(String(tx.date || "").slice(0,7)) + " • " + (tx.category || "Dividendos"))+'</small></div><div class="amount positive">'+money(tx.value)+'</div></div>';
-      }).join("") : '<div class="cockpit-dividend-empty"><b>Sem histórico.</b><br>Os dividendos cadastrados aparecerão aqui.</div>';
-    }
-  }
-
-  function openDividends() {
-    const section = ensureDividendsSection();
-    if (!section) return;
-
-    qa(".section").forEach(function(sec){
-      sec.classList.remove("active");
-      sec.style.display = "none";
-    });
-
-    section.classList.add("active");
-    section.style.display = "block";
-
-    qa("#nav button,.nav-hub button,.desktop-nav button,.grouped-nav button,.mobile-nav button").forEach(function(btn){
-      const t = String(btn.textContent || "").toLowerCase();
-      const active = t.includes("dividendo") || btn.dataset.view === "dividends";
-      btn.classList.toggle("active", active);
-    });
-
-    const title = byId("pageTitle");
-    if (title) title.textContent = "Dividendos";
-    const hint = byId("monthHint");
-    if (hint) hint.textContent = "Rendimentos e renda passiva";
-
-    if (isMobile()) {
-      document.documentElement.classList.add("cockpit-mobile-force");
-      window.scrollTo({ top: 0, behavior: "instant" });
-      const content = q(".content");
-      if (content) content.scrollTo({ top: 0, behavior: "instant" });
-    }
-
-    renderDividends();
-  }
-
-  function openDividendRegister() {
-    ensureDividendTxOption();
-
-    safe(function(){ setView("register"); });
-
-    setTimeout(function(){
-      ensureDividendTxOption();
-
-      const type = byId("txType");
-      if (type) {
-        type.value = "dividend";
-        type.dispatchEvent(new Event("change", { bubbles:true }));
+        openCustomView("debts");
       }
-
-      safe(function(){
-        if (typeof fillCategorySelect === "function") fillCategorySelect("txCat", "income");
-      });
-
-      const desc = byId("txDesc");
-      if (desc && !desc.value) desc.value = "Dividendos / rendimentos";
-
-      const form = byId("txFormPanel");
-      if (form) {
-        form.style.display = "block";
-        form.scrollIntoView({ behavior:"smooth", block:"start" });
-      }
-
-      const title = byId("pageTitle");
-      if (title) title.textContent = "Registrar dividendo";
-      const hint = byId("monthHint");
-      if (hint) hint.textContent = "Novo rendimento recebido";
-    }, 160);
-  }
-
-  function bindDividendButton() {
-    const btn = byId("addDividendFromTab");
-    if (btn && btn.dataset.boundV9 !== "1") {
-      btn.dataset.boundV9 = "1";
-      btn.addEventListener("click", function(e){
-        e.preventDefault();
-        openDividendRegister();
-      });
-    }
-  }
-
-  function normalizeNav() {
-    qa("#nav button,.nav-hub button,.desktop-nav button,.grouped-nav button,.mobile-nav button").forEach(function(btn){
-      const t = String(btn.textContent || "").toLowerCase();
-      if (t.includes("dividendo")) {
-        btn.dataset.view = "dividends";
-        delete btn.dataset.debtNav;
-      }
-      if (t.includes("dívida") || t.includes("divida")) {
-        btn.dataset.view = "debts";
-        btn.dataset.debtNav = "1";
-      }
-      if (t.includes("investimento")) {
-        btn.dataset.view = "wallet";
-        delete btn.dataset.debtNav;
-      }
-      if (t.includes("simulador")) {
-        btn.dataset.view = "simulator";
-        delete btn.dataset.debtNav;
-      }
-    });
-  }
-
-  function interceptClicks() {
-    if (window.__cockpitV9Click) return;
-    window.__cockpitV9Click = true;
-
-    document.addEventListener("click", function(e){
-      const btn = e.target.closest("button[data-view]");
-      if (!btn) return;
-      const view = btn.dataset.view;
-      if (view !== "dividends") return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      openDividends();
     }, true);
   }
 
-  function fixMobileRoutes() {
+  function fixMobileChrome() {
     if (!isMobile()) return;
 
-    document.documentElement.classList.add("cockpit-mobile-force");
+    document.documentElement.classList.add("cockpit-mobile-stable");
 
-    const activeBtn = q(".mobile-nav button.active");
-    const activeView = activeBtn && activeBtn.dataset && activeBtn.dataset.view;
-
-    if (activeView && activeView !== "debts" && activeView !== "dividends") {
-      const debts = byId("debts");
-      const dividends = byId("dividends");
-      if (debts) debts.style.display = "none";
-      if (dividends) dividends.style.display = "none";
-    }
-
-    const avatar = q("#userMenuButton img,.user-avatar img");
+    const avatar = q("#userMenuButton img, .user-avatar img");
     if (avatar) {
       avatar.setAttribute("referrerpolicy", "no-referrer");
       avatar.style.width = "40px";
@@ -3727,36 +953,73 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
       avatar.style.objectFit = "cover";
       avatar.style.borderRadius = "50%";
     }
+
+    const content = q(".content");
+    if (content && q(".section.active")) {
+      content.scrollTop = content.scrollTop < 0 ? 0 : content.scrollTop;
+    }
   }
 
-  function patchRenderAfterSave() {
-    if (window.__cockpitV9RenderPatch) return;
-    const original = window.render;
-    if (typeof original !== "function") return;
+  function setupMobileHomeCards() {
+    if (!isMobile()) return;
 
-    window.render = function() {
-      const out = original.apply(this, arguments);
-      setTimeout(function(){
-        ensureDividendsSection();
-        renderDividends();
-        fixMobileRoutes();
-      }, 80);
-      return out;
-    };
+    const cards = qa("#dashboard .dashboard-kpis > *");
+    const actions = ["wallet", "register", "register-income", "register-expense"];
 
-    safe(function(){ render = window.render; });
-    window.__cockpitV9RenderPatch = true;
+    cards.forEach(function (card, index) {
+      if (index >= 4) {
+        card.style.display = "none";
+        return;
+      }
+
+      card.style.cursor = "pointer";
+      card.dataset.mobileHomeAction = actions[index] || "register";
+    });
+
+    if (window.__cockpitV10HomeCardsBound) return;
+    window.__cockpitV10HomeCardsBound = true;
+
+    document.addEventListener("click", function (event) {
+      const card = event.target.closest("#dashboard .dashboard-kpis > *[data-mobile-home-action]");
+      if (!card || !isMobile()) return;
+
+      const action = card.dataset.mobileHomeAction;
+
+      if (action === "wallet") {
+        openOriginalView("wallet");
+        return;
+      }
+
+      openOriginalView("register");
+
+      setTimeout(function () {
+        const filter =
+          action === "register-income" ? "income" :
+          action === "register-expense" ? "expense" :
+          "all";
+
+        safe(function () { txFilter = filter; });
+        qa("[data-tx-filter]").forEach(function (button) {
+          button.classList.toggle("active", button.dataset.txFilter === filter);
+        });
+        safe(function () { if (typeof renderTxList === "function") renderTxList(getMonth()); });
+      }, 120);
+    }, true);
   }
 
   function boot() {
     injectCss();
-    ensureDividendTxOption();
-    ensureDividendsSection();
-    normalizeNav();
-    interceptClicks();
-    bindDividendButton();
-    fixMobileRoutes();
-    patchRenderAfterSave();
+    patchSetView();
+    normalizeNavigationButtons();
+    interceptNavigation();
+    interceptRegisterActions();
+    addDebtOptionToSheet();
+    ensureDividendOption();
+    setupMobileHomeCards();
+    fixMobileChrome();
+
+    if (id("dividends")) renderDividends();
+    if (id("debts")) renderDebtList();
   }
 
   boot();
@@ -3765,8 +1028,15 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
   setTimeout(boot, 1800);
   setTimeout(boot, 3000);
 
-  window.addEventListener("resize", function(){ setTimeout(boot, 120); });
-  window.addEventListener("orientationchange", function(){ setTimeout(boot, 260); });
-  document.addEventListener("click", function(){ setTimeout(boot, 120); }, true);
-})();
+  document.addEventListener("click", function () {
+    setTimeout(boot, 120);
+  }, true);
 
+  window.addEventListener("resize", function () {
+    setTimeout(boot, 150);
+  });
+
+  window.addEventListener("orientationchange", function () {
+    setTimeout(boot, 300);
+  });
+})();
