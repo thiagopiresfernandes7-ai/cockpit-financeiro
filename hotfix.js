@@ -1156,3 +1156,582 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
   }, true);
 })();
 
+
+/* ===== DEBT WORKFLOW FORCE PATCH v3 =====
+   Corrige:
+   - clicar em Dívidas abria Extrato;
+   - tentar lançar dívida pelo + abria Extrato;
+   - após salvar dívida voltava para Extrato.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-debt-workflow-force-v3";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function q(selector, root = document) { return root.querySelector(selector); }
+  function qa(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
+  function byId(id) { return document.getElementById(id); }
+  function safe(fn) { try { return fn(); } catch (error) { console.warn("[Cockpit debt v3]", error); return null; } }
+
+  function selectedMonthSafe() {
+    return safe(function () { return selectedMonth(); }) ||
+      (byId("monthPicker") && byId("monthPicker").value) ||
+      new Date().toISOString().slice(0, 7);
+  }
+
+  function injectDebtCss() {
+    if (byId("cockpit-debt-workflow-force-v3-css")) return;
+
+    const css = `
+#debts.cockpit-debts-section{display:none}
+#debts.cockpit-debts-section.active{display:block!important}
+.cockpit-debt-workspace{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:14px;align-items:start}
+.cockpit-debt-workspace #debtFormPanel,.cockpit-debt-workspace #debtListPanel{margin-top:0!important}
+.cockpit-debt-helper{margin-bottom:14px;border:1px solid rgba(142,213,255,.18);background:rgba(76,201,255,.06);border-radius:18px;padding:12px 14px;color:var(--soft,#bfd0e5);font-size:13px;line-height:1.45}
+.cockpit-debt-helper b{color:var(--text,#e7f1ff)}
+@media(max-width:780px){.cockpit-debt-workspace{grid-template-columns:1fr!important;gap:10px!important}.cockpit-debt-helper{font-size:12px;padding:11px 12px;border-radius:16px}}
+`;
+
+    const style = document.createElement("style");
+    style.id = "cockpit-debt-workflow-force-v3-css";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function createDebtSection() {
+    const content = q(".content");
+    if (!content) return null;
+
+    let section = byId("debts");
+
+    if (!section) {
+      section = document.createElement("section");
+      section.id = "debts";
+      section.className = "section cockpit-debts-section";
+      section.innerHTML =
+        '<div class="page-head">' +
+          '<div class="page-title">' +
+            '<div class="overline">Debt control</div>' +
+            '<h1>Dívidas <span>& Parcelas</span></h1>' +
+            '<p>Cadastre financiamentos, empréstimos, parcelamentos e compromissos recorrentes diretamente por aqui.</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cockpit-debt-helper"><b>Fluxo correto:</b> cadastre a dívida nesta aba. Depois de salvar, as parcelas entram automaticamente no Painel, no Extrato e no Fluxo de Caixa.</div>' +
+        '<div class="cockpit-debt-workspace"></div>';
+
+      const register = byId("register");
+      if (register && register.nextSibling) content.insertBefore(section, register.nextSibling);
+      else content.appendChild(section);
+    }
+
+    const workspace = q(".cockpit-debt-workspace", section);
+    if (!workspace) return section;
+
+    const debtForm = byId("debtFormPanel");
+    const debtList = byId("debtListPanel");
+
+    if (debtForm && debtForm.parentNode !== workspace) {
+      workspace.appendChild(debtForm);
+      debtForm.style.marginTop = "0";
+
+      const title = byId("debtFormTitle");
+      if (title) title.textContent = "Cadastrar dívida";
+
+      const paragraph = q(".panel-head p", debtForm);
+      if (paragraph) paragraph.textContent = "Preencha aqui. Você não precisa passar por Novo Lançamento para cadastrar uma dívida.";
+    }
+
+    if (debtList && debtList.parentNode !== workspace) {
+      workspace.appendChild(debtList);
+      debtList.style.marginTop = "0";
+
+      const paragraph = q(".panel-head p", debtList);
+      if (paragraph) paragraph.textContent = "Dívidas ativas, próximas parcelas e compromissos futuros.";
+    }
+
+    return section;
+  }
+
+  function forceOpenDebts() {
+    injectDebtCss();
+
+    const section = createDebtSection();
+    if (!section) return;
+
+    qa(".section").forEach(function (node) {
+      node.classList.remove("active");
+      node.style.display = "none";
+    });
+
+    section.classList.add("active");
+    section.style.display = "block";
+
+    qa("#nav button,.nav-hub button,.mobile-nav button").forEach(function (button) {
+      const text = (button.textContent || "").toLowerCase();
+      const isDebt = text.includes("dívida") || text.includes("divida") || button.dataset.view === "debts";
+      button.classList.toggle("active", isDebt);
+    });
+
+    const pageTitle = byId("pageTitle");
+    if (pageTitle) pageTitle.textContent = "Dívidas";
+
+    const monthHint = byId("monthHint");
+    if (monthHint) monthHint.textContent = "Cadastro e acompanhamento de parcelas";
+
+    safe(function () { renderDebts(selectedMonthSafe()); });
+
+    const debtForm = byId("debtFormPanel");
+    if (debtForm) setTimeout(function () { debtForm.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80);
+
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  function patchNavAttributes() {
+    qa("#nav button,.nav-hub button,.desktop-nav button,.grouped-nav button,.mobile-nav button").forEach(function (button) {
+      const text = (button.textContent || "").toLowerCase();
+
+      if (text.includes("dívida") || text.includes("divida")) {
+        button.dataset.view = "debts";
+        button.setAttribute("data-debt-nav", "1");
+      }
+
+      if (text.includes("simulador")) button.dataset.view = "simulator";
+    });
+  }
+
+  function addDebtOptionToActionSheet() {
+    const grid = q("#registerActionSheet .sheet-grid");
+    if (!grid || q('[data-register-action="debt"]', grid)) return;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.registerAction = "debt";
+    button.innerHTML = '<span>⚠</span><b>Dívida / financiamento</b><small>Parcelas, empréstimos e financiamentos</small>';
+
+    grid.appendChild(button);
+  }
+
+  function closeRegisterSheetSafely() {
+    const sheet = byId("registerActionSheet");
+    if (sheet) {
+      sheet.classList.add("hidden");
+      sheet.setAttribute("aria-hidden", "true");
+    }
+
+    safe(function () { closeRegisterSheet(); });
+  }
+
+  function interceptDebtClicks() {
+    if (window.__cockpitDebtV3ClickInterceptor) return;
+    window.__cockpitDebtV3ClickInterceptor = true;
+
+    document.addEventListener("click", function (event) {
+      const button = event.target.closest("button");
+      if (!button) return;
+
+      const text = (button.textContent || "").toLowerCase();
+      const action = button.dataset.registerAction;
+      const view = button.dataset.view;
+
+      const isDebtNav =
+        button.dataset.debtNav === "1" ||
+        view === "debts" ||
+        ((text.includes("dívida") || text.includes("divida")) && button.closest("#nav,.nav-hub,.desktop-nav,.mobile-nav"));
+
+      const isDebtAction =
+        action === "debt" ||
+        ((text.includes("dívida") || text.includes("divida") || text.includes("financiamento")) && button.closest("#registerActionSheet"));
+
+      if (!isDebtNav && !isDebtAction) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      closeRegisterSheetSafely();
+      forceOpenDebts();
+    }, true);
+  }
+
+  function patchSaveDebtReturn() {
+    const saveDebt = byId("saveDebt");
+    if (!saveDebt || saveDebt.dataset.debtForceV3 === "1") return;
+
+    saveDebt.dataset.debtForceV3 = "1";
+
+    saveDebt.addEventListener("click", function () {
+      setTimeout(function () {
+        createDebtSection();
+        safe(function () { renderDebts(selectedMonthSafe()); });
+        safe(function () { renderDashboard(selectedMonthSafe()); });
+        safe(function () { renderTxList(selectedMonthSafe()); });
+        forceOpenDebts();
+        safe(function () { toast("Dívida salva. Parcelas atualizadas no Extrato, Painel e Fluxo de Caixa."); });
+      }, 350);
+    });
+  }
+
+  function patchEditDebt() {
+    if (window.__cockpitDebtV3EditPatch) return;
+
+    const original = window.editDebt;
+    if (typeof original !== "function") return;
+
+    window.editDebt = function (id) {
+      original(id);
+      setTimeout(function () { forceOpenDebts(); }, 120);
+    };
+
+    safe(function () { editDebt = window.editDebt; });
+    window.__cockpitDebtV3EditPatch = true;
+  }
+
+  function patchOpenRegisterSheet() {
+    qa("#globalAddBtn,#desktopGlobalAddBtn,#topGlobalAddBtn,#statementAddBtn").forEach(function (button) {
+      if (button.dataset.debtV3SheetPatched === "1") return;
+      button.dataset.debtV3SheetPatched = "1";
+      button.addEventListener("click", function () {
+        setTimeout(addDebtOptionToActionSheet, 80);
+        setTimeout(addDebtOptionToActionSheet, 250);
+      });
+    });
+  }
+
+  function bootDebtV3() {
+    injectDebtCss();
+    patchNavAttributes();
+    createDebtSection();
+    addDebtOptionToActionSheet();
+    interceptDebtClicks();
+    patchSaveDebtReturn();
+    patchEditDebt();
+    patchOpenRegisterSheet();
+  }
+
+  bootDebtV3();
+  setTimeout(bootDebtV3, 300);
+  setTimeout(bootDebtV3, 900);
+  setTimeout(bootDebtV3, 1800);
+  setTimeout(bootDebtV3, 3000);
+
+  document.addEventListener("click", function () { setTimeout(bootDebtV3, 120); }, true);
+})();
+
+
+/* ===== MOBILE HOME ACTION PATCH v4 =====
+   Feedback de usuário:
+   "Ficou bom! Só estou achando muita informação.
+    Seria bom se na tela de início eu conseguisse clicar nas Despesas, por exemplo, e já entrar nelas."
+
+   Resultado:
+   - Home mobile vira uma porta de entrada.
+   - 4 cards principais clicáveis.
+   - Despesas abre Extrato filtrado por saídas.
+   - Receitas abre Extrato filtrado por entradas.
+   - Saldo abre Extrato geral.
+   - Patrimônio abre Carteira.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-mobile-home-action-v4";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function q(selector, root = document) {
+    return root.querySelector(selector);
+  }
+
+  function qa(selector, root = document) {
+    return Array.from(root.querySelectorAll(selector));
+  }
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function safe(fn) {
+    try {
+      return fn();
+    } catch (error) {
+      console.warn("[Cockpit mobile home v4]", error);
+      return null;
+    }
+  }
+
+  function isMobileLike() {
+    return window.innerWidth <= 900 || window.matchMedia("(max-width: 900px)").matches;
+  }
+
+  function selectedMonthSafe() {
+    return safe(function () { return selectedMonth(); }) ||
+      (byId("monthPicker") && byId("monthPicker").value) ||
+      new Date().toISOString().slice(0, 7);
+  }
+
+  function injectCss() {
+    if (byId("cockpit-mobile-home-action-v4-css")) return;
+
+    const css = `
+@media (max-width: 900px) {
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12,
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > *,
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .panel,
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .goal-mini-card {
+    display: none !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis {
+    margin-bottom: 0 !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi {
+    position: relative !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    transition: transform .14s ease, border-color .14s ease, background .14s ease !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi:active,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi:active {
+    transform: scale(.985) !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi::after,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi::after {
+    content: "toque para ver";
+    position: absolute;
+    right: 12px;
+    bottom: 9px;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(190, 210, 232, .52);
+    pointer-events: none;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi[data-home-action="expense"]::after,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi[data-home-action="expense"]::after {
+    content: "ver saídas";
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi[data-home-action="income"]::after,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi[data-home-action="income"]::after {
+    content: "ver entradas";
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi[data-home-action="statement"]::after,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi[data-home-action="statement"]::after {
+    content: "ver extrato";
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi[data-home-action="wallet"]::after,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi[data-home-action="wallet"]::after {
+    content: "ver carteira";
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi .delta,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi .delta {
+    padding-right: 62px !important;
+  }
+}
+`;
+
+    const style = document.createElement("style");
+    style.id = "cockpit-mobile-home-action-v4-css";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function markCards() {
+    const cards = qa("#dashboard .dashboard-kpis > *");
+
+    if (cards[0]) {
+      cards[0].dataset.homeAction = "wallet";
+      cards[0].setAttribute("role", "button");
+      cards[0].setAttribute("tabindex", "0");
+      cards[0].setAttribute("aria-label", "Abrir patrimônio e carteira");
+    }
+
+    if (cards[1]) {
+      cards[1].dataset.homeAction = "statement";
+      cards[1].setAttribute("role", "button");
+      cards[1].setAttribute("tabindex", "0");
+      cards[1].setAttribute("aria-label", "Abrir extrato geral");
+    }
+
+    if (cards[2]) {
+      cards[2].dataset.homeAction = "income";
+      cards[2].setAttribute("role", "button");
+      cards[2].setAttribute("tabindex", "0");
+      cards[2].setAttribute("aria-label", "Abrir entradas no extrato");
+    }
+
+    if (cards[3]) {
+      cards[3].dataset.homeAction = "expense";
+      cards[3].setAttribute("role", "button");
+      cards[3].setAttribute("tabindex", "0");
+      cards[3].setAttribute("aria-label", "Abrir saídas no extrato");
+    }
+
+    cards.forEach(function (card, index) {
+      card.style.display = index >= 4 ? "none" : "";
+    });
+
+    qa("#dashboard .dashboard-grid-12, #dashboard .dashboard-grid-12 > *").forEach(function (node) {
+      node.style.display = "none";
+    });
+  }
+
+  function activateStatementFilter(filter) {
+    safe(function () {
+      txFilter = filter;
+    });
+
+    qa("[data-tx-filter]").forEach(function (button) {
+      const active = button.dataset.txFilter === filter;
+      button.classList.toggle("active", active);
+    });
+
+    safe(function () {
+      renderTxList(selectedMonthSafe());
+    });
+
+    const search = byId("txSearch");
+    if (search && filter !== "all") {
+      search.blur();
+    }
+  }
+
+  function goToFilteredStatement(filter) {
+    safe(function () {
+      setView("register");
+    });
+
+    setTimeout(function () {
+      activateStatementFilter(filter);
+
+      const title = byId("pageTitle");
+      if (title) {
+        title.textContent =
+          filter === "expense" ? "Despesas" :
+          filter === "income" ? "Receitas" :
+          "Extrato";
+      }
+
+      const hint = byId("monthHint");
+      if (hint) {
+        hint.textContent =
+          filter === "expense" ? "Saídas do mês selecionado" :
+          filter === "income" ? "Entradas do mês selecionado" :
+          "Movimentações do mês";
+      }
+
+      const target =
+        q('[data-tx-filter="' + filter + '"]') ||
+        byId("txList") ||
+        byId("register");
+
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 90);
+  }
+
+  function goToWallet() {
+    safe(function () {
+      setView("wallet");
+    });
+
+    setTimeout(function () {
+      const title = byId("pageTitle");
+      if (title) title.textContent = "Patrimônio";
+
+      const hint = byId("monthHint");
+      if (hint) hint.textContent = "Carteira, investimentos e patrimônio";
+
+      const target = byId("wallet") || q(".section.active");
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 90);
+  }
+
+  function handleAction(action) {
+    if (!isMobileLike()) return;
+
+    if (action === "wallet") {
+      goToWallet();
+      return;
+    }
+
+    if (action === "statement") {
+      goToFilteredStatement("all");
+      return;
+    }
+
+    if (action === "income") {
+      goToFilteredStatement("income");
+      return;
+    }
+
+    if (action === "expense") {
+      goToFilteredStatement("expense");
+    }
+  }
+
+  function bindEvents() {
+    if (window.__cockpitMobileHomeActionV4Click) return;
+    window.__cockpitMobileHomeActionV4Click = true;
+
+    document.addEventListener("click", function (event) {
+      const card = event.target.closest("#dashboard .dashboard-kpis > *[data-home-action]");
+      if (!card) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      handleAction(card.dataset.homeAction);
+    }, true);
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") return;
+
+      const card = event.target.closest && event.target.closest("#dashboard .dashboard-kpis > *[data-home-action]");
+      if (!card) return;
+
+      event.preventDefault();
+      handleAction(card.dataset.homeAction);
+    }, true);
+  }
+
+  function run() {
+    injectCss();
+
+    if (isMobileLike()) {
+      document.documentElement.classList.add("cockpit-mobile-force");
+      markCards();
+      bindEvents();
+    }
+  }
+
+  run();
+  setTimeout(run, 300);
+  setTimeout(run, 900);
+  setTimeout(run, 1800);
+  setTimeout(run, 3000);
+
+  window.addEventListener("resize", run);
+  window.addEventListener("orientationchange", function () {
+    setTimeout(run, 300);
+  });
+
+  document.addEventListener("click", function () {
+    setTimeout(run, 120);
+  }, true);
+})();
+
