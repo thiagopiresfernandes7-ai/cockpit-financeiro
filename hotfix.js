@@ -2451,3 +2451,694 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
   }, true);
 })();
 
+
+/* ===== LAYOUT AUDIT PATCH v7 =====
+   Revisão global de layout:
+   - equilibra tamanhos no desktop;
+   - evita texto/botões pequenos demais;
+   - reduz componentes grandes demais;
+   - mantém visual premium;
+   - remove redundâncias visuais sem remover funções centrais;
+   - preserva dívidas, simulador, home mobile clicável e sidebar com rolagem.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-layout-audit-v7";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function q(selector, root = document) {
+    return root.querySelector(selector);
+  }
+
+  function qa(selector, root = document) {
+    return Array.from(root.querySelectorAll(selector));
+  }
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function injectLayoutAuditCss() {
+    if (byId("cockpit-layout-audit-v7-css")) return;
+
+    const css = `
+/* ========= V7 TOKENS ========= */
+:root {
+  --v7-sidebar: 198px;
+  --v7-top: 52px;
+  --v7-radius-card: 18px;
+  --v7-radius-panel: 18px;
+  --v7-font-ui: 12px;
+  --v7-font-small: 11px;
+  --v7-font-label: 9px;
+  --v7-font-title: 20px;
+  --v7-font-panel-title: 15px;
+  --v7-font-money: 25px;
+}
+
+/* ========= DESKTOP: escala equilibrada ========= */
+@media (min-width: 781px) {
+  html {
+    font-size: 14px !important;
+  }
+
+  body {
+    overflow: hidden !important;
+  }
+
+  #appView.app,
+  .app {
+    grid-template-columns: var(--v7-sidebar) minmax(0, 1fr) !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  .sidebar {
+    width: var(--v7-sidebar) !important;
+    min-width: var(--v7-sidebar) !important;
+    height: 100vh !important;
+    padding: 12px 11px 14px !important;
+    gap: 9px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin !important;
+  }
+
+  .logo {
+    gap: 9px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .logo .mark,
+  .mark {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    border-radius: 13px !important;
+  }
+
+  .brand strong {
+    font-size: 16px !important;
+    line-height: .94 !important;
+    letter-spacing: -.05em !important;
+  }
+
+  .brand span,
+  .brand small {
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+  }
+
+  .status-card {
+    min-height: 38px !important;
+    padding: 8px 9px !important;
+    border-radius: 13px !important;
+  }
+
+  .status-card .line,
+  #syncStatus {
+    font-size: 10.5px !important;
+  }
+
+  .nav-label {
+    font-size: 8.5px !important;
+    letter-spacing: .13em !important;
+    margin: 10px 8px 4px !important;
+  }
+
+  .nav-hub button,
+  .desktop-nav button,
+  .grouped-nav button,
+  #nav button {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 9px !important;
+    gap: 8px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+  }
+
+  .nav-hub .ico,
+  .desktop-nav .ico,
+  .grouped-nav .ico,
+  #nav .ico {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+  }
+
+  .main {
+    height: 100vh !important;
+    overflow: hidden !important;
+    min-width: 0 !important;
+  }
+
+  .top {
+    height: var(--v7-top) !important;
+    min-height: var(--v7-top) !important;
+    padding: 7px 16px !important;
+    gap: 10px !important;
+  }
+
+  #pageTitle,
+  .top .title h1 {
+    font-size: 20px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    letter-spacing: -.04em !important;
+  }
+
+  #monthHint,
+  .top .title p {
+    font-size: 10.5px !important;
+    margin-top: 3px !important;
+  }
+
+  .actions,
+  .compact-actions,
+  .monthbar {
+    gap: 7px !important;
+  }
+
+  .monthbar input {
+    height: 34px !important;
+    min-width: 148px !important;
+    max-width: 148px !important;
+    padding: 0 11px !important;
+    border-radius: 999px !important;
+    font-size: 12px !important;
+  }
+
+  .btn,
+  .ghost-btn,
+  .primary-btn {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+  }
+
+  .icon-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 12px !important;
+    font-size: 12px !important;
+  }
+
+  #topGlobalAddBtn {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 14px !important;
+    font-size: 11px !important;
+  }
+
+  #userMenuButton {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+  }
+
+  #userMenuButton img {
+    width: 36px !important;
+    height: 36px !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+  }
+
+  .content {
+    height: calc(100vh - var(--v7-top)) !important;
+    overflow: auto !important;
+    padding: 14px 16px 28px !important;
+    max-width: none !important;
+  }
+
+  .section {
+    padding: 0 !important;
+  }
+
+  .page-head {
+    margin-bottom: 12px !important;
+    gap: 10px !important;
+  }
+
+  .page-title .overline {
+    font-size: 9px !important;
+    margin-bottom: 4px !important;
+    letter-spacing: .16em !important;
+  }
+
+  .page-title h1 {
+    font-size: 25px !important;
+    line-height: 1 !important;
+    letter-spacing: -.05em !important;
+  }
+
+  .page-title p {
+    font-size: 12px !important;
+    margin-top: 5px !important;
+    line-height: 1.35 !important;
+  }
+
+  .grid,
+  .dashboard-grid-12,
+  .grid.kpis,
+  .dashboard-kpis {
+    gap: 12px !important;
+  }
+
+  .dashboard-kpis,
+  .grid.kpis {
+    margin-bottom: 12px !important;
+  }
+
+  .card,
+  .panel {
+    border-radius: var(--v7-radius-panel) !important;
+  }
+
+  .card.kpi,
+  .kpi {
+    min-height: 82px !important;
+    padding: 13px 14px !important;
+    border-radius: var(--v7-radius-card) !important;
+  }
+
+  .card.kpi span,
+  .kpi span {
+    font-size: 8px !important;
+    letter-spacing: .12em !important;
+    line-height: 1.15 !important;
+  }
+
+  .card.kpi b,
+  .kpi b,
+  [data-money] {
+    font-size: var(--v7-font-money) !important;
+    line-height: 1 !important;
+    margin-top: 7px !important;
+  }
+
+  .delta {
+    font-size: 10px !important;
+    margin-top: 5px !important;
+  }
+
+  .panel {
+    padding: 14px !important;
+  }
+
+  .panel-head {
+    margin-bottom: 11px !important;
+    gap: 10px !important;
+  }
+
+  .panel-head h2,
+  .panel h2 {
+    font-size: var(--v7-font-panel-title) !important;
+    line-height: 1.15 !important;
+    margin: 0 0 5px !important;
+    letter-spacing: -.03em !important;
+  }
+
+  .panel-head p,
+  .panel p,
+  .label,
+  .notice {
+    font-size: 11px !important;
+    line-height: 1.42 !important;
+  }
+
+  .compact-list,
+  .list {
+    gap: 8px !important;
+  }
+
+  .item {
+    min-height: 42px !important;
+    padding: 9px 10px !important;
+    border-radius: 13px !important;
+    gap: 9px !important;
+  }
+
+  .item b {
+    font-size: 11.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  .item small {
+    font-size: 9.5px !important;
+    line-height: 1.25 !important;
+    margin-top: 3px !important;
+  }
+
+  .amount {
+    font-size: 12px !important;
+  }
+
+  .empty {
+    min-height: 44px !important;
+    padding: 11px 12px !important;
+    border-radius: 13px !important;
+    font-size: 11px !important;
+  }
+
+  .form-grid {
+    gap: 10px !important;
+  }
+
+  .field span {
+    font-size: 10px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    min-height: 38px !important;
+    padding: 9px 11px !important;
+    border-radius: 13px !important;
+    font-size: 12px !important;
+  }
+
+  .field textarea {
+    min-height: 76px !important;
+  }
+
+  .statement-tx {
+    min-height: 50px !important;
+    padding: 9px 11px !important;
+    border-radius: 14px !important;
+  }
+
+  .statement-tx-icon {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+  }
+
+  .statement-tx-main b {
+    font-size: 12px !important;
+  }
+
+  .statement-tx-main small {
+    font-size: 10px !important;
+  }
+
+  .chip,
+  .filter-chips button {
+    min-height: 31px !important;
+    height: 31px !important;
+    padding: 0 11px !important;
+    border-radius: 999px !important;
+    font-size: 11px !important;
+  }
+
+  .cockpit-debt-workspace {
+    display: grid !important;
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr) !important;
+    gap: 14px !important;
+    align-items: start !important;
+  }
+
+  .cockpit-debt-direct-panel .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .cockpit-debt-direct-panel textarea {
+    min-height: 80px !important;
+  }
+
+  .simulator-hotfix-grid,
+  #simulator .grid.cards2 {
+    gap: 14px !important;
+  }
+}
+
+/* Notebooks baixos: compacto, mas legível */
+@media (min-width: 781px) and (max-height: 760px) {
+  :root {
+    --v7-sidebar: 190px;
+    --v7-top: 48px;
+    --v7-font-money: 23px;
+  }
+
+  .sidebar {
+    padding-top: 9px !important;
+  }
+
+  .nav-hub button,
+  .desktop-nav button,
+  .grouped-nav button,
+  #nav button {
+    height: 31px !important;
+    min-height: 31px !important;
+  }
+
+  .card.kpi,
+  .kpi {
+    min-height: 72px !important;
+    padding: 11px 12px !important;
+  }
+
+  .panel {
+    padding: 12px !important;
+  }
+
+  .item {
+    min-height: 38px !important;
+    padding: 8px 9px !important;
+  }
+}
+
+/* ========= MOBILE: Home limpa, clicável e sem planilha comprimida ========= */
+@media (max-width: 780px) {
+  html.cockpit-mobile-force .content {
+    padding: 10px 12px calc(108px + env(safe-area-inset-bottom)) !important;
+  }
+
+  html.cockpit-mobile-force .top {
+    height: 54px !important;
+    min-height: 54px !important;
+    padding: 7px 12px !important;
+  }
+
+  html.cockpit-mobile-force .monthbar input {
+    width: 158px !important;
+    min-width: 158px !important;
+    max-width: 158px !important;
+    height: 34px !important;
+    font-size: 13px !important;
+  }
+
+  html.cockpit-mobile-force #userMenuButton,
+  html.cockpit-mobile-force .user-avatar,
+  html.cockpit-mobile-force #userMenuButton img,
+  html.cockpit-mobile-force .user-avatar img {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin: 0 !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis > *:nth-child(n+5) {
+    display: none !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi {
+    min-height: 96px !important;
+    padding: 13px !important;
+    border-radius: 19px !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi span,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi span {
+    font-size: 8px !important;
+    letter-spacing: .11em !important;
+    line-height: 1.2 !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .kpi b,
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .card.kpi b {
+    font-size: 23px !important;
+    line-height: 1.05 !important;
+    margin-top: 7px !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-kpis .delta {
+    font-size: 10.5px !important;
+    margin-top: 5px !important;
+  }
+
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12,
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > *,
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .panel,
+  html.cockpit-mobile-force #dashboard .dashboard-grid-12 > .goal-mini-card {
+    display: none !important;
+  }
+
+  html.cockpit-mobile-force .mobile-nav {
+    min-height: 64px !important;
+    padding: 6px !important;
+    border-radius: 24px !important;
+  }
+
+  html.cockpit-mobile-force .mobile-nav button {
+    min-height: 50px !important;
+    font-size: 10px !important;
+  }
+
+  html.cockpit-mobile-force .global-add-btn {
+    width: 52px !important;
+    height: 52px !important;
+    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+    right: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  html.cockpit-mobile-force .panel {
+    border-radius: 18px !important;
+    padding: 13px !important;
+  }
+
+  html.cockpit-mobile-force .field input,
+  html.cockpit-mobile-force .field select,
+  html.cockpit-mobile-force .field textarea {
+    min-height: 42px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* ========= REDUNDÂNCIAS ========= */
+.cockpit-hidden-redundant {
+  display: none !important;
+}
+`;
+
+    const style = document.createElement("style");
+    style.id = "cockpit-layout-audit-v7-css";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function textOf(node) {
+    return String(node && node.textContent || "").trim().toLowerCase();
+  }
+
+  function hideRedundantNavigation() {
+    const topAdd = q("#topGlobalAddBtn") || q("#desktopGlobalAddBtn") || q("#globalAddBtn");
+
+    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button").forEach(function (button) {
+      const t = textOf(button);
+
+      if (t.includes("importar extrato")) {
+        button.classList.add("cockpit-hidden-redundant");
+      }
+
+      if (topAdd && (t === "lançamentos" || t === "lancamentos" || t === "lançar" || t === "lancar")) {
+        button.classList.add("cockpit-hidden-redundant");
+      }
+    });
+
+    /* Mobile: se existe botão global +, não precisa de aba "Lançar" ocupando espaço. */
+    qa(".mobile-nav button").forEach(function (button) {
+      const t = textOf(button);
+      if (q("#globalAddBtn") && (t.includes("lançar") || t.includes("lancar"))) {
+        button.classList.add("cockpit-hidden-redundant");
+      }
+    });
+  }
+
+  function hideRedundantInlineButtons() {
+    qa("button, .btn").forEach(function (button) {
+      const t = textOf(button);
+
+      if (t === "adicionar lançamento" || t === "adicionar lancamento") {
+        const dashboard = button.closest("#dashboard");
+        if (dashboard && q("#topGlobalAddBtn, #globalAddBtn")) {
+          button.classList.add("cockpit-hidden-redundant");
+        }
+      }
+    });
+  }
+
+  function normalizePageTitles() {
+    const title = q("#pageTitle");
+    const active = q(".section.active");
+    if (!title || !active) return;
+
+    const id = active.id;
+
+    const map = {
+      dashboard: "Início",
+      register: "Extrato",
+      wallet: "Patrimônio",
+      debts: "Dívidas",
+      simulator: "Simulador",
+      projection: "Fluxo de caixa",
+      budget: "Orçamento",
+      profile: "Perfil",
+      help: "Ajuda",
+      more: "Mais"
+    };
+
+    if (map[id]) title.textContent = map[id];
+  }
+
+  function markPrimaryActions() {
+    const topAdd = q("#topGlobalAddBtn");
+    if (topAdd) {
+      topAdd.textContent = "+ Novo";
+      topAdd.title = "Novo lançamento";
+    }
+
+    const exportBtn = q("#exportBtn");
+    if (exportBtn) {
+      exportBtn.textContent = "Exportar";
+    }
+  }
+
+  function runLayoutAudit() {
+    injectLayoutAuditCss();
+    hideRedundantNavigation();
+    hideRedundantInlineButtons();
+    normalizePageTitles();
+    markPrimaryActions();
+  }
+
+  runLayoutAudit();
+  setTimeout(runLayoutAudit, 300);
+  setTimeout(runLayoutAudit, 900);
+  setTimeout(runLayoutAudit, 1800);
+  setTimeout(runLayoutAudit, 3000);
+
+  window.addEventListener("resize", function () {
+    setTimeout(runLayoutAudit, 160);
+  });
+
+  document.addEventListener("click", function () {
+    setTimeout(runLayoutAudit, 120);
+  }, true);
+})();
+
