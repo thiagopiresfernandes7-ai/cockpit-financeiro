@@ -357,8 +357,7 @@ function setAvatarNode(node,name,email,url){if(!node)return;if(url){node.innerHT
 function updateUserIdentity(){var p=(state&&state.profile)||{},name=p.name||'Usuário',email=p.email||(user&&user.email)||'';setAvatarNode(el('userMenuButton'),name,email,p.avatarUrl);setText('userAvatarText',initials(name,email));setAvatarNode(el('profileAvatar'),name,email,p.avatarUrl);setText('profileIdentityName',name);setText('profileIdentityEmail',email||'E-mail não informado');if(el('profileGoogleSyncNote'))el('profileGoogleSyncNote').classList.toggle('hidden',!p.profileSyncedFromGoogle)}
 function setText(id,value){var n=el(id);if(n)n.textContent=value}
 function safeHTML(id,html){var n=el(id);if(n)n.innerHTML=html}
-function monthsWithTransactions(){var keys={};(state.transactions||[]).forEach(function(t){if(t.date)keys[t.date.slice(0,7)]=true;if(t.installments&&t.installments.firstMonth){for(var i=0;i<Number(t.installments.count||1);i++)keys[addMonths(t.installments.firstMonth,i)]=true}});return Object.keys(keys).sort()}
-function averageByType(type){var months=monthsWithTransactions();if(!months.length)return 0;return months.reduce(function(a,m){return a+summary(m)[type]},0)/months.length}
+function monthsWithTransactions(){var keys={};(state.transactions||[]).forEach(function(t){var type=t.type||'expense';var isExpenseLike=type==='expense'||type==='debt'||type==='transfer';if(isExpenseLike){var first=txBillingMonth(t);var count=Number(t.installments&&t.installments.count||t.installmentCount||1);for(var i=0;i<Math.max(1,count);i++)keys[addMonths(first,i)]=true}else if(t.date)keys[t.date.slice(0,7)]=true});(state.debts||[]).forEach(function(d){debtSchedule(d).forEach(function(p){if(p.month)keys[p.month]=true})});return Object.keys(keys).sort()} function averageByType(type){var months=monthsWithTransactions();if(!months.length)return 0;return months.reduce(function(a,m){return a+summary(m)[type]},0)/months.length}
 function calculateAverageMonthlyIncome(){return averageByType('income')}
 function calculateAverageMonthlyExpenses(){return averageByType('expense')}
 function calculateMonthlySurplus(){return calculateAverageMonthlyIncome()-calculateAverageMonthlyExpenses()}
@@ -403,6 +402,21 @@ function txBillingMonthFromForm(d){
     d.slice(0,7)
   );
 }
+function daysInBillingMonth(ym){
+  var p=String(ym||month()).split('-');
+  var y=Number(p[0]||new Date().getFullYear());
+  var m=Number(p[1]||1);
+  return new Date(y,m,0).getDate();
+}
+function txBillingOccurrenceDate(tx, billMonth){
+  billMonth = billMonth || txBillingMonth(tx);
+  var day = 1;
+  if(tx && tx.date && /^\d{4}-\d{2}-\d{2}/.test(String(tx.date))){
+    day = Number(String(tx.date).slice(8,10)) || 1;
+  }
+  day = Math.min(Math.max(1, day), daysInBillingMonth(billMonth));
+  return billMonth + '-' + String(day).padStart(2,'0');
+}
 function generatedInstallments(tx, ym){
   var type = tx.type || 'expense';
   var isExpenseLike = type === 'expense' || type === 'debt' || type === 'transfer';
@@ -417,15 +431,21 @@ function generatedInstallments(tx, ym){
   var first = txBillingMonth(tx);
 
   if(count <= 1){
-    return first === ym
-      ? [Object.assign({}, tx, {
-          monthAmount:Number(tx.value || 0),
-          parcelLabel:'',
-          billingMonth:first,
-          competenceMonth:first,
-          originalPurchaseDate:tx.date
-        })]
-      : [];
+    if(first !== ym)return [];
+    var once = Object.assign({}, tx);
+    var occurrenceDate = txBillingOccurrenceDate(tx, first);
+    once.date = occurrenceDate;
+    once.occurrenceDate = occurrenceDate;
+    once.dueDate = occurrenceDate;
+    once.displayDate = occurrenceDate;
+    once.monthAmount = Number(tx.value || 0);
+    once.parcelLabel = '';
+    once.billingMonth = first;
+    once.competenceMonth = first;
+    once.invoiceMonth = first;
+    once.cardBillMonth = first;
+    once.originalPurchaseDate = tx.date;
+    return [once];
   }
 
   var out = [];
@@ -435,10 +455,17 @@ function generatedInstallments(tx, ym){
 
     if(parcelMonth === ym){
       var t = Object.assign({}, tx);
+      var occurrence = txBillingOccurrenceDate(tx, parcelMonth);
+      t.date = occurrence;
+      t.occurrenceDate = occurrence;
+      t.dueDate = occurrence;
+      t.displayDate = occurrence;
       t.monthAmount = Number(tx.value || 0) / count;
       t.parcelLabel = 'Parcela ' + (i + 1) + '/' + count;
       t.billingMonth = parcelMonth;
       t.competenceMonth = parcelMonth;
+      t.invoiceMonth = parcelMonth;
+      t.cardBillMonth = parcelMonth;
       t.originalPurchaseDate = tx.date;
       out.push(t);
     }
@@ -455,10 +482,16 @@ function debtTransactionsIn(ym){
     debtSchedule(d).filter(function(p){
       return p.month === ym && !p.paid;
     }).forEach(function(p){
+      var dueDay = Math.min(Math.max(1, Number(d.dueDay || 1)), daysInBillingMonth(ym));
+      var dueDate = ym + '-' + String(dueDay).padStart(2,'0');
       out.push({
         id: 'debt_' + d.id + '_' + p.number,
         type: 'debt',
-        date: ym + '-' + String(d.dueDay || 1).padStart(2,'0'),
+        date: dueDate,
+        occurrenceDate: dueDate,
+        dueDate: dueDate,
+        billingMonth: ym,
+        competenceMonth: ym,
         description: d.name || 'Parcela de dívida',
         category: 'Dívidas',
         value: Number(p.payment || 0),
@@ -660,7 +693,7 @@ function dateBR(date){var p=String(date||'').slice(0,10).split('-');return p.len
 
 function renderTxList(ym){var all=monthTransactions(ym);var entries=all.filter(function(t){return txFilterMatch(t)&&txSearchMatch(t)}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))});var income=0,out=0;all.forEach(function(t){var v=Number(t.monthAmount!=null?t.monthAmount:t.value||0);if(t.type==='income'||t.type==='dividend')income+=v;else if(t.type==='transfer'){}else out+=v});setText('statementPeriodLabel',monthName(ym));setText('statementIncome',money(income));setText('statementExpense',money(out));setText('statementNet',money(income-out));var chips=document.querySelectorAll('[data-tx-filter]');chips.forEach(function(c){c.classList.toggle('active',c.dataset.txFilter===txFilter)});if(el('txSearch')&&el('txSearch').value!==txSearch)el('txSearch').value=txSearch;if(!entries.length){el('txList').innerHTML='<div class="empty">Nenhuma movimentação encontrada neste período.</div>';return}var grouped={};entries.forEach(function(t){var k=String(t.date||today()).slice(0,10);(grouped[k]=grouped[k]||[]).push(t)});var html=Object.keys(grouped).sort().reverse().map(function(day){return '<div class="statement-day"><div class="statement-day-title">'+esc(dayLabel(day))+'</div>'+grouped[day].map(function(t){var v=Number(t.monthAmount!=null?t.monthAmount:t.value||0);var cat=categoryNameById(t.categoryId,t.category);var subParts=[cat,typeLabel(t.type),t.parcelLabel||'',t.notes?'com observação':''].filter(Boolean);var bill=txBillingMonth(t),purchaseMonth=t.originalPurchaseDate?String(t.originalPurchaseDate).slice(0,7):(t.date?String(t.date).slice(0,7):'');if(t.originalPurchaseDate&&bill&&purchaseMonth&&bill!==purchaseMonth){subParts.push('Compra: '+dateBR(t.originalPurchaseDate)+' • Fatura: '+monthName(bill))}var sub=subParts.join(' • ');var editCall=(t.type==='debt'&&t.debtId)?"editDebt('"+t.debtId+"')":"editTx('"+t.id+"')";var delCall=(t.type==='debt'&&t.debtId)?"deleteDebt('"+t.debtId+"')":"deleteTx('"+t.id+"')";return '<div class="statement-tx" onclick="showTxDetails(\''+t.id+'\')"><div class="statement-tx-icon '+txClass(t)+'">'+txIcon(t)+'</div><div class="statement-tx-main"><b>'+esc(t.description||'Movimentação')+'</b><small>'+esc(sub)+'</small></div><div class="statement-tx-side"><span class="amount '+txAmountClass(t)+'">'+txSignedMoney(t,v)+'</span><div class="statement-tx-actions"><button class="btn" onclick="event.stopPropagation();'+editCall+'">Editar</button><button class="btn danger" onclick="event.stopPropagation();'+delCall+'">Excluir</button></div></div></div>'}).join('')+'</div>'}).join('');el('txList').innerHTML=html}
 
-function showTxDetails(id){var t=txSource(id);if(!t)return;selectedTxDetailId=id;var generated=monthTransactions(selectedMonth()).find(function(x){return x.id===id})||t;var v=Number(generated.monthAmount!=null?generated.monthAmount:t.value||0);var rows=[item('Descrição',t.description||'Movimentação','','neutral'),item('Tipo',typeLabel(t.type),'','neutral'),item('Categoria',categoryNameById(t.categoryId,t.category),'','neutral'),item('Data',t.date||'Sem data','','neutral'),item('Valor',txSignedMoney(t,v),'','neutral')];if(generated.parcelLabel)rows.push(item('Parcela',generated.parcelLabel,'','warn'));var bill=txBillingMonth(generated);var purchaseMonth=generated.originalPurchaseDate?String(generated.originalPurchaseDate).slice(0,7):(t.date?String(t.date).slice(0,7):'');if(generated.originalPurchaseDate&&bill&&bill!==purchaseMonth){rows.push(item('Competência da fatura','Compra: '+dateBR(generated.originalPurchaseDate)+' • Fatura: '+monthName(bill),'','neutral'))}if(generated.debtId)rows.push(item('Vínculo','Parcela mensal de dívida/financiamento','','warn'));if(t.notes)rows.push(item('Observações',t.notes,'','neutral'));safeHTML('txDetailsContent',rows.join(''));var sh=el('txDetailsSheet');if(sh){sh.classList.remove('hidden');sh.setAttribute('aria-hidden','false')}}
+function showTxDetails(id){var t=txSource(id);if(!t)return;selectedTxDetailId=id;var generated=monthTransactions(selectedMonth()).find(function(x){return x.id===id})||t;var v=Number(generated.monthAmount!=null?generated.monthAmount:t.value||0);var rows=[item('Descrição',t.description||'Movimentação','','neutral'),item('Tipo',typeLabel(t.type),'','neutral'),item('Categoria',categoryNameById(t.categoryId,t.category),'','neutral'),item('Data no extrato',generated.date||t.date||'Sem data','','neutral'),item('Valor',txSignedMoney(t,v),'','neutral')];if(generated.parcelLabel)rows.push(item('Parcela',generated.parcelLabel,'','warn'));var bill=txBillingMonth(generated);var purchaseDate=generated.originalPurchaseDate||t.date;var purchaseMonth=purchaseDate?String(purchaseDate).slice(0,7):'';if(purchaseDate&&bill&&bill!==purchaseMonth){rows.push(item('Competência da fatura','Compra: '+dateBR(purchaseDate)+' • Fatura: '+monthName(bill),'','neutral'))}if(generated.debtId)rows.push(item('Vínculo','Parcela mensal de dívida/financiamento','','warn'));if(t.notes)rows.push(item('Observações',t.notes,'','neutral'));safeHTML('txDetailsContent',rows.join(''));var sh=el('txDetailsSheet');if(sh){sh.classList.remove('hidden');sh.setAttribute('aria-hidden','false')}}
 function closeTxDetails(){var sh=el('txDetailsSheet');if(sh){sh.classList.add('hidden');sh.setAttribute('aria-hidden','true')}selectedTxDetailId=null}
 window.showTxDetails=showTxDetails;window.closeTxDetails=closeTxDetails;
 function renderBudgets(tx){var m=byCat(tx);el('budgetList').innerHTML=state.budgets.length?state.budgets.map(function(b){var name=categoryNameById(b.categoryId,b.category);var used=m[name]||0,p=b.value?Math.round(used/b.value*100):0;return item(name,'Usado: '+money(used)+' de '+money(b.value),p+'%',p>=100?'err':p>=80?'warn':'ok')}).join(''):'<div class="empty">Nenhum orçamento cadastrado.</div>'}
