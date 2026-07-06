@@ -2289,3 +2289,165 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
   }, true);
 })();
 
+
+/* ===== DESKTOP SIDEBAR ACCOUNT PATCH v6 =====
+   Corrige:
+   - os itens da seção "Conta" ficam escondidos no desktop;
+   - sidebar cortava Perfil, Configurações, Categorias e Ajuda.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-desktop-sidebar-account-v6";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function q(selector, root = document) {
+    return root.querySelector(selector);
+  }
+
+  function qa(selector, root = document) {
+    return Array.from(root.querySelectorAll(selector));
+  }
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function injectCss() {
+    if (byId("cockpit-desktop-sidebar-account-v6-css")) return;
+
+    const css = `
+@media (min-width: 781px) {
+  .sidebar {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(76,201,255,.38) rgba(255,255,255,.04) !important;
+    padding-bottom: 14px !important;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    width: 6px !important;
+  }
+
+  .sidebar::-webkit-scrollbar-track {
+    background: rgba(255,255,255,.04) !important;
+    border-radius: 999px !important;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb {
+    background: rgba(76,201,255,.38) !important;
+    border-radius: 999px !important;
+  }
+
+  .nav-hub,
+  .desktop-nav,
+  .grouped-nav,
+  #nav {
+    overflow: visible !important;
+    padding-bottom: 10px !important;
+  }
+
+  .nav-section:last-child,
+  .nav-label:last-of-type {
+    margin-bottom: 4px !important;
+  }
+
+  .nav-hub button:last-child,
+  .desktop-nav button:last-child,
+  .grouped-nav button:last-child,
+  #nav button:last-child {
+    margin-bottom: 8px !important;
+  }
+
+  .side-footer {
+    display: none !important;
+  }
+}
+
+/* Em notebooks mais baixos, compacta um pouco mais a navegação */
+@media (min-width: 781px) and (max-height: 760px) {
+  .sidebar {
+    padding-top: 8px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .nav-label {
+    margin-top: 6px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .nav-hub button,
+  .desktop-nav button,
+  .grouped-nav button,
+  #nav button {
+    height: 28px !important;
+    min-height: 28px !important;
+  }
+
+  .status-card {
+    min-height: 30px !important;
+  }
+}
+`;
+
+    const style = document.createElement("style");
+    style.id = "cockpit-desktop-sidebar-account-v6-css";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function scrollActiveIntoView() {
+    const sidebar = q(".sidebar");
+    const active =
+      q("#nav button.active") ||
+      q(".nav-hub button.active") ||
+      q(".desktop-nav button.active") ||
+      q(".grouped-nav button.active");
+
+    if (!sidebar || !active) return;
+
+    const sidebarRect = sidebar.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+
+    if (activeRect.bottom > sidebarRect.bottom || activeRect.top < sidebarRect.top) {
+      active.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }
+
+  function makeAccountItemsReachable() {
+    const sidebar = q(".sidebar");
+    if (!sidebar) return;
+
+    sidebar.style.overflowY = "auto";
+    sidebar.style.overflowX = "hidden";
+
+    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button").forEach(function (button) {
+      if (button.dataset.sidebarScrollBound === "1") return;
+      button.dataset.sidebarScrollBound = "1";
+      button.addEventListener("click", function () {
+        setTimeout(scrollActiveIntoView, 120);
+      });
+    });
+  }
+
+  function run() {
+    injectCss();
+    makeAccountItemsReachable();
+    setTimeout(scrollActiveIntoView, 250);
+  }
+
+  run();
+  setTimeout(run, 500);
+  setTimeout(run, 1500);
+
+  window.addEventListener("resize", function () {
+    setTimeout(run, 150);
+  });
+
+  document.addEventListener("click", function () {
+    setTimeout(run, 120);
+  }, true);
+})();
+
