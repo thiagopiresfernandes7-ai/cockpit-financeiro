@@ -3142,3 +3142,264 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
   }, true);
 })();
 
+
+/* ===== ROUTE ISOLATION PATCH v8 =====
+   Corrige bug da v7:
+   - Dívidas ficou presa e aparece em Investimentos, Dividendos e Simulador.
+   - Este patch isola a tela de Dívidas.
+   - Ao clicar em qualquer aba que NÃO seja Dívidas, remove o #debts da tela
+     e restaura a section correta do app original.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-route-isolation-v8";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function q(selector, root = document) {
+    return root.querySelector(selector);
+  }
+
+  function qa(selector, root = document) {
+    return Array.from(root.querySelectorAll(selector));
+  }
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function safe(fn) {
+    try {
+      return fn();
+    } catch (error) {
+      console.warn("[Cockpit route v8]", error);
+      return null;
+    }
+  }
+
+  const viewTitleMap = {
+    dashboard: ["Início", "Visualizando julho de 2026"],
+    analysis: ["Análise", "Diagnóstico financeiro do mês"],
+    register: ["Extrato", "Movimentações do mês"],
+    wallet: ["Patrimônio", "Carteira, investimentos e patrimônio"],
+    investments: ["Investimentos", "Carteira, ativos e rendimentos"],
+    dividends: ["Dividendos", "Rendimentos recebidos e previstos"],
+    simulator: ["Simulador", "Projeções financeiras e liberdade financeira"],
+    budget: ["Orçamento", "Limites por categoria"],
+    projection: ["Fluxo de caixa", "Projeção dos próximos meses"],
+    decisions: ["Decisões de compra", "Análise antes de comprar"],
+    week: ["Plano da Semana", "Ações financeiras da semana"],
+    profile: ["Perfil", "Dados da conta"],
+    settings: ["Configurações", "Preferências do app"],
+    categories: ["Categorias", "Organização dos lançamentos"],
+    help: ["Ajuda", "Tutoriais e suporte"]
+  };
+
+  function titleForView(view) {
+    return viewTitleMap[view] || [view || "Cockpit", ""];
+  }
+
+  function findSectionForView(view) {
+    if (!view) return null;
+
+    const direct = byId(view);
+    if (direct) return direct;
+
+    const aliases = {
+      investments: ["wallet", "investments"],
+      dividend: ["dividends"],
+      dividents: ["dividends"],
+      debts: ["debts"],
+      cashflow: ["projection"],
+      flow: ["projection"],
+      decisions: ["decisions"],
+      week: ["week"],
+      settings: ["settings"],
+      categories: ["categories"],
+      help: ["help"]
+    };
+
+    const list = aliases[view] || [];
+    for (const id of list) {
+      const node = byId(id);
+      if (node) return node;
+    }
+
+    return null;
+  }
+
+  function clearDebtOverlay() {
+    const debts = byId("debts");
+    if (!debts) return;
+
+    debts.classList.remove("active");
+    debts.style.display = "none";
+  }
+
+  function restoreOriginalView(view) {
+    if (!view || view === "debts") return;
+
+    clearDebtOverlay();
+
+    const section = findSectionForView(view);
+
+    if (section) {
+      qa(".section").forEach(function (node) {
+        node.classList.remove("active");
+        node.style.display = "none";
+      });
+
+      section.classList.add("active");
+      section.style.display = "block";
+    }
+
+    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button, .mobile-nav button").forEach(function (button) {
+      const active = button.dataset.view === view ||
+        (view === "wallet" && /investimentos|patrimônio|patrimonio/i.test(button.textContent || "")) ||
+        (view === "dividends" && /dividendos/i.test(button.textContent || "")) ||
+        (view === "simulator" && /simulador/i.test(button.textContent || ""));
+
+      button.classList.toggle("active", active);
+    });
+
+    const title = byId("pageTitle");
+    const hint = byId("monthHint");
+    const pair = titleForView(view);
+
+    if (title) title.textContent = pair[0];
+    if (hint && pair[1]) hint.textContent = pair[1];
+
+    safe(function () {
+      if (typeof render === "function") render();
+    });
+
+    setTimeout(function () {
+      clearDebtOverlay();
+      const sectionAgain = findSectionForView(view);
+      if (sectionAgain) {
+        sectionAgain.classList.add("active");
+        sectionAgain.style.display = "block";
+      }
+    }, 80);
+  }
+
+  function normalizeKnownNavViews() {
+    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button, .mobile-nav button").forEach(function (button) {
+      const text = String(button.textContent || "").trim().toLowerCase();
+
+      if (text.includes("dívida") || text.includes("divida")) {
+        button.dataset.view = "debts";
+        button.dataset.debtNav = "1";
+      } else if (text.includes("investimento")) {
+        button.dataset.view = "wallet";
+        delete button.dataset.debtNav;
+      } else if (text.includes("dividendo")) {
+        button.dataset.view = "dividends";
+        delete button.dataset.debtNav;
+      } else if (text.includes("simulador")) {
+        button.dataset.view = "simulator";
+        delete button.dataset.debtNav;
+      } else if (text.includes("início") || text.includes("inicio") || text.includes("dashboard")) {
+        button.dataset.view = "dashboard";
+        delete button.dataset.debtNav;
+      } else if (text.includes("extrato")) {
+        button.dataset.view = "register";
+        delete button.dataset.debtNav;
+      }
+    });
+  }
+
+  function interceptNonDebtNavigation() {
+    if (window.__cockpitRouteV8Click) return;
+    window.__cockpitRouteV8Click = true;
+
+    document.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-view]");
+      if (!button) return;
+
+      const view = button.dataset.view;
+      if (!view || view === "debts") return;
+
+      /*
+        Captura antes dos patches de dívida, mas NÃO bloqueia totalmente o app.
+        Deixa o handler original rodar e depois limpa qualquer sobra da tela Dívidas.
+      */
+      setTimeout(function () {
+        restoreOriginalView(view);
+      }, 40);
+
+      setTimeout(function () {
+        restoreOriginalView(view);
+      }, 180);
+    }, true);
+  }
+
+  function protectAgainstDebtLeak() {
+    const activeButton =
+      q("#nav button.active") ||
+      q(".nav-hub button.active") ||
+      q(".desktop-nav button.active") ||
+      q(".grouped-nav button.active") ||
+      q(".mobile-nav button.active");
+
+    const activeView = activeButton && activeButton.dataset && activeButton.dataset.view;
+
+    if (activeView && activeView !== "debts") {
+      const debts = byId("debts");
+      const real = findSectionForView(activeView);
+
+      if (debts && debts.style.display !== "none" && real && real.id !== "debts") {
+        restoreOriginalView(activeView);
+      }
+    }
+  }
+
+  function patchSetViewIfPossible() {
+    if (window.__cockpitRouteV8SetViewPatch) return;
+
+    const original = window.setView;
+    if (typeof original !== "function") return;
+
+    window.setView = function (view) {
+      const result = original.apply(this, arguments);
+
+      if (view && view !== "debts") {
+        setTimeout(function () {
+          restoreOriginalView(view);
+        }, 60);
+      }
+
+      return result;
+    };
+
+    safe(function () {
+      setView = window.setView;
+    });
+
+    window.__cockpitRouteV8SetViewPatch = true;
+  }
+
+  function bootRouteV8() {
+    normalizeKnownNavViews();
+    interceptNonDebtNavigation();
+    patchSetViewIfPossible();
+    protectAgainstDebtLeak();
+  }
+
+  bootRouteV8();
+  setTimeout(bootRouteV8, 300);
+  setTimeout(bootRouteV8, 900);
+  setTimeout(bootRouteV8, 1800);
+  setTimeout(bootRouteV8, 3000);
+
+  document.addEventListener("click", function () {
+    setTimeout(bootRouteV8, 120);
+    setTimeout(protectAgainstDebtLeak, 260);
+  }, true);
+
+  window.addEventListener("hashchange", function () {
+    setTimeout(bootRouteV8, 120);
+  });
+})();
+
