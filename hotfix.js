@@ -1735,3 +1735,557 @@ html.cockpit-mobile-force .cockpit-debt-workspace {
   }, true);
 })();
 
+
+/* ===== DEBT DIRECT FORM PATCH v5 =====
+   Corrige definitivamente:
+   - aba Dívidas abre, mas não mostra formulário;
+   - usuário não consegue cadastrar dívida no desktop nem mobile.
+
+   Solução:
+   - cria um formulário próprio e independente dentro da aba Dívidas;
+   - salva diretamente em state.debts no mesmo formato do app original;
+   - atualiza lista de dívidas, painel, extrato e fluxo;
+   - não depende do formulário antigo do Extrato aparecer.
+*/
+(function () {
+  "use strict";
+
+  const FLAG = "cockpit-debt-direct-form-v5";
+  if (window[FLAG]) return;
+  window[FLAG] = true;
+
+  function q(selector, root = document) {
+    return root.querySelector(selector);
+  }
+
+  function qa(selector, root = document) {
+    return Array.from(root.querySelectorAll(selector));
+  }
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function safe(fn) {
+    try {
+      return fn();
+    } catch (error) {
+      console.warn("[Cockpit debt v5]", error);
+      return null;
+    }
+  }
+
+  function uidSafe() {
+    return safe(function () { return uid(); }) || ("debt_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2));
+  }
+
+  function todaySafe() {
+    return safe(function () { return today(); }) || new Date().toISOString().slice(0, 10);
+  }
+
+  function selectedMonthSafe() {
+    return safe(function () { return selectedMonth(); }) ||
+      (byId("monthPicker") && byId("monthPicker").value) ||
+      new Date().toISOString().slice(0, 7);
+  }
+
+  function numSafe(value) {
+    return Math.max(0, Number(String(value || "0").replace(",", ".")) || 0);
+  }
+
+  function getStateSafe() {
+    return safe(function () { return state; }) || window.state || null;
+  }
+
+  function setValue(id, value) {
+    const node = byId(id);
+    if (node) node.value = value == null ? "" : String(value);
+  }
+
+  function getValue(id) {
+    const node = byId(id);
+    return node ? node.value : "";
+  }
+
+  function injectDebtDirectCss() {
+    if (byId("cockpit-debt-direct-form-v5-css")) return;
+
+    const css = `
+.cockpit-debt-direct-panel {
+  margin-bottom: 14px !important;
+}
+
+.cockpit-debt-direct-panel .form-grid {
+  align-items: end;
+}
+
+.cockpit-debt-direct-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.cockpit-debt-direct-summary .mini-result {
+  border: 1px solid rgba(142,213,255,.13);
+  background: rgba(255,255,255,.035);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.cockpit-debt-direct-summary .mini-result span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--muted, #7f94ae);
+  font-weight: 900;
+}
+
+.cockpit-debt-direct-summary .mini-result b {
+  display: block;
+  margin-top: 5px;
+  font-size: 15px;
+  color: var(--text, #e7f1ff);
+}
+
+@media (max-width: 780px) {
+  .cockpit-debt-direct-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .cockpit-debt-direct-panel {
+    margin-bottom: 10px !important;
+  }
+}
+`;
+
+    const style = document.createElement("style");
+    style.id = "cockpit-debt-direct-form-v5-css";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function createDebtSectionIfNeeded() {
+    const content = q(".content");
+    if (!content) return null;
+
+    let section = byId("debts");
+
+    if (!section) {
+      section = document.createElement("section");
+      section.id = "debts";
+      section.className = "section cockpit-debts-section";
+      section.innerHTML =
+        '<div class="page-head">' +
+          '<div class="page-title">' +
+            '<div class="overline">Debt control</div>' +
+            '<h1>Dívidas <span>& Parcelas</span></h1>' +
+            '<p>Cadastre financiamentos, empréstimos, parcelamentos e compromissos recorrentes diretamente por aqui.</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cockpit-debt-workspace"></div>';
+
+      const register = byId("register");
+      if (register && register.nextSibling) content.insertBefore(section, register.nextSibling);
+      else content.appendChild(section);
+    }
+
+    let workspace = q(".cockpit-debt-workspace", section);
+    if (!workspace) {
+      workspace = document.createElement("div");
+      workspace.className = "cockpit-debt-workspace";
+      section.appendChild(workspace);
+    }
+
+    return section;
+  }
+
+  function buildDirectDebtForm() {
+    const panel = document.createElement("div");
+    panel.id = "debtDirectFormPanel";
+    panel.className = "panel cockpit-debt-direct-panel";
+    panel.innerHTML =
+      '<div class="panel-head">' +
+        '<div>' +
+          '<h2>Cadastrar dívida</h2>' +
+          '<p>Cadastro direto. A dívida salva aqui entra nas parcelas, no Extrato, no Painel e no Fluxo de Caixa.</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-grid">' +
+        '<label class="field"><span>Nome da dívida</span><input id="directDebtName" placeholder="Ex.: financiamento do apartamento"></label>' +
+        '<label class="field"><span>Tipo</span><select id="directDebtType">' +
+          '<option value="real_estate_financing">Financiamento imobiliário</option>' +
+          '<option value="vehicle_financing">Financiamento de veículo</option>' +
+          '<option value="credit_card_installment">Parcelamento de cartão</option>' +
+          '<option value="personal_loan">Empréstimo pessoal</option>' +
+          '<option value="payroll_loan">Consignado</option>' +
+          '<option value="consortium">Consórcio</option>' +
+          '<option value="student_loan">Financiamento estudantil</option>' +
+          '<option value="informal_debt">Dívida informal</option>' +
+          '<option value="other">Outra dívida</option>' +
+        '</select></label>' +
+        '<label class="field"><span>Banco, loja ou credor</span><input id="directDebtCreditor" placeholder="Ex.: Caixa, Nubank, C6"></label>' +
+        '<label class="field"><span>Valor original</span><input id="directDebtOriginal" type="number" min="0" step="0.01" placeholder="0,00"></label>' +
+        '<label class="field"><span>Valor financiado</span><input id="directDebtFinanced" type="number" min="0" step="0.01" placeholder="0,00"></label>' +
+        '<label class="field"><span>Entrada paga</span><input id="directDebtDownPayment" type="number" min="0" step="0.01" placeholder="0,00"></label>' +
+        '<label class="field"><span>Juros (%)</span><input id="directDebtInterest" type="number" min="0" step="0.0001" placeholder="Ex.: 0.89"></label>' +
+        '<label class="field"><span>Periodicidade dos juros</span><select id="directDebtRatePeriod"><option value="monthly">Ao mês</option><option value="annual">Ao ano</option></select></label>' +
+        '<label class="field"><span>Sistema de cálculo</span><select id="directDebtSystem"><option value="fixed_installment">Sem juros / parcela fixa</option><option value="price">Price</option><option value="sac">SAC</option><option value="manual">Manual</option></select></label>' +
+        '<label class="field"><span>Total de parcelas</span><input id="directDebtInstallmentsTotal" type="number" min="1" step="1" value="12"></label>' +
+        '<label class="field"><span>Parcelas já pagas</span><input id="directDebtInstallmentsPaid" type="number" min="0" step="1" value="0"></label>' +
+        '<label class="field"><span>Valor da parcela manual</span><input id="directDebtManualPayment" type="number" min="0" step="0.01" placeholder="Use quando souber o valor exato"></label>' +
+        '<label class="field"><span>Saldo devedor atual</span><input id="directDebtCurrentBalance" type="number" min="0" step="0.01" placeholder="Opcional"></label>' +
+        '<label class="field"><span>Primeira parcela</span><input id="directDebtFirstPayment" type="date"></label>' +
+        '<label class="field"><span>Dia de vencimento</span><input id="directDebtDueDay" type="number" min="1" max="31"></label>' +
+        '<label class="field"><span>Observações</span><textarea id="directDebtNotes" placeholder="Detalhes opcionais"></textarea></label>' +
+      '</div>' +
+      '<div class="cockpit-debt-direct-summary">' +
+        '<div class="mini-result"><span>Parcela estimada</span><b id="directDebtPreviewPayment">R$ 0,00</b></div>' +
+        '<div class="mini-result"><span>Saldo base</span><b id="directDebtPreviewBase">R$ 0,00</b></div>' +
+        '<div class="mini-result"><span>Prazo restante</span><b id="directDebtPreviewTerm">0 meses</b></div>' +
+      '</div>' +
+      '<div class="split" style="margin-top:14px">' +
+        '<button class="btn primary" id="saveDirectDebt" type="button">Salvar dívida</button>' +
+        '<button class="btn ghost" id="clearDirectDebt" type="button">Limpar</button>' +
+      '</div>';
+
+    return panel;
+  }
+
+  function ensureDebtListPanel(workspace) {
+    let list = byId("debtListPanel");
+
+    if (!list) {
+      list = document.createElement("div");
+      list.id = "debtListPanel";
+      list.className = "panel statement-debts";
+      list.innerHTML =
+        '<div class="panel-head"><div><h2>Dívidas ativas e parcelas futuras</h2><p>Obrigações que impactam seu fluxo de caixa.</p></div></div>' +
+        '<div id="debtList" class="list"></div>';
+    }
+
+    if (list.parentNode !== workspace) workspace.appendChild(list);
+    list.style.marginTop = "0";
+  }
+
+  function ensureDebtFormVisible() {
+    injectDebtDirectCss();
+
+    const section = createDebtSectionIfNeeded();
+    if (!section) return;
+
+    const workspace = q(".cockpit-debt-workspace", section);
+    if (!workspace) return;
+
+    let directForm = byId("debtDirectFormPanel");
+
+    if (!directForm) {
+      directForm = buildDirectDebtForm();
+      workspace.insertBefore(directForm, workspace.firstChild);
+    } else if (directForm.parentNode !== workspace) {
+      workspace.insertBefore(directForm, workspace.firstChild);
+    }
+
+    directForm.style.display = "block";
+
+    const oldForm = byId("debtFormPanel");
+    if (oldForm) oldForm.style.display = "none";
+
+    ensureDebtListPanel(workspace);
+    bindDirectDebtForm();
+    setDefaultDirectDebtDates();
+    updateDebtPreview();
+  }
+
+  function setDefaultDirectDebtDates() {
+    const firstPayment = byId("directDebtFirstPayment");
+    if (firstPayment && !firstPayment.value) firstPayment.value = todaySafe();
+
+    const dueDay = byId("directDebtDueDay");
+    if (dueDay && !dueDay.value) dueDay.value = String(new Date().getDate());
+
+    const total = byId("directDebtInstallmentsTotal");
+    if (total && !total.value) total.value = "12";
+
+    const paid = byId("directDebtInstallmentsPaid");
+    if (paid && !paid.value) paid.value = "0";
+  }
+
+  function formatMoney(value) {
+    return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+
+  function directDebtBaseValue() {
+    const financed = numSafe(getValue("directDebtFinanced"));
+    const original = numSafe(getValue("directDebtOriginal"));
+    const down = numSafe(getValue("directDebtDownPayment"));
+    return financed || Math.max(0, original - down) || original;
+  }
+
+  function estimateDirectPayment() {
+    const manual = numSafe(getValue("directDebtManualPayment"));
+    if (manual > 0) return manual;
+
+    const base = directDebtBaseValue();
+    const total = Math.max(1, Math.floor(numSafe(getValue("directDebtInstallmentsTotal")) || 1));
+    const paid = Math.max(0, Math.floor(numSafe(getValue("directDebtInstallmentsPaid")) || 0));
+    const remaining = Math.max(1, total - paid);
+
+    const annualOrMonthlyRate = numSafe(getValue("directDebtInterest")) / 100;
+    const period = getValue("directDebtRatePeriod") || "monthly";
+    const monthlyRate = period === "annual"
+      ? Math.pow(1 + annualOrMonthlyRate, 1 / 12) - 1
+      : annualOrMonthlyRate;
+
+    if (!base) return 0;
+
+    if (monthlyRate > 0) {
+      return base * (monthlyRate * Math.pow(1 + monthlyRate, remaining)) / (Math.pow(1 + monthlyRate, remaining) - 1);
+    }
+
+    return base / remaining;
+  }
+
+  function updateDebtPreview() {
+    const base = directDebtBaseValue();
+    const total = Math.max(1, Math.floor(numSafe(getValue("directDebtInstallmentsTotal")) || 1));
+    const paid = Math.max(0, Math.floor(numSafe(getValue("directDebtInstallmentsPaid")) || 0));
+    const remaining = Math.max(0, total - paid);
+
+    const paymentNode = byId("directDebtPreviewPayment");
+    const baseNode = byId("directDebtPreviewBase");
+    const termNode = byId("directDebtPreviewTerm");
+
+    if (paymentNode) paymentNode.textContent = formatMoney(estimateDirectPayment());
+    if (baseNode) baseNode.textContent = formatMoney(base);
+    if (termNode) termNode.textContent = remaining + " meses";
+  }
+
+  function debtFromDirectForm() {
+    const now = new Date().toISOString();
+    const original = numSafe(getValue("directDebtOriginal"));
+    const financed = numSafe(getValue("directDebtFinanced"));
+    const down = numSafe(getValue("directDebtDownPayment"));
+    const current = numSafe(getValue("directDebtCurrentBalance"));
+    const base = directDebtBaseValue();
+
+    return {
+      id: uidSafe(),
+      name: getValue("directDebtName").trim(),
+      debtType: getValue("directDebtType") || "other",
+      creditor: getValue("directDebtCreditor").trim(),
+      original: original || base,
+      financed: financed || base,
+      downPayment: down,
+      interestRate: numSafe(getValue("directDebtInterest")),
+      ratePeriod: getValue("directDebtRatePeriod") || "monthly",
+      fees: 0,
+      insurance: 0,
+      totalInstallments: Math.max(1, Math.floor(numSafe(getValue("directDebtInstallmentsTotal")) || 1)),
+      paidInstallments: Math.max(0, Math.floor(numSafe(getValue("directDebtInstallmentsPaid")) || 0)),
+      startDate: getValue("directDebtFirstPayment") || todaySafe(),
+      firstPaymentDate: getValue("directDebtFirstPayment") || todaySafe(),
+      dueDay: Math.max(1, Math.min(31, Math.floor(numSafe(getValue("directDebtDueDay")) || 1))),
+      amortizationSystem: getValue("directDebtSystem") || "fixed_installment",
+      manualPayment: numSafe(getValue("directDebtManualPayment")),
+      currentBalance: current || base,
+      notes: getValue("directDebtNotes"),
+      status: "active",
+      createdAt: now,
+      updatedAt: now
+    };
+  }
+
+  function clearDirectDebtForm() {
+    [
+      "directDebtName",
+      "directDebtCreditor",
+      "directDebtOriginal",
+      "directDebtFinanced",
+      "directDebtDownPayment",
+      "directDebtInterest",
+      "directDebtManualPayment",
+      "directDebtCurrentBalance",
+      "directDebtNotes"
+    ].forEach(function (id) {
+      setValue(id, "");
+    });
+
+    setValue("directDebtType", "real_estate_financing");
+    setValue("directDebtRatePeriod", "monthly");
+    setValue("directDebtSystem", "fixed_installment");
+    setValue("directDebtInstallmentsTotal", "12");
+    setValue("directDebtInstallmentsPaid", "0");
+    setValue("directDebtFirstPayment", todaySafe());
+    setValue("directDebtDueDay", String(new Date().getDate()));
+
+    updateDebtPreview();
+  }
+
+  function saveDirectDebt() {
+    const stateObj = getStateSafe();
+    if (!stateObj) {
+      alert("Não foi possível acessar os dados do app. Recarregue a página e tente novamente.");
+      return;
+    }
+
+    const debt = debtFromDirectForm();
+
+    if (!debt.name) {
+      alert("Informe o nome da dívida.");
+      return;
+    }
+
+    if (!debt.original && !debt.financed && !debt.currentBalance) {
+      alert("Informe o valor original ou financiado da dívida.");
+      return;
+    }
+
+    stateObj.debts = Array.isArray(stateObj.debts) ? stateObj.debts : [];
+    stateObj.debts.push(debt);
+
+    clearDirectDebtForm();
+
+    safe(function () { renderDebts(selectedMonthSafe()); });
+    safe(function () { renderDashboard(selectedMonthSafe()); });
+    safe(function () { renderTxList(selectedMonthSafe()); });
+    safe(function () { render(); });
+    safe(function () { saveNow(); });
+    safe(function () { toast("Dívida cadastrada. Parcelas atualizadas no Painel, Extrato e Fluxo de Caixa."); });
+
+    ensureDebtFormVisible();
+    forceOpenDebtsV5();
+  }
+
+  function bindDirectDebtForm() {
+    const save = byId("saveDirectDebt");
+    if (save && save.dataset.bound !== "1") {
+      save.dataset.bound = "1";
+      save.addEventListener("click", saveDirectDebt);
+    }
+
+    const clear = byId("clearDirectDebt");
+    if (clear && clear.dataset.bound !== "1") {
+      clear.dataset.bound = "1";
+      clear.addEventListener("click", clearDirectDebtForm);
+    }
+
+    [
+      "directDebtOriginal",
+      "directDebtFinanced",
+      "directDebtDownPayment",
+      "directDebtInterest",
+      "directDebtRatePeriod",
+      "directDebtInstallmentsTotal",
+      "directDebtInstallmentsPaid",
+      "directDebtManualPayment",
+      "directDebtCurrentBalance",
+      "directDebtSystem"
+    ].forEach(function (id) {
+      const node = byId(id);
+      if (node && node.dataset.previewBound !== "1") {
+        node.dataset.previewBound = "1";
+        node.addEventListener("input", updateDebtPreview);
+        node.addEventListener("change", updateDebtPreview);
+      }
+    });
+  }
+
+  function forceOpenDebtsV5() {
+    ensureDebtFormVisible();
+
+    const section = byId("debts");
+    if (!section) return;
+
+    qa(".section").forEach(function (node) {
+      node.classList.remove("active");
+      node.style.display = "none";
+    });
+
+    section.classList.add("active");
+    section.style.display = "block";
+
+    qa("#nav button, .nav-hub button, .mobile-nav button").forEach(function (button) {
+      const text = (button.textContent || "").toLowerCase();
+      const isDebt = text.includes("dívida") || text.includes("divida") || button.dataset.view === "debts";
+      button.classList.toggle("active", isDebt);
+    });
+
+    const pageTitle = byId("pageTitle");
+    if (pageTitle) pageTitle.textContent = "Dívidas";
+
+    const monthHint = byId("monthHint");
+    if (monthHint) monthHint.textContent = "Cadastro e acompanhamento de parcelas";
+  }
+
+  function patchDebtNavV5() {
+    qa("#nav button, .nav-hub button, .desktop-nav button, .grouped-nav button, .mobile-nav button").forEach(function (button) {
+      const text = (button.textContent || "").toLowerCase();
+
+      if (text.includes("dívida") || text.includes("divida")) {
+        button.dataset.view = "debts";
+        button.dataset.debtNav = "1";
+      }
+    });
+  }
+
+  function patchDebtClickV5() {
+    if (window.__cockpitDebtDirectClickV5) return;
+    window.__cockpitDebtDirectClickV5 = true;
+
+    document.addEventListener("click", function (event) {
+      const button = event.target.closest("button");
+      if (!button) return;
+
+      const text = (button.textContent || "").toLowerCase();
+      const action = button.dataset.registerAction;
+      const isDebtNav = button.dataset.debtNav === "1" || button.dataset.view === "debts";
+      const isDebtSheet = action === "debt" || ((text.includes("dívida") || text.includes("divida") || text.includes("financiamento")) && button.closest("#registerActionSheet"));
+
+      if (!isDebtNav && !isDebtSheet) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      const sheet = byId("registerActionSheet");
+      if (sheet) {
+        sheet.classList.add("hidden");
+        sheet.setAttribute("aria-hidden", "true");
+      }
+
+      forceOpenDebtsV5();
+    }, true);
+  }
+
+  function addDebtOptionToSheetV5() {
+    const grid = q("#registerActionSheet .sheet-grid");
+    if (!grid || q('[data-register-action="debt"]', grid)) return;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.registerAction = "debt";
+    button.innerHTML = '<span>⚠</span><b>Dívida / financiamento</b><small>Parcelas, empréstimos e financiamentos</small>';
+    grid.appendChild(button);
+  }
+
+  function bootDebtDirectV5() {
+    injectDebtDirectCss();
+    patchDebtNavV5();
+    ensureDebtFormVisible();
+    patchDebtClickV5();
+    addDebtOptionToSheetV5();
+  }
+
+  bootDebtDirectV5();
+  setTimeout(bootDebtDirectV5, 300);
+  setTimeout(bootDebtDirectV5, 900);
+  setTimeout(bootDebtDirectV5, 1800);
+  setTimeout(bootDebtDirectV5, 3000);
+
+  document.addEventListener("click", function () {
+    setTimeout(bootDebtDirectV5, 120);
+  }, true);
+})();
+
