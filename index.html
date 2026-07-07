@@ -201,6 +201,9 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 @media(max-width:1100px){#analysis .analysis-grid>.chart-panel,#analysis .analysis-grid>.chart-wide{grid-column:1/-1!important}#analysis .chart-svg,#analysis .chart-wide .chart-svg{height:150px!important}}
 @media(max-width:720px){#analysis .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}#analysis .analysis-score{display:none!important}#analysis .chart-svg,#analysis .chart-wide .chart-svg{height:140px!important}#analysis .chart-row{grid-template-columns:1fr!important}}
 
+
+/* PATCH — edição de aportes/rendimentos, amortizações e exportação para gestor */
+.movement-edit-row{align-items:center;gap:10px;flex-wrap:wrap}.movement-edit-row>span{min-width:0}.movement-actions{display:inline-flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.movement-actions .btn{min-height:28px;padding:0 9px;font-size:11px;border-radius:10px}.amortization-list{margin-top:10px;display:grid;gap:7px}.amortization-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.07);padding-top:8px}.amortization-row small{color:var(--muted)}.amortization-row .btn{min-height:30px;padding:0 10px;font-size:11px;border-radius:10px}@media(max-width:780px){.movement-edit-row{display:grid!important;grid-template-columns:1fr auto;align-items:center}.movement-actions{grid-column:1/-1;justify-content:flex-start;margin-top:2px}.amortization-row{grid-template-columns:1fr auto}.amortization-row .btn{grid-column:1/-1;width:max-content}.investment-card .split{align-items:flex-start;flex-wrap:wrap}}
 </style>
 <body>
 <div class="auth hidden" id="authView">
@@ -728,7 +731,16 @@ function investmentHasBaseMovementInMonth(i,ym,base){
     var src=String(m.sourceType||'');
     var sameSource=m.sourceId&&String(m.sourceId)===String(i.id);
     var sameValue=base>0&&Math.abs(Number(m.value||0)-base)<0.01;
-    return (src==='investment_form'&&sameSource) || (src==='investment_form'&&sameValue) || (src==='investment_consolidation'&&sameSource);
+    var desc=normalizeInvestmentIdentityText((m.description||'')+' '+(m.notes||''));
+    var label=normalizeInvestmentIdentityText(invLabel(i));
+    var looksLikeBase=desc&&label&&desc.indexOf(label)!==-1&&/(aporte|aplicacao|cadastro|posicao|consolidado)/.test(desc);
+    /*
+      Evita dupla contagem do aporte inicial.
+      Em versões anteriores, alguns investimentos ficaram com o mesmo aporte inicial
+      salvo em dois lugares: na base da posição e também como movimento.
+      Nessa situação, o card "Aportes no ano" somava a base + o movimento duplicado.
+    */
+    return sameSource || sameValue || (src==='investment_form') || (src==='investment_consolidation') || looksLikeBase;
   });
 }
 function investmentBaseContributionIn(ym){
@@ -790,11 +802,68 @@ function investmentMovementSummary(i,ym){
 function movementRowsForInvestment(i,ym){
   var movs=investmentMovementsUntil(i.id,ym||selectedMonth()).filter(function(m){return movementAfterBaseline(m,i)}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
   if(!movs.length)return '<div class="empty tiny-empty">Nenhum aporte ou rendimento até o mês selecionado.</div>';
-  return '<div class="movement-history">'+movs.slice(0,6).map(function(m){
+  return '<div class="movement-history">'+movs.slice(0,8).map(function(m){
     var type=normalizeMovementType(m.type);
     var cls=type==='withdrawal'?'negative':type==='yield'?'positive':'neutral';
-    return '<div class="mini-row"><span>'+esc(dateBR(m.date||today()))+' • '+esc(investmentMovementTypeLabel(type))+'</span><b class="amount '+cls+'">'+money(Number(m.value||0))+'</b></div>'
-  }).join('')+(movs.length>6?'<small class="muted">+'+(movs.length-6)+' movimento(s) anterior(es)</small>':'')+'</div>'
+    var source=(m.sourceType==='transaction'||m.transactionId)?'lançamento':(m.sourceType==='auto_yield'?'automático':(m.sourceType==='manual'||m.sourceType==='manual_yield'?'manual':'carteira'));
+    return '<div class="mini-row movement-edit-row"><span>'+esc(dateBR(m.date||today()))+' • '+esc(investmentMovementTypeLabel(type))+' • '+esc(source)+'</span><b class="amount '+cls+'">'+money(Number(m.value||0))+'</b><div class="movement-actions"><button class="btn" onclick="editInvestmentMovement(&quot;'+m.id+'&quot;)">Editar</button><button class="btn danger" onclick="deleteInvestmentMovement(&quot;'+m.id+'&quot;)">Excluir</button></div></div>'
+  }).join('')+(movs.length>8?'<small class="muted">+'+(movs.length-8)+' movimento(s) anterior(es)</small>':'')+'</div>'
+}
+function editInvestmentMovement(id){
+  var m=(state.investmentMovements||[]).find(function(x){return x&&x.id===id});
+  if(!m)return;
+  var tx=m.transactionId?(state.transactions||[]).find(function(t){return t&&t.id===m.transactionId}):null;
+  if(!tx&&m.sourceType==='transaction'&&m.sourceId)tx=(state.transactions||[]).find(function(t){return t&&t.id===m.sourceId});
+  if(tx){
+    toast('Este aporte veio de um lançamento. Edite o lançamento para manter caixa e carteira sincronizados.');
+    editTx(tx.id);
+    return;
+  }
+  var oldType=normalizeMovementType(m.type);
+  var type=prompt('Tipo do movimento: aporte, rendimento, resgate ou ajuste',investmentMovementTypeLabel(oldType));
+  if(type===null)return;
+  type=normalizeMovementType(type);
+  if(['contribution','yield','withdrawal','adjustment'].indexOf(type)<0){alert('Tipo inválido. Use aporte, rendimento, resgate ou ajuste.');return;}
+  var date=prompt('Data do movimento (AAAA-MM-DD):',String(m.date||today()).slice(0,10));
+  if(date===null)return;
+  date=String(date||today()).slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){alert('Data inválida. Use AAAA-MM-DD.');return;}
+  var value=num(prompt('Valor do movimento:',String(Number(m.value||0)).replace('.',',')));
+  if(!(value>0)){alert('Informe valor maior que zero.');return;}
+  var desc=prompt('Descrição:',m.description||investmentMovementTypeLabel(type));
+  if(desc===null)return;
+  m.type=type;
+  m.date=date;
+  m.value=value;
+  m.description=desc;
+  m.updatedAt=new Date().toISOString();
+  (state.dividends||[]).forEach(function(d){
+    if((m.sourceId&&d.sourceId===m.sourceId&&d.sourceType===m.sourceType)||d.id===m.sourceId){
+      d.date=date;d.value=value;d.type=type==='yield'?'Rendimento':d.type;d.updatedAt=new Date().toISOString();
+    }
+  });
+  cleanupInvestmentAccounting();
+  render();
+  toast('Movimento do investimento atualizado.');
+}
+function deleteInvestmentMovement(id){
+  var m=(state.investmentMovements||[]).find(function(x){return x&&x.id===id});
+  if(!m)return;
+  var tx=m.transactionId?(state.transactions||[]).find(function(t){return t&&t.id===m.transactionId}):null;
+  if(!tx&&m.sourceType==='transaction'&&m.sourceId)tx=(state.transactions||[]).find(function(t){return t&&t.id===m.sourceId});
+  if(tx){
+    if(!confirm('Este aporte veio de um lançamento financeiro. Excluir também o lançamento do extrato e do caixa?'))return;
+    state.transactions=(state.transactions||[]).filter(function(t){return t.id!==tx.id});
+  }else if(!confirm('Excluir este movimento do investimento?'))return;
+  state.investmentMovements=(state.investmentMovements||[]).filter(function(x){return x.id!==id});
+  state.dividends=(state.dividends||[]).filter(function(d){
+    if(m.sourceId&&d.sourceId===m.sourceId&&d.sourceType===m.sourceType)return false;
+    if(d.id===m.sourceId)return false;
+    return true;
+  });
+  cleanupInvestmentAccounting();
+  render();
+  toast('Movimento excluído.');
 }
 function invBaseValue(i){if(i&&i.baseCurrent!=null)return Number(i.baseCurrent||0);var q=Number(i.quantity||1);var cur=Number(i.current||i.average||0);if(i.type==='Renda fixa')return cur;return q*cur}
 function monthsBetween(a,b){var ap=a.split('-'),bp=b.split('-');return (Number(bp[0])-Number(ap[0]))*12+(Number(bp[1])-Number(ap[1]))}
@@ -1010,8 +1079,41 @@ function cancelDebtEdit(){var rv=state&&state.ui&&state.ui.returnViewAfterGlobal
 function deleteDebt(id){if(!confirm('Excluir esta dívida? Parcelas futuras sairão das projeções.'))return;state.debts=state.debts.filter(function(d){return d.id!==id});if(editingDebtId===id)cancelDebtEdit();recalculateComputedGoal('debt_deleted');setView('debts');render()}
 function settleDebt(id){var d=(state.debts||[]).find(function(x){return x.id===id});if(!d||!confirm('Marcar esta dívida como quitada? Parcelas futuras sairão das projeções.'))return;d.status='paid';d.paidAt=today();render()}
 function amortizeDebt(id){var d=(state.debts||[]).find(function(x){return x.id===id});if(!d)return;var v=num(prompt('Valor da amortização extra:','0'));if(v<=0)return;d.currentBalance=Math.max(0,debtRemainingBalance(d)-v);d.amortizations=d.amortizations||[];d.amortizations.push({id:uid(),date:today(),value:v});render()}
-function renderDebts(ym){if(el('debtMonthKpi'))setText('debtMonthKpi',money(debtPaymentsIn(ym).reduce(function(a,p){return a+Number(p.payment||0)},0)));if(el('debtBalanceKpi'))setText('debtBalanceKpi',money((state.debts||[]).filter(function(d){return d.status!=='paid'}).reduce(function(a,d){return a+debtRemainingBalance(d)},0)));if(el('debtActiveKpi'))setText('debtActiveKpi',String((state.debts||[]).filter(function(d){return d.status!=='paid'}).length));if(!el('debtList'))return;var debts=state.debts||[];if(!debts.length){el('debtList').innerHTML='<div class="empty">Nenhuma dívida cadastrada.</div>';return}el('debtList').innerHTML=debts.map(function(d){var sch=debtSchedule(d),open=sch.filter(function(p){return !p.paid}),next=open[0],rem=debtRemainingBalance(d);var sub=debtTypeLabel(d.debtType)+' • '+(d.creditor||'sem credor')+' • Próxima parcela: '+(next?money(next.payment)+' em '+monthName(next.month):'sem parcelas futuras');var val='<div class="amount negative">'+money(rem)+'</div><div class="split"><button class="btn" onclick="editDebt(&quot;'+d.id+'&quot;)">Editar</button><button class="btn" onclick="amortizeDebt(&quot;'+d.id+'&quot;)">Amortizar</button><button class="btn" onclick="settleDebt(&quot;'+d.id+'&quot;)">Quitar</button><button class="btn danger" onclick="deleteDebt(&quot;'+d.id+'&quot;)">Excluir</button></div>';return '<div class="item"><div><b>'+esc(d.name||'Dívida')+(d.status==='paid'?' <span class="badge">Quitada</span>':'')+'</b><small>'+esc(sub)+'</small></div><div>'+val+'</div></div>'}).join('')}
-window.editDebt=editDebt;window.deleteDebt=deleteDebt;window.settleDebt=settleDebt;window.amortizeDebt=amortizeDebt;
+function deleteDebtAmortization(debtId,amortId){
+  var d=(state.debts||[]).find(function(x){return x&&x.id===debtId});
+  if(!d||!Array.isArray(d.amortizations))return;
+  var a=d.amortizations.find(function(x){return x&&x.id===amortId});
+  if(!a)return;
+  if(!confirm('Excluir esta amortização? O saldo devedor será recomposto pelo valor amortizado.'))return;
+  d.currentBalance=Number(d.currentBalance||0)+Number(a.value||0);
+  d.amortizations=d.amortizations.filter(function(x){return x.id!==amortId});
+  d.updatedAt=new Date().toISOString();
+  render();
+  toast('Amortização excluída.');
+}
+function renderDebtAmortizations(d){
+  var list=(d.amortizations||[]).slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
+  if(!list.length)return '';
+  return '<div class="amortization-list">'+list.map(function(a){
+    return '<div class="amortization-row"><small>'+esc(dateBR(a.date||today()))+' • Amortização extra</small><b class="amount positive">'+money(Number(a.value||0))+'</b><button class="btn danger" onclick="deleteDebtAmortization(&quot;'+d.id+'&quot;,&quot;'+a.id+'&quot;)">Excluir amortização</button></div>'
+  }).join('')+'</div>';
+}
+function renderDebts(ym){
+  if(el('debtMonthKpi'))setText('debtMonthKpi',money(debtPaymentsIn(ym).reduce(function(a,p){return a+Number(p.payment||0)},0)));
+  if(el('debtBalanceKpi'))setText('debtBalanceKpi',money((state.debts||[]).filter(function(d){return d.status!=='paid'}).reduce(function(a,d){return a+debtRemainingBalance(d)},0)));
+  if(el('debtActiveKpi'))setText('debtActiveKpi',String((state.debts||[]).filter(function(d){return d.status!=='paid'}).length));
+  if(!el('debtList'))return;
+  var debts=state.debts||[];
+  if(!debts.length){el('debtList').innerHTML='<div class="empty">Nenhuma dívida cadastrada.</div>';return}
+  el('debtList').innerHTML=debts.map(function(d){
+    var sch=debtSchedule(d),open=sch.filter(function(p){return !p.paid}),next=open[0],rem=debtRemainingBalance(d);
+    var amortTotal=(d.amortizations||[]).reduce(function(a,x){return a+Number(x.value||0)},0);
+    var sub=debtTypeLabel(d.debtType)+' • '+(d.creditor||'sem credor')+' • Próxima parcela: '+(next?money(next.payment)+' em '+monthName(next.month):'sem parcelas futuras')+(amortTotal?(' • Amortizado extra: '+money(amortTotal)):'');
+    var val='<div class="amount negative">'+money(rem)+'</div><div class="split"><button class="btn" onclick="editDebt(&quot;'+d.id+'&quot;)">Editar</button><button class="btn" onclick="amortizeDebt(&quot;'+d.id+'&quot;)">Amortizar</button><button class="btn" onclick="settleDebt(&quot;'+d.id+'&quot;)">Quitar</button><button class="btn danger" onclick="deleteDebt(&quot;'+d.id+'&quot;)">Excluir</button></div>';
+    return '<div class="item"><div><b>'+esc(d.name||'Dívida')+(d.status==='paid'?' <span class="badge">Quitada</span>':'')+'</b><small>'+esc(sub)+'</small>'+renderDebtAmortizations(d)+'</div><div>'+val+'</div></div>'
+  }).join('')
+}
+window.editDebt=editDebt;window.deleteDebt=deleteDebt;window.settleDebt=settleDebt;window.amortizeDebt=amortizeDebt;window.deleteDebtAmortization=deleteDebtAmortization;
 
 
 function futureTypeLabel(t){return {future_income:'Receita futura',future_receivable:'Recebimento futuro',future_expense:'Despesa futura',future_investment_contribution:'Aporte futuro',future_debt_payment:'Pagamento de dívida',recurring_income:'Receita recorrente',recurring_expense:'Despesa recorrente',subscription:'Assinatura',fixed_bill:'Conta fixa'}[t]||'Lançamento futuro'}
@@ -1177,231 +1279,287 @@ var tut=0;var steps=[['Organize seu mês','Use o seletor de mês para olhar pass
 function showTutorial(){tut=0;el('tutorial').classList.remove('hidden');renderTutorial()}
 function renderTutorial(){el('tutorialTitle').textContent=steps[tut][0];el('tutorialText').textContent=steps[tut][1];el('tutorialProgress').style.width=((tut+1)/steps.length*100)+'%';el('nextTutorial').textContent=tut===steps.length-1?'Concluir':'Continuar'}
 function nextTutorial(){if(tut<steps.length-1){tut++;renderTutorial()}else{state.ui.onboarded=true;el('tutorial').classList.add('hidden');render()}}
-function exportExcel(){var ym=selectedMonth();var sheets=[];function table(name,heads,rows){var h='<table><tr>'+heads.map(function(x){return '<th>'+esc(x)+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+esc(c)+'</td>'}).join('')+'</tr>'}).join('')+'</table>';sheets.push('<h2>'+esc(name)+'</h2>'+h)}table('Movimentações', ['Data','Mês','Tipo','Descrição','Categoria','Valor','Parcela'], monthTransactions(ym).map(function(t){return[t.date,ym,t.type,t.description,categoryNameById(t.categoryId,t.category),Number(t.monthAmount!=null?t.monthAmount:t.value||0).toFixed(2),t.parcelLabel||'']}));table('Investimentos',['Tipo','Ativo','Quantidade','Preço médio','Preço/saldo atual','Valor projetado','Indexador','Taxa anual','Vencimento'],state.investments.map(function(i){return[i.type,i.ticker,i.quantity,i.average,i.current,projectedInvestment(i,ym).toFixed(2),i.indexer,i.annualRate,i.maturity]}));table('Movimentos de investimentos',['Data','Investimento','Tipo','Descrição','Valor','Origem'],(state.investmentMovements||[]).map(function(m){var i=investmentById(m.investmentId);return[m.date,i?invLabel(i):m.investmentId,investmentMovementTypeLabel(normalizeMovementType(m.type)),m.description,Number(m.value||0).toFixed(2),m.sourceType||'manual']}));table('Dividendos e rendimentos',['Data','Ativo','Tipo','Valor'],state.dividends.map(function(d){return[d.date,d.ticker,d.type,Number(d.value||0).toFixed(2)]}));table('Orçamentos',['Categoria','Limite'],state.budgets.map(function(b){return[b.category,Number(b.value||0).toFixed(2)]}));table('Independência financeira',['Campo','Valor'],Object.keys(state.freedom||{}).map(function(k){return[k,state.freedom[k]]}));table('Lançamentos futuros',['Tipo','Descrição','Categoria','Valor','Início','Fim','Dia','Recorrência','Status'],(state.futureCashflowItems||[]).map(function(i){return[futureTypeLabel(i.type),i.description,categoryNameById(i.categoryId,i.category),Number(i.amount||0).toFixed(2),i.startDate,i.endDate||'',i.dueDay||'',i.recurrence,i.status]}));table('Fluxo projetado',['Mês','Entrada esperada','Comprometido','Resultado do mês','Saldo final'],futureProjectedMonths(ym).map(function(r){return[monthName(r.month),Number(r.expectedIncome||0).toFixed(2),Number(r.committed||0).toFixed(2),Number(r.net||0).toFixed(2),Number(r.balance||0).toFixed(2)]}));table('Decisões de compra',['Descrição','Categoria','Valor','Motivo','Prioridade','Recorrência','Status','Custo em horas','Criado em','Liberar em'],(state.purchaseDecisions||[]).map(function(d){var ev=evaluateDecisionDraft(d);return[d.description,categoryNameById(d.categoryId,d.category),Number(d.amount||0).toFixed(2),decisionReasonLabel(d.reason),decisionPriorityLabel(d.priority),decisionRecurrenceLabel(d.recurrence),decisionStatusLabel(d.status),formatHours(ev.hours),d.createdAt||'',decisionWaitUntil(d)]}));table('Objetivo inteligente',['Campo','Valor'],state.profile&&state.profile.computedGoal?[[ 'Tipo', state.profile.computedGoal.type ],[ 'Título', state.profile.computedGoal.title ],[ 'Confiança', state.profile.computedGoal.confidence ],[ 'Calculado em', state.profile.computedGoal.calculatedAt ]]:[]);table('Perfil',['Campo','Valor'],Object.keys(state.profile).map(function(k){return[k,state.profile[k]]}));var html='<html><head><meta charset="utf-8"></head><body>'+sheets.join('<br>')+'</body></html>';var blob=new Blob([html],{type:'application/vnd.ms-excel'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cockpit-financeiro-'+ym+'.xls';a.click();URL.revokeObjectURL(a.href)}
-/* PATCH FINAL — correção dos aportes do ano sem dupla contagem
-   Cole este bloco logo acima de: Object.assign(window,{
+function exportExcel(){
+  var ym=selectedMonth();
+  var now=new Date().toISOString();
+  var sheets=[];
+  function cleanSheetName(name){return String(name||'Planilha').replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Planilha'}
+  function addSheet(name,heads,rows){sheets.push({name:cleanSheetName(name),heads:heads||[],rows:rows||[]})}
+  function xml(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function cell(v){
+    if(v==null)v='';
+    if(typeof v==='number'&&isFinite(v))return '<Cell><Data ss:Type="Number">'+v+'</Data></Cell>';
+    return '<Cell><Data ss:Type="String">'+xml(v)+'</Data></Cell>'
+  }
+  function row(vals){return '<Row>'+vals.map(cell).join('')+'</Row>'}
+  function sheetXml(sh){return '<Worksheet ss:Name="'+xml(sh.name)+'"><Table>'+row(sh.heads)+sh.rows.map(row).join('')+'</Table></Worksheet>'}
+  var s=summary(ym);
+  var aportesAno=typeof investmentContributionValueYearToDate==='function'?investmentContributionValueYearToDate(ym):0;
+  var rendimentoMes=typeof investmentYieldValueIn==='function'?investmentYieldValueIn(ym):0;
+  var debtTotal=(state.debts||[]).filter(function(d){return d.status!=='paid'}).reduce(function(a,d){return a+debtRemainingBalance(d)},0);
+  var amortTotal=(state.debts||[]).reduce(function(a,d){return a+(d.amortizations||[]).reduce(function(b,x){return b+Number(x.value||0)},0)},0);
+  addSheet('Resumo executivo',['Indicador','Valor','Observação'],[
+    ['Arquivo gerado em',now,'Exportação completa para análise externa'],
+    ['Mês selecionado',monthName(ym),ym],
+    ['Patrimônio líquido',s.net,'Investimentos menos dívidas, conforme cadastro atual'],
+    ['Saldo disponível do mês',s.cash,'Receitas - despesas - aportes com saída de caixa + dividendos em caixa'],
+    ['Receitas do mês',s.income,'Entradas registradas no mês'],
+    ['Despesas do mês',s.expense,'Saídas e parcelas do mês'],
+    ['Aportes do mês',s.aporte,'Aportes econômicos sem duplicidade'],
+    ['Aportes no ano até o mês',aportesAno,'Soma de janeiro até o mês selecionado'],
+    ['Rendimentos reinvestidos no mês',rendimentoMes,'Rendimentos vinculados a investimentos'],
+    ['Dividendos/rendimentos em caixa no mês',s.dividends,'Somente registros com impacto em caixa'],
+    ['Saldo devedor total',debtTotal,'Dívidas ativas'],
+    ['Parcelas do mês',s.debtPayments,'Compromissos mensais de dívidas'],
+    ['Amortizações extras cadastradas',amortTotal,'Total histórico de amortizações extras']
+  ]);
+  var months=yearMonthsToDate(ym);
+  addSheet('Resumo mensal',['Mês','Receitas','Despesas','Saldo do mês','Aportes','Saída de caixa para aportes','Rendimentos reinvestidos','Dividendos em caixa','Parcelas dívida','Carteira','Saldo devedor','Patrimônio líquido'],months.map(function(m){var x=summary(m);return[monthName(m),x.income,x.expense,x.cash,x.aporte,x.investmentCashOutflow||0,investmentYieldValueIn(m),x.dividends,x.debtPayments,x.investments,x.debtBalance,x.net]}));
+  addSheet('Movimentações do mês',['Data','Mês contábil','Tipo','Descrição','Categoria','Valor do mês','Valor original','Parcela','Investimento vinculado','Dívida vinculada','Observações'],monthTransactions(ym).map(function(t){var inv=investmentById(t.investmentId||t.linkedInvestmentId);return[t.date,txBillingMonth(t)||ym,typeLabel(t.type),t.description,categoryNameById(t.categoryId,t.category),Number(t.monthAmount!=null?t.monthAmount:t.value||0),Number(t.value||0),t.parcelLabel||'',inv?invLabel(inv):'',t.debtName||t.debtId||'',t.notes||'']}));
+  addSheet('Transações base',['ID','Data','Mês fatura','Tipo','Descrição','Categoria','Valor','Parcelas','Parcela inicial','Investimento vinculado','Movimento vinculado','Criado em','Atualizado em','Observações'],(state.transactions||[]).map(function(t){var inv=investmentById(t.investmentId||t.linkedInvestmentId);return[t.id,t.date,txBillingMonth(t)||'',typeLabel(t.type),t.description,categoryNameById(t.categoryId,t.category),Number(t.value||0),Number(t.installments||1),t.firstBillingMonth||t.billingMonth||'',inv?invLabel(inv):'',t.linkedInvestmentMovementId||'',t.createdAt||'',t.updatedAt||'',t.notes||'']}));
+  addSheet('Investimentos',['ID','Tipo','Ativo/produto','Corretora/banco','Indexador','Quantidade','Preço médio/valor aplicado','Saldo/preço atual','Valor projetado no mês','Total aportado até mês','Ganho estimado','Taxa anual prevista','Vencimento','Data aplicação','Última atualização','Observações'],(state.investments||[]).map(function(i){var val=projectedInvestment(i,ym),cost=investmentCost(i,ym);return[i.id,i.type,invLabel(i),i.broker||'',i.indexer||'',Number(i.quantity||0),Number(i.average||0),Number(i.current||0),val,cost,val-cost,Number(i.annualRate||0),i.maturity||'',i.purchaseDate||'',i.lastUpdate||'',i.notes||'']}));
+  addSheet('Movimentos investimentos',['ID','Data','Mês','Investimento','Tipo','Valor','Descrição','Origem','ID origem','Transação vinculada','Criado em','Atualizado em'],(state.investmentMovements||[]).map(function(m){var i=investmentById(m.investmentId);var t=normalizeMovementType(m.type);return[m.id,m.date,String(m.date||'').slice(0,7),i?invLabel(i):m.investmentId,investmentMovementTypeLabel(t),Number(m.value||0),m.description||'',m.sourceType||'',m.sourceId||'',m.transactionId||'',m.createdAt||'',m.updatedAt||'']}));
+  addSheet('Dividendos rendimentos',['ID','Data','Mês','Ativo','Tipo','Valor','Impacto no caixa','Reinvestido','Origem','ID origem','Criado em'],(state.dividends||[]).map(function(d){return[d.id,d.date,String(d.date||'').slice(0,7),d.ticker||'',d.type||'',Number(d.value||0),d.cashImpact?'Sim':'Não',d.reinvested?'Sim':'Não',d.sourceType||'',d.sourceId||'',d.createdAt||'']}));
+  addSheet('Dívidas',['ID','Nome','Tipo','Credor','Status','Valor original','Valor financiado','Entrada','Saldo devedor','Juros','Periodicidade','Sistema','Total parcelas','Parcelas pagas','Parcela manual','Data início','Primeira parcela','Dia vencimento','Amortizações extras','Total amortizado extra','Observações'],(state.debts||[]).map(function(d){var amort=(d.amortizations||[]),totalAmort=amort.reduce(function(a,x){return a+Number(x.value||0)},0);return[d.id,d.name,debtTypeLabel(d.debtType),d.creditor||'',d.status||'active',Number(d.original||0),Number(d.financed||0),Number(d.downPayment||0),debtRemainingBalance(d),Number(d.interestRate||0),d.ratePeriod||'',d.amortizationSystem||'',Number(d.totalInstallments||0),Number(d.paidInstallments||0),Number(d.manualPayment||0),d.startDate||'',d.firstPaymentDate||'',d.dueDay||'',amort.length,totalAmort,d.notes||'']}));
+  var debtRows=[];(state.debts||[]).forEach(function(d){debtSchedule(d).forEach(function(p){debtRows.push([d.id,d.name,p.number,p.month,p.paid?'Paga':'Aberta',Number(p.payment||0),Number(p.interest||0),Number(p.amortization||0),Number(p.balance||0),d.creditor||''])})});
+  addSheet('Cronograma dívidas',['ID dívida','Dívida','Parcela','Mês','Status','Pagamento','Juros','Amortização','Saldo após parcela','Credor'],debtRows);
+  var amortRows=[];(state.debts||[]).forEach(function(d){(d.amortizations||[]).forEach(function(a){amortRows.push([d.id,d.name,a.id,a.date,String(a.date||'').slice(0,7),Number(a.value||0),a.createdAt||''])})});
+  addSheet('Amortizações',['ID dívida','Dívida','ID amortização','Data','Mês','Valor','Criado em'],amortRows);
+  addSheet('Fluxo projetado',['Mês','Entrada esperada','Comprometido','Resultado do mês','Saldo final','Novos lançamentos'],futureProjectedMonths(ym).map(function(r){return[monthName(r.month),Number(r.expectedIncome||0),Number(r.committed||0),Number(r.net||0),Number(r.balance||0),r.occurrences.length]}));
+  addSheet('Lançamentos futuros',['ID','Tipo','Descrição','Categoria','Valor','Início','Fim','Dia','Recorrência','Status'],(state.futureCashflowItems||[]).map(function(i){return[i.id,futureTypeLabel(i.type),i.description,categoryNameById(i.categoryId,i.category),Number(i.amount||0),i.startDate||'',i.endDate||'',i.dueDay||'',i.recurrence||'',futureStatusLabel(i.status)]}));
+  addSheet('Orçamentos',['ID','Categoria','Limite mensal','Tipo categoria'],(state.budgets||[]).map(function(b){var cat=(state.categories||[]).find(function(c){return c.id===b.categoryId});return[b.id,categoryNameById(b.categoryId,b.category),Number(b.value||0),cat?cat.type:'']}));
+  addSheet('Categorias',['ID','Nome','Tipo','Sistema'],(state.categories||[]).map(function(c){return[c.id,c.name,c.type,c.system?'Sim':'Não']}));
+  addSheet('Decisões de compra',['ID','Descrição','Categoria','Valor','Motivo','Prioridade','Recorrência','Status','Custo em horas','Criado em','Liberar em'],(state.purchaseDecisions||[]).map(function(d){var ev=evaluateDecisionDraft(d);return[d.id,d.description,categoryNameById(d.categoryId,d.category),Number(d.amount||0),decisionReasonLabel(d.reason),decisionPriorityLabel(d.priority),decisionRecurrenceLabel(d.recurrence),decisionStatusLabel(d.status),formatHours(ev.hours),d.createdAt||'',decisionWaitUntil(d)]}));
+  var goalRows=state.profile&&state.profile.computedGoal?[[ 'Objetivo calculado',state.profile.computedGoal.title||'' ],[ 'Tipo',state.profile.computedGoal.type||'' ],[ 'Confiança',state.profile.computedGoal.confidence||'' ],[ 'Calculado em',state.profile.computedGoal.calculatedAt||'' ]]:[];
+  Object.keys(state.profile||{}).forEach(function(k){goalRows.push(['Perfil: '+k,state.profile[k]])});
+  addSheet('Objetivo e perfil',['Campo','Valor'],goalRows);
+  var workbook='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'+sheets.map(sheetXml).join('')+'</Workbook>';
+  var blob=new Blob([workbook],{type:'application/vnd.ms-excel;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='cockpit-financeiro-completo-'+ym+'.xls';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+
+
+/* PATCH V2 — aportes do ano sem duplicidade entre posição, movimento e transação
+   O erro que persistia vinha de três fontes possíveis para o mesmo aporte:
+   1) base da posição do investimento;
+   2) movimento criado automaticamente;
+   3) transação antiga de tipo investment sem vínculo.
+   Esta versão conta cada aporte econômico uma única vez.
 */
-
-function cockpitPatchYm(v){
-  return String(v || '').slice(0, 7);
-}
-
-function cockpitPatchNum(v){
-  v = Number(v || 0);
-  return isFinite(v) ? v : 0;
-}
-
-function cockpitPatchNorm(v){
-  return String(v || '')
+function cockpitAporteV2Norm(v){
+  return String(v||'')
     .trim()
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ');
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ');
 }
-
-function cockpitPatchMovementType(m){
-  var t = cockpitPatchNorm(m && m.type);
-
-  if(['aporte', 'aplicacao', 'aplicação', 'contribution', 'investimento'].indexOf(t) >= 0) {
-    return 'contribution';
-  }
-
-  if(['rendimento', 'yield', 'dividendo', 'dividend'].indexOf(t) >= 0) {
-    return 'yield';
-  }
-
-  if(['resgate', 'withdrawal', 'saque'].indexOf(t) >= 0) {
-    return 'withdrawal';
-  }
-
-  if(['ajuste', 'adjustment'].indexOf(t) >= 0) {
-    return 'adjustment';
-  }
-
-  return t || 'contribution';
+function cockpitAporteV2Num(v){
+  v=Number(v||0);
+  return isFinite(v)?v:0;
 }
-
-function cockpitPatchMovementInMonth(m, ym){
-  return cockpitPatchYm(m && m.date) === ym;
+function cockpitAporteV2MoneyKey(v){
+  return cockpitAporteV2Num(v).toFixed(2);
 }
-
-function cockpitPatchInvestmentLabel(i){
-  if(typeof invLabel === 'function') return invLabel(i);
-  return [
-    i && (i.ticker || i.name || i.product || i.description),
-    i && i.type,
-    i && (i.broker || i.bank || i.institution),
-    i && i.indexer
-  ].filter(Boolean).join(' • ');
+function cockpitAporteV2Date(v){
+  return String(v||'').slice(0,10);
 }
-
-function investmentDirectBaseMonth(i){
-  return cockpitPatchYm(
-    (i && i.purchaseDate) ||
-    (i && i.date) ||
-    (i && i.createdAt) ||
-    (i && i.movementBaselineDate)
-  );
+function cockpitAporteV2Ym(v){
+  return String(v||'').slice(0,7);
 }
-
-function investmentDirectBaseValue(i){
-  i = i || {};
-
-  var v = 0;
-
-  if(typeof investmentCostFromRaw === 'function'){
-    v = cockpitPatchNum(investmentCostFromRaw(i));
-  }
-
-  if(!v) v = cockpitPatchNum(i.baseTotalInvested);
-  if(!v) v = cockpitPatchNum(i.totalInvested);
-  if(!v) v = cockpitPatchNum(i.totalContribution);
-  if(!v) v = cockpitPatchNum(i.cost);
-  if(!v) v = cockpitPatchNum(i.investedAmount);
-  if(!v) v = cockpitPatchNum(i.initialContribution);
-
+function cockpitAporteV2MovementType(m){
+  var t=cockpitAporteV2Norm(m&&m.type);
+  if(['aporte','aplicacao','aplicação','contribution','investimento','investment'].indexOf(t)>=0)return 'contribution';
+  if(['rendimento','yield','dividendo','dividend'].indexOf(t)>=0)return 'yield';
+  if(['resgate','withdrawal','saque'].indexOf(t)>=0)return 'withdrawal';
+  if(['ajuste','adjustment'].indexOf(t)>=0)return 'adjustment';
+  return t||'contribution';
+}
+function cockpitAporteV2InvLabel(i){
+  if(typeof invLabel==='function')return invLabel(i);
+  return [i&&(i.ticker||i.name||i.product),i&&i.type,i&&(i.broker||i.bank||i.institution),i&&i.indexer].filter(Boolean).join(' • ');
+}
+function cockpitAporteV2InvText(i){
+  return cockpitAporteV2Norm([
+    cockpitAporteV2InvLabel(i),
+    i&&i.ticker,
+    i&&i.name,
+    i&&i.product,
+    i&&i.description,
+    i&&i.type,
+    i&&i.indexer,
+    i&&(i.broker||i.bank||i.institution)
+  ].filter(Boolean).join(' '));
+}
+function cockpitAporteV2BaseDate(i){
+  return cockpitAporteV2Date((i&&i.purchaseDate)||(i&&i.date)||(i&&i.createdAt)||(i&&i.movementBaselineDate));
+}
+function cockpitAporteV2BaseMonth(i){
+  return cockpitAporteV2Ym(cockpitAporteV2BaseDate(i));
+}
+function cockpitAporteV2BaseValue(i){
+  i=i||{};
+  var v=0;
+  if(typeof investmentCostFromRaw==='function')v=cockpitAporteV2Num(investmentCostFromRaw(i));
+  if(!v)v=cockpitAporteV2Num(i.baseTotalInvested);
+  if(!v)v=cockpitAporteV2Num(i.totalInvested);
+  if(!v)v=cockpitAporteV2Num(i.totalContribution);
+  if(!v)v=cockpitAporteV2Num(i.cost);
+  if(!v)v=cockpitAporteV2Num(i.investedAmount);
+  if(!v)v=cockpitAporteV2Num(i.initialContribution);
   if(!v){
-    var q = cockpitPatchNum(i.quantity);
-    var avg = cockpitPatchNum(i.average);
-    if(q > 0 && avg > 0) v = q * avg;
+    var q=cockpitAporteV2Num(i.quantity),avg=cockpitAporteV2Num(i.average||i.unitPrice);
+    if(q>0&&avg>0)v=q*avg;
   }
-
-  return Math.max(0, cockpitPatchNum(v));
+  return Math.max(0,cockpitAporteV2Num(v));
 }
-
-function investmentHasBaseMovementInMonth(i, ym, base){
-  if(!i || !i.id) return false;
-
-  base = cockpitPatchNum(base);
-  if(!base) return false;
-
-  var movements = (state.investmentMovements || []).filter(function(m){
-    if(!m) return false;
-    if(String(m.investmentId || '') !== String(i.id)) return false;
-    if(cockpitPatchMovementType(m) !== 'contribution') return false;
-    if(!cockpitPatchMovementInMonth(m, ym)) return false;
-    return true;
-  });
-
-  if(!movements.length) return false;
-
-  var label = cockpitPatchNorm(cockpitPatchInvestmentLabel(i));
-
-  var sum = movements.reduce(function(a, m){
-    return a + cockpitPatchNum(m.value);
-  }, 0);
-
-  if(Math.abs(sum - base) < 0.01) return true;
-
-  return movements.some(function(m){
-    var value = cockpitPatchNum(m.value);
-    var src = String(m.sourceType || '');
-    var sameSource = m.sourceId && String(m.sourceId) === String(i.id);
-    var sameValue = Math.abs(value - base) < 0.01;
-
-    var desc = cockpitPatchNorm((m.description || '') + ' ' + (m.notes || ''));
-    var looksLikeBase =
-      desc &&
-      label &&
-      desc.indexOf(label) !== -1 &&
-      /(aporte|aplicacao|aplicação|cadastro|posicao|posição|consolidado|inicial)/.test(desc);
-
-    return (
-      sameSource ||
-      sameValue ||
-      src === 'investment_form' ||
-      src === 'investment_consolidation' ||
-      src === 'initial_investment' ||
-      looksLikeBase
-    );
+function cockpitAporteV2SameValue(a,b){
+  return Math.abs(cockpitAporteV2Num(a)-cockpitAporteV2Num(b))<0.01;
+}
+function cockpitAporteV2TextMatchesInvestment(text,i){
+  text=cockpitAporteV2Norm(text);
+  if(!text)return false;
+  var names=[i&&i.ticker,i&&i.name,i&&i.product,cockpitAporteV2InvLabel(i)].filter(Boolean).map(cockpitAporteV2Norm).filter(Boolean);
+  return names.some(function(n){return n&&n.length>=3&&(text.indexOf(n)!==-1||n.indexOf(text)!==-1)});
+}
+function cockpitAporteV2LinkedToInvestment(obj,i){
+  if(!obj||!i)return false;
+  var invId=String(i.id||'');
+  return !!invId&&[
+    obj.investmentId,
+    obj.linkedInvestmentId,
+    obj.targetInvestmentId,
+    obj.assetId
+  ].some(function(x){return x&&String(x)===invId});
+}
+function cockpitAporteV2MovementDuplicatesBase(m,ym){
+  if(!m||cockpitAporteV2MovementType(m)!=='contribution')return false;
+  if(cockpitAporteV2Ym(m.date)!==ym)return false;
+  var value=cockpitAporteV2Num(m.value);
+  if(!value)return false;
+  return (state.investments||[]).some(function(i){
+    if(!i||!i.id)return false;
+    if(cockpitAporteV2BaseMonth(i)!==ym)return false;
+    var base=cockpitAporteV2BaseValue(i);
+    if(!base||!cockpitAporteV2SameValue(base,value))return false;
+    var sameInvestment=String(m.investmentId||'')===String(i.id||'')||cockpitAporteV2LinkedToInvestment(m,i);
+    var sameSource=m.sourceId&&String(m.sourceId)===String(i.id||'');
+    var sameDate=cockpitAporteV2Date(m.date)===cockpitAporteV2BaseDate(i);
+    var src=cockpitAporteV2Norm(m.sourceType||'');
+    var sourceSaysBase=['investment_form','investment_consolidation','initial_investment','cadastro_investimento','posicao_inicial'].indexOf(src)>=0;
+    var text=(m.description||'')+' '+(m.notes||'');
+    var textMatches=cockpitAporteV2TextMatchesInvestment(text,i);
+    return sameInvestment||sameSource||sourceSaysBase||sameDate||textMatches;
   });
 }
-
-function investmentBaseContributionIn(ym){
-  var total = 0;
-
-  (state.investments || []).forEach(function(i){
-    if(!i || !i.id) return;
-
-    if(investmentDirectBaseMonth(i) !== ym) return;
-
-    var base = investmentDirectBaseValue(i);
-    if(!base) return;
-
-    if(investmentHasBaseMovementInMonth(i, ym, base)) return;
-
-    total += base;
+function cockpitAporteV2TxDuplicatesBase(t,ym){
+  if(!t||t.type!=='investment')return false;
+  if(cockpitAporteV2Ym(t.date)!==ym)return false;
+  var value=cockpitAporteV2Num(t.monthAmount!=null?t.monthAmount:t.value);
+  if(!value)return false;
+  var text=(t.description||'')+' '+(t.notes||'')+' '+(t.category||'');
+  return (state.investments||[]).some(function(i){
+    if(!i||!i.id)return false;
+    if(cockpitAporteV2BaseMonth(i)!==ym)return false;
+    var base=cockpitAporteV2BaseValue(i);
+    if(!base||!cockpitAporteV2SameValue(base,value))return false;
+    var sameInvestment=cockpitAporteV2LinkedToInvestment(t,i);
+    var sameDate=cockpitAporteV2Date(t.date)===cockpitAporteV2BaseDate(i);
+    var textMatches=cockpitAporteV2TextMatchesInvestment(text,i);
+    /* Se uma transação de investimento tem mesmo valor e mesma data da posição inicial,
+       ela representa o mesmo aporte econômico e não pode entrar de novo. */
+    return sameInvestment||sameDate||textMatches;
   });
-
-  return total;
 }
-
+function cockpitAporteV2TxDuplicatesMovement(t,ym){
+  if(!t||t.type!=='investment')return false;
+  if(cockpitAporteV2Ym(t.date)!==ym)return false;
+  var value=cockpitAporteV2Num(t.monthAmount!=null?t.monthAmount:t.value);
+  var date=cockpitAporteV2Date(t.date);
+  var text=(t.description||'')+' '+(t.notes||'')+' '+(t.category||'');
+  return (state.investmentMovements||[]).some(function(m){
+    if(!m||cockpitAporteV2MovementType(m)!=='contribution')return false;
+    if(cockpitAporteV2Ym(m.date)!==ym)return false;
+    if(m.transactionId&&t.id&&String(m.transactionId)===String(t.id))return true;
+    if(m.sourceType==='transaction'&&m.sourceId&&t.id&&String(m.sourceId)===String(t.id))return true;
+    if(!cockpitAporteV2SameValue(m.value,value))return false;
+    if(cockpitAporteV2Date(m.date)!==date)return false;
+    var sameInvestment=t.investmentId&&m.investmentId&&String(t.investmentId)===String(m.investmentId);
+    var inv=(state.investments||[]).find(function(i){return i&&m.investmentId&&String(i.id)===String(m.investmentId)});
+    var textMatches=inv&&cockpitAporteV2TextMatchesInvestment(text,inv);
+    return sameInvestment||textMatches||!cockpitAporteV2Norm(text);
+  });
+}
+function cockpitAporteV2MovementKey(m){
+  return [
+    m.id||'',
+    m.investmentId||'',
+    cockpitAporteV2Date(m.date),
+    cockpitAporteV2MoneyKey(m.value),
+    cockpitAporteV2Norm(m.sourceType||''),
+    m.sourceId||'',
+    m.transactionId||'',
+    cockpitAporteV2Norm(m.description||'')
+  ].join('|');
+}
 function investmentContributionValueIn(ym){
-  var total = investmentBaseContributionIn(ym);
-  var countedTx = {};
-  var countedMov = {};
+  ym=ym||selectedMonth();
+  var total=0;
+  var countedTx={};
+  var countedMov={};
 
-  (state.investmentMovements || []).forEach(function(m){
-    if(!m) return;
-    if(cockpitPatchMovementType(m) !== 'contribution') return;
-    if(!cockpitPatchMovementInMonth(m, ym)) return;
-
-    var key = [
-      m.id || '',
-      m.investmentId || '',
-      cockpitPatchYm(m.date),
-      cockpitPatchNum(m.value).toFixed(2),
-      cockpitPatchNorm(m.description || ''),
-      cockpitPatchNorm(m.sourceType || ''),
-      m.sourceId || '',
-      m.transactionId || ''
-    ].join('|');
-
-    if(countedMov[key]) return;
-    countedMov[key] = true;
-
-    total += cockpitPatchNum(m.value);
-
-    if(m.transactionId) countedTx[String(m.transactionId)] = true;
-    if(m.sourceType === 'transaction' && m.sourceId) countedTx[String(m.sourceId)] = true;
+  (state.investments||[]).forEach(function(i){
+    if(!i||!i.id)return;
+    if(cockpitAporteV2BaseMonth(i)!==ym)return;
+    var base=cockpitAporteV2BaseValue(i);
+    if(base>0)total+=base;
   });
 
-  (state.transactions || []).forEach(function(t){
-    if(!t) return;
-    if(t.type !== 'investment') return;
-    if(cockpitPatchYm(t.date) !== ym) return;
+  (state.investmentMovements||[]).forEach(function(m){
+    if(!m)return;
+    if(cockpitAporteV2MovementType(m)!=='contribution')return;
+    if(cockpitAporteV2Ym(m.date)!==ym)return;
+    if(cockpitAporteV2MovementDuplicatesBase(m,ym)){
+      if(m.transactionId)countedTx[String(m.transactionId)]=true;
+      if(m.sourceType==='transaction'&&m.sourceId)countedTx[String(m.sourceId)]=true;
+      return;
+    }
+    var key=cockpitAporteV2MovementKey(m);
+    if(countedMov[key])return;
+    countedMov[key]=true;
+    total+=cockpitAporteV2Num(m.value);
+    if(m.transactionId)countedTx[String(m.transactionId)]=true;
+    if(m.sourceType==='transaction'&&m.sourceId)countedTx[String(m.sourceId)]=true;
+  });
 
-    if(t.linkedInvestmentMovementId) return;
-    if(t.id && countedTx[String(t.id)]) return;
-
-    total += cockpitPatchNum(t.monthAmount != null ? t.monthAmount : t.value);
+  (state.transactions||[]).forEach(function(t){
+    if(!t||t.type!=='investment')return;
+    if(cockpitAporteV2Ym(t.date)!==ym)return;
+    if(t.linkedInvestmentMovementId)return;
+    if(t.id&&countedTx[String(t.id)])return;
+    if(cockpitAporteV2TxDuplicatesBase(t,ym))return;
+    if(cockpitAporteV2TxDuplicatesMovement(t,ym))return;
+    total+=cockpitAporteV2Num(t.monthAmount!=null?t.monthAmount:t.value);
   });
 
   return total;
 }
-
 function investmentContributionValueYearToDate(ym){
-  ym = ym || selectedMonth();
-
-  var months;
-
-  if(typeof yearMonthsToDate === 'function'){
-    months = yearMonthsToDate(ym);
-  } else {
-    var year = Number(String(ym).slice(0, 4));
-    var last = Number(String(ym).slice(5, 7));
-    months = [];
-    for(var i = 1; i <= last; i++){
-      months.push(year + '-' + String(i).padStart(2, '0'));
-    }
-  }
-
-  return months.reduce(function(total, monthKey){
-    return total + investmentContributionValueIn(monthKey);
-  }, 0);
+  ym=ym||selectedMonth();
+  var months=(typeof yearMonthsToDate==='function')?yearMonthsToDate(ym):(function(){
+    var y=Number(String(ym).slice(0,4)),last=Number(String(ym).slice(5,7)),out=[];
+    for(var i=1;i<=last;i++)out.push(y+'-'+String(i).padStart(2,'0'));
+    return out;
+  })();
+  return months.reduce(function(total,m){return total+investmentContributionValueIn(m)},0);
 }
-Object.assign(window,{setView:setView,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend});
+
+Object.assign(window,{setView:setView,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,deleteDebtAmortization:deleteDebtAmortization,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editInvestmentMovement:editInvestmentMovement,deleteInvestmentMovement:deleteInvestmentMovement,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend});
 setupEvents();load();
 })();
 </script>
