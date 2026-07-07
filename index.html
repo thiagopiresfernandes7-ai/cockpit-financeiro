@@ -1178,7 +1178,229 @@ function showTutorial(){tut=0;el('tutorial').classList.remove('hidden');renderTu
 function renderTutorial(){el('tutorialTitle').textContent=steps[tut][0];el('tutorialText').textContent=steps[tut][1];el('tutorialProgress').style.width=((tut+1)/steps.length*100)+'%';el('nextTutorial').textContent=tut===steps.length-1?'Concluir':'Continuar'}
 function nextTutorial(){if(tut<steps.length-1){tut++;renderTutorial()}else{state.ui.onboarded=true;el('tutorial').classList.add('hidden');render()}}
 function exportExcel(){var ym=selectedMonth();var sheets=[];function table(name,heads,rows){var h='<table><tr>'+heads.map(function(x){return '<th>'+esc(x)+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+esc(c)+'</td>'}).join('')+'</tr>'}).join('')+'</table>';sheets.push('<h2>'+esc(name)+'</h2>'+h)}table('Movimentações', ['Data','Mês','Tipo','Descrição','Categoria','Valor','Parcela'], monthTransactions(ym).map(function(t){return[t.date,ym,t.type,t.description,categoryNameById(t.categoryId,t.category),Number(t.monthAmount!=null?t.monthAmount:t.value||0).toFixed(2),t.parcelLabel||'']}));table('Investimentos',['Tipo','Ativo','Quantidade','Preço médio','Preço/saldo atual','Valor projetado','Indexador','Taxa anual','Vencimento'],state.investments.map(function(i){return[i.type,i.ticker,i.quantity,i.average,i.current,projectedInvestment(i,ym).toFixed(2),i.indexer,i.annualRate,i.maturity]}));table('Movimentos de investimentos',['Data','Investimento','Tipo','Descrição','Valor','Origem'],(state.investmentMovements||[]).map(function(m){var i=investmentById(m.investmentId);return[m.date,i?invLabel(i):m.investmentId,investmentMovementTypeLabel(normalizeMovementType(m.type)),m.description,Number(m.value||0).toFixed(2),m.sourceType||'manual']}));table('Dividendos e rendimentos',['Data','Ativo','Tipo','Valor'],state.dividends.map(function(d){return[d.date,d.ticker,d.type,Number(d.value||0).toFixed(2)]}));table('Orçamentos',['Categoria','Limite'],state.budgets.map(function(b){return[b.category,Number(b.value||0).toFixed(2)]}));table('Independência financeira',['Campo','Valor'],Object.keys(state.freedom||{}).map(function(k){return[k,state.freedom[k]]}));table('Lançamentos futuros',['Tipo','Descrição','Categoria','Valor','Início','Fim','Dia','Recorrência','Status'],(state.futureCashflowItems||[]).map(function(i){return[futureTypeLabel(i.type),i.description,categoryNameById(i.categoryId,i.category),Number(i.amount||0).toFixed(2),i.startDate,i.endDate||'',i.dueDay||'',i.recurrence,i.status]}));table('Fluxo projetado',['Mês','Entrada esperada','Comprometido','Resultado do mês','Saldo final'],futureProjectedMonths(ym).map(function(r){return[monthName(r.month),Number(r.expectedIncome||0).toFixed(2),Number(r.committed||0).toFixed(2),Number(r.net||0).toFixed(2),Number(r.balance||0).toFixed(2)]}));table('Decisões de compra',['Descrição','Categoria','Valor','Motivo','Prioridade','Recorrência','Status','Custo em horas','Criado em','Liberar em'],(state.purchaseDecisions||[]).map(function(d){var ev=evaluateDecisionDraft(d);return[d.description,categoryNameById(d.categoryId,d.category),Number(d.amount||0).toFixed(2),decisionReasonLabel(d.reason),decisionPriorityLabel(d.priority),decisionRecurrenceLabel(d.recurrence),decisionStatusLabel(d.status),formatHours(ev.hours),d.createdAt||'',decisionWaitUntil(d)]}));table('Objetivo inteligente',['Campo','Valor'],state.profile&&state.profile.computedGoal?[[ 'Tipo', state.profile.computedGoal.type ],[ 'Título', state.profile.computedGoal.title ],[ 'Confiança', state.profile.computedGoal.confidence ],[ 'Calculado em', state.profile.computedGoal.calculatedAt ]]:[]);table('Perfil',['Campo','Valor'],Object.keys(state.profile).map(function(k){return[k,state.profile[k]]}));var html='<html><head><meta charset="utf-8"></head><body>'+sheets.join('<br>')+'</body></html>';var blob=new Blob([html],{type:'application/vnd.ms-excel'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cockpit-financeiro-'+ym+'.xls';a.click();URL.revokeObjectURL(a.href)}
+/* PATCH FINAL — correção dos aportes do ano sem dupla contagem
+   Cole este bloco logo acima de: Object.assign(window,{
+*/
 
+function cockpitPatchYm(v){
+  return String(v || '').slice(0, 7);
+}
+
+function cockpitPatchNum(v){
+  v = Number(v || 0);
+  return isFinite(v) ? v : 0;
+}
+
+function cockpitPatchNorm(v){
+  return String(v || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+function cockpitPatchMovementType(m){
+  var t = cockpitPatchNorm(m && m.type);
+
+  if(['aporte', 'aplicacao', 'aplicação', 'contribution', 'investimento'].indexOf(t) >= 0) {
+    return 'contribution';
+  }
+
+  if(['rendimento', 'yield', 'dividendo', 'dividend'].indexOf(t) >= 0) {
+    return 'yield';
+  }
+
+  if(['resgate', 'withdrawal', 'saque'].indexOf(t) >= 0) {
+    return 'withdrawal';
+  }
+
+  if(['ajuste', 'adjustment'].indexOf(t) >= 0) {
+    return 'adjustment';
+  }
+
+  return t || 'contribution';
+}
+
+function cockpitPatchMovementInMonth(m, ym){
+  return cockpitPatchYm(m && m.date) === ym;
+}
+
+function cockpitPatchInvestmentLabel(i){
+  if(typeof invLabel === 'function') return invLabel(i);
+  return [
+    i && (i.ticker || i.name || i.product || i.description),
+    i && i.type,
+    i && (i.broker || i.bank || i.institution),
+    i && i.indexer
+  ].filter(Boolean).join(' • ');
+}
+
+function investmentDirectBaseMonth(i){
+  return cockpitPatchYm(
+    (i && i.purchaseDate) ||
+    (i && i.date) ||
+    (i && i.createdAt) ||
+    (i && i.movementBaselineDate)
+  );
+}
+
+function investmentDirectBaseValue(i){
+  i = i || {};
+
+  var v = 0;
+
+  if(typeof investmentCostFromRaw === 'function'){
+    v = cockpitPatchNum(investmentCostFromRaw(i));
+  }
+
+  if(!v) v = cockpitPatchNum(i.baseTotalInvested);
+  if(!v) v = cockpitPatchNum(i.totalInvested);
+  if(!v) v = cockpitPatchNum(i.totalContribution);
+  if(!v) v = cockpitPatchNum(i.cost);
+  if(!v) v = cockpitPatchNum(i.investedAmount);
+  if(!v) v = cockpitPatchNum(i.initialContribution);
+
+  if(!v){
+    var q = cockpitPatchNum(i.quantity);
+    var avg = cockpitPatchNum(i.average);
+    if(q > 0 && avg > 0) v = q * avg;
+  }
+
+  return Math.max(0, cockpitPatchNum(v));
+}
+
+function investmentHasBaseMovementInMonth(i, ym, base){
+  if(!i || !i.id) return false;
+
+  base = cockpitPatchNum(base);
+  if(!base) return false;
+
+  var movements = (state.investmentMovements || []).filter(function(m){
+    if(!m) return false;
+    if(String(m.investmentId || '') !== String(i.id)) return false;
+    if(cockpitPatchMovementType(m) !== 'contribution') return false;
+    if(!cockpitPatchMovementInMonth(m, ym)) return false;
+    return true;
+  });
+
+  if(!movements.length) return false;
+
+  var label = cockpitPatchNorm(cockpitPatchInvestmentLabel(i));
+
+  var sum = movements.reduce(function(a, m){
+    return a + cockpitPatchNum(m.value);
+  }, 0);
+
+  if(Math.abs(sum - base) < 0.01) return true;
+
+  return movements.some(function(m){
+    var value = cockpitPatchNum(m.value);
+    var src = String(m.sourceType || '');
+    var sameSource = m.sourceId && String(m.sourceId) === String(i.id);
+    var sameValue = Math.abs(value - base) < 0.01;
+
+    var desc = cockpitPatchNorm((m.description || '') + ' ' + (m.notes || ''));
+    var looksLikeBase =
+      desc &&
+      label &&
+      desc.indexOf(label) !== -1 &&
+      /(aporte|aplicacao|aplicação|cadastro|posicao|posição|consolidado|inicial)/.test(desc);
+
+    return (
+      sameSource ||
+      sameValue ||
+      src === 'investment_form' ||
+      src === 'investment_consolidation' ||
+      src === 'initial_investment' ||
+      looksLikeBase
+    );
+  });
+}
+
+function investmentBaseContributionIn(ym){
+  var total = 0;
+
+  (state.investments || []).forEach(function(i){
+    if(!i || !i.id) return;
+
+    if(investmentDirectBaseMonth(i) !== ym) return;
+
+    var base = investmentDirectBaseValue(i);
+    if(!base) return;
+
+    if(investmentHasBaseMovementInMonth(i, ym, base)) return;
+
+    total += base;
+  });
+
+  return total;
+}
+
+function investmentContributionValueIn(ym){
+  var total = investmentBaseContributionIn(ym);
+  var countedTx = {};
+  var countedMov = {};
+
+  (state.investmentMovements || []).forEach(function(m){
+    if(!m) return;
+    if(cockpitPatchMovementType(m) !== 'contribution') return;
+    if(!cockpitPatchMovementInMonth(m, ym)) return;
+
+    var key = [
+      m.id || '',
+      m.investmentId || '',
+      cockpitPatchYm(m.date),
+      cockpitPatchNum(m.value).toFixed(2),
+      cockpitPatchNorm(m.description || ''),
+      cockpitPatchNorm(m.sourceType || ''),
+      m.sourceId || '',
+      m.transactionId || ''
+    ].join('|');
+
+    if(countedMov[key]) return;
+    countedMov[key] = true;
+
+    total += cockpitPatchNum(m.value);
+
+    if(m.transactionId) countedTx[String(m.transactionId)] = true;
+    if(m.sourceType === 'transaction' && m.sourceId) countedTx[String(m.sourceId)] = true;
+  });
+
+  (state.transactions || []).forEach(function(t){
+    if(!t) return;
+    if(t.type !== 'investment') return;
+    if(cockpitPatchYm(t.date) !== ym) return;
+
+    if(t.linkedInvestmentMovementId) return;
+    if(t.id && countedTx[String(t.id)]) return;
+
+    total += cockpitPatchNum(t.monthAmount != null ? t.monthAmount : t.value);
+  });
+
+  return total;
+}
+
+function investmentContributionValueYearToDate(ym){
+  ym = ym || selectedMonth();
+
+  var months;
+
+  if(typeof yearMonthsToDate === 'function'){
+    months = yearMonthsToDate(ym);
+  } else {
+    var year = Number(String(ym).slice(0, 4));
+    var last = Number(String(ym).slice(5, 7));
+    months = [];
+    for(var i = 1; i <= last; i++){
+      months.push(year + '-' + String(i).padStart(2, '0'));
+    }
+  }
+
+  return months.reduce(function(total, monthKey){
+    return total + investmentContributionValueIn(monthKey);
+  }, 0);
+}
 Object.assign(window,{setView:setView,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend});
 setupEvents();load();
 })();
