@@ -204,6 +204,61 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 
 /* PATCH — edição de aportes/rendimentos, amortizações e exportação para gestor */
 .movement-edit-row{align-items:center;gap:10px;flex-wrap:wrap}.movement-edit-row>span{min-width:0}.movement-actions{display:inline-flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.movement-actions .btn{min-height:28px;padding:0 9px;font-size:11px;border-radius:10px}.amortization-list{margin-top:10px;display:grid;gap:7px}.amortization-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.07);padding-top:8px}.amortization-row small{color:var(--muted)}.amortization-row .btn{min-height:30px;padding:0 10px;font-size:11px;border-radius:10px}@media(max-width:780px){.movement-edit-row{display:grid!important;grid-template-columns:1fr auto;align-items:center}.movement-actions{grid-column:1/-1;justify-content:flex-start;margin-top:2px}.amortization-row{grid-template-columns:1fr auto}.amortization-row .btn{grid-column:1/-1;width:max-content}.investment-card .split{align-items:flex-start;flex-wrap:wrap}}
+
+
+/* PATCH — fluxo de caixa futuro: corrigir colunas estreitas no desktop */
+#projection .analysis-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,2.35fr) minmax(320px,.9fr)!important;
+  gap:18px!important;
+  align-items:start!important;
+}
+#projection .analysis-grid>.chart-wide{
+  grid-column:1/2!important;
+  grid-row:1 / span 3!important;
+  min-height:0!important;
+}
+#projection .analysis-grid>.panel:not(.chart-wide){
+  grid-column:2/3!important;
+  width:100%!important;
+  min-width:0!important;
+}
+#projection .analysis-grid>.panel:not(.chart-wide) h2{
+  font-size:16px!important;
+  line-height:1.15!important;
+}
+#projection .analysis-grid>.panel:not(.chart-wide) .list{
+  display:grid!important;
+  gap:10px!important;
+}
+#projection .analysis-grid>.panel:not(.chart-wide) .item,
+#projection .analysis-grid>.panel:not(.chart-wide) .row{
+  min-width:0!important;
+}
+#projection #futureCashflowSvg{
+  height:230px!important;
+  min-height:0!important;
+}
+#projection #futureCashflowSvg svg{
+  width:100%!important;
+  height:100%!important;
+  max-height:none!important;
+}
+#projection #futureMonthList{
+  margin-top:14px!important;
+}
+@media(max-width:1180px){
+  #projection .analysis-grid{
+    grid-template-columns:1fr!important;
+  }
+  #projection .analysis-grid>.chart-wide,
+  #projection .analysis-grid>.panel:not(.chart-wide){
+    grid-column:1/-1!important;
+    grid-row:auto!important;
+  }
+  #projection #futureCashflowSvg{height:190px!important}
+}
+
 </style>
 <body>
 <div class="auth hidden" id="authView">
