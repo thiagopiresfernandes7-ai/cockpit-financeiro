@@ -201,19 +201,6 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 @media(max-width:1100px){#analysis .analysis-grid>.chart-panel,#analysis .analysis-grid>.chart-wide{grid-column:1/-1!important}#analysis .chart-svg,#analysis .chart-wide .chart-svg{height:150px!important}}
 @media(max-width:720px){#analysis .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}#analysis .analysis-score{display:none!important}#analysis .chart-svg,#analysis .chart-wide .chart-svg{height:140px!important}#analysis .chart-row{grid-template-columns:1fr!important}}
 
-
-/* Correção contábil/visual: gráficos compactos e cards de análise menos altos */
-#analysis .analysis-grid{grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr)!important;gap:14px!important;align-items:start!important}
-#analysis .chart-panel{min-height:0!important;padding:16px!important}
-#analysis .chart-svg{height:150px!important;min-height:0!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
-#analysis .chart-svg svg{width:100%!important;height:100%!important;max-height:150px!important}
-#analysis .chart-wide .chart-svg{height:150px!important}
-#analysis .compact-list{margin-top:8px!important;gap:6px!important}
-#analysis .chart-row{grid-template-columns:minmax(90px,130px) minmax(120px,1fr) auto!important;gap:8px!important;font-size:11px!important}
-#analysis .panel-head{margin-bottom:8px!important}
-#analysis .kpi{min-height:92px!important}
-@media(max-width:1100px){#analysis .analysis-grid{grid-template-columns:1fr!important}#analysis .chart-svg,#analysis .chart-wide .chart-svg{height:140px!important}}
-@media(max-width:720px){#analysis .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}#analysis .analysis-score{display:none!important}#analysis .chart-svg,#analysis .chart-wide .chart-svg{height:132px!important}#analysis .chart-row{grid-template-columns:1fr!important}}
 </style>
 <body>
 <div class="auth hidden" id="authView">
@@ -340,7 +327,7 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 <section class="section" id="wallet"><div class="page-head"><div class="page-title"><div class="overline">Capital allocation</div><h1>Carteira &amp; Investimentos</h1><p>Ativos, rendimentos, atualização de preços e distribuição patrimonial.</p></div></div><div class="grid cards2"><div class="panel"><h2 id="invFormTitle">Adicionar investimento</h2><div class="form-grid"><label class="field"><span>Tipo de investimento</span><select id="invType"><option value="Ação">Ação</option><option value="FII">FII</option><option value="ETF">ETF</option><option value="Renda fixa">Renda fixa</option><option value="Cripto">Cripto</option><option value="Outro">Outro</option></select></label><label class="field"><span>Ativo ou produto</span><input id="invTicker" placeholder="Ex.: PETR4, Tesouro Selic, CDB Banco X"/></label><label class="field"><span>Quantidade</span><input id="invQty" min="0" step="0.0001" type="number"/></label><label class="field"><span>Preço médio ou valor aplicado</span><input id="invAvg" min="0" step="0.01" type="number"/></label><label class="field"><span>Preço atual ou saldo atual</span><input id="invCurrent" min="0" step="0.01" type="number"/></label><label class="field"><span>Taxa anual prevista (%)</span><input id="invRate" placeholder="Renda fixa ou projeção" step="0.01" type="number"/></label><label class="field"><span>Indexador</span><input id="invIndexer" placeholder="Ex.: CDI, IPCA, Selic"/></label><label class="field"><span>Vencimento</span><input id="invMaturity" type="date"/></label><label class="field"><span>Corretora ou banco</span><input id="invBroker" placeholder="Opcional"/></label><label class="field"><span>Dividendos/rendimentos esperados no mês</span><input id="invExpectedDividend" min="0" step="0.01" type="number"/></label><label class="field"><span>Data da compra/aplicação</span><input id="invDate" type="date"/></label><label class="field"><span>Observações</span><textarea id="invNotes" placeholder="Detalhes opcionais sobre este investimento"></textarea></label></div><div class="split" style="margin-top:14px"><button class="btn primary" id="saveInv">Salvar investimento</button><button class="btn ghost hidden" id="cancelInvEdit">Cancelar edição</button></div></div><div class="panel"><h2>Atualizar ativo</h2><div class="form-grid"><label class="field"><span>Investimento</span><select id="updateInvSelect"></select></label><label class="field"><span>Novo preço/saldo atual</span><input id="updateInvPrice" min="0" step="0.01" type="number"/></label></div><div class="split" style="margin-top:14px"><button class="btn primary" id="savePrice">Atualizar valor</button></div><div class="notice">Atualize apenas o preço ou saldo atual do ativo. Rendimentos ficam na aba Dividendos.</div></div></div><div class="panel" style="margin-top:14px"><h2>Carteira por tipo</h2><div class="list" id="investmentList"></div></div></section>
 <section class="section" id="analysis">
 <div class="page-head"><div class="page-title"><div class="overline">Financial intelligence</div><h1>Análise <span>Financeira</span></h1><p>Visão aprofundada do seu ecossistema de capital: entradas, gastos, carteira, dívidas e independência.</p></div><div class="controls"><button class="ghost-btn" id="analysisExportMirror" type="button">Exportar visão</button></div></div>
-<div class="grid kpis"><div class="card kpi"><span>Receitas no ano</span><b data-money="" id="analysisIncomeYear">R$ 0,00</b><div class="delta good">Até o mês selecionado</div></div><div class="card kpi"><span>Gastos no ano</span><b class="bad" data-money="" id="analysisExpenseYear">R$ 0,00</b><div class="delta bad">Até o mês selecionado</div></div><div class="card kpi green"><span>Saldo acumulado</span><b data-money="" id="analysisCashYear">R$ 0,00</b><div class="delta">Acumulado até o mês</div></div><div class="card kpi gold"><span>Aportes no ano</span><b data-money="" id="analysisContribYear">R$ 0,00</b><div class="delta good">Aportes realizados</div></div></div>
+<div class="grid kpis"><div class="card kpi"><span>Receitas no ano</span><b data-money="" id="analysisIncomeYear">R$ 0,00</b><div class="delta good">Até o mês selecionado</div></div><div class="card kpi"><span>Gastos no ano</span><b class="bad" data-money="" id="analysisExpenseYear">R$ 0,00</b><div class="delta bad">Até o mês selecionado</div></div><div class="card kpi green"><span>Saldo acumulado</span><b data-money="" id="analysisCashYear">R$ 0,00</b><div class="delta">Acumulado até o mês</div></div><div class="card kpi gold"><span>Aportes no ano</span><b data-money="" id="analysisContribYear">R$ 0,00</b><div class="delta good">Aportes realizados até o mês</div></div></div>
 <div class="analysis-hero"><div><small>Leitura rápida</small><h2 id="analysisHeadline">Seu mês em uma frase</h2><p id="analysisInsight">Registre entradas, gastos e investimentos para o app montar sua análise.</p></div><div class="analysis-score"><div><span id="analysisScore">0</span><small>saúde do mês</small></div></div></div>
 <div class="grid analysis-grid"><div class="panel chart-panel chart-wide"><div class="panel-head"><div><h2>Fluxo de Caixa Consolidado</h2><p>Receita vs. gasto acumulados até o mês selecionado.</p></div></div><div class="chart-svg" id="analysisFlowSvg"></div></div><div class="panel chart-panel"><div class="panel-head"><div><h2>Gastos por categoria</h2><p>Onde o dinheiro está indo neste mês.</p></div></div><div class="chart-svg" id="analysisCategorySvg"></div><div class="chart-list compact-list" id="expenseCategoryChart"></div></div><div class="panel chart-panel"><div class="panel-head"><div><h2>Carteira</h2><p>Distribuição por tipo de investimento.</p></div></div><div class="chart-svg donut-wrap" id="analysisPortfolioSvg"></div><div class="chart-list compact-list" id="portfolioChart"></div></div><div class="panel chart-panel chart-wide"><div class="panel-head"><div><h2>Patrimônio projetado</h2><p>Visão simples de evolução com aportes e investimentos.</p></div></div><div class="chart-svg" id="analysisTrendSvg"></div></div><div class="panel chart-panel"><h2>Dívidas e parcelas</h2><div class="chart-list compact-list" id="debtChart"></div></div><div class="panel chart-panel"><h2>Alertas inteligentes</h2><div class="list" id="analysisTips"></div></div></div><div class="panel" style="margin-top:18px"><h2>Carteira x perfil de investidor</h2><div class="list" id="profileAlignment"></div></div><div class="hidden" id="cashflowChart"></div>
 </section>
@@ -717,43 +704,44 @@ function movementAfterBaseline(m,i){
   return !b||b==='0000-00-00'||d>=b;
 }
 
-function investmentMovementsUntil(investmentId, ym){
-  var end=String(ym||selectedMonth()).slice(0,7);
-  return (state.investmentMovements||[]).filter(function(m){
-    return m && m.investmentId===investmentId && String(m.date||'').slice(0,7)<=end;
+function investmentDirectBaseMonth(i){
+  return String((i&&i.purchaseDate)||(i&&i.date)||(i&&i.createdAt)||(i&&i.movementBaselineDate)||'').slice(0,7);
+}
+function investmentDirectBaseValue(i){
+  i=i||{};
+  var v=Number(i.baseTotalInvested!=null?i.baseTotalInvested:investmentCostFromRaw(i));
+  if(!v&&Number(i.totalInvested||0)>0)v=Number(i.totalInvested||0);
+  return Math.max(0,Number(v||0));
+}
+function investmentHasBaseMovementInMonth(i,ym,base){
+  if(!i||!i.id)return false;
+  base=Number(base||0);
+  return (state.investmentMovements||[]).some(function(m){
+    if(!m||m.investmentId!==i.id)return false;
+    if(normalizeMovementType(m.type)!=='contribution')return false;
+    if(!movementInMonth(m,ym))return false;
+    var src=String(m.sourceType||'');
+    var sameSource=m.sourceId&&String(m.sourceId)===String(i.id);
+    var sameValue=base>0&&Math.abs(Number(m.value||0)-base)<0.01;
+    return (src==='investment_form'&&sameSource) || (src==='investment_form'&&sameValue) || (src==='investment_consolidation'&&sameSource);
   });
 }
-function investmentAdjustmentValue(m){
-  var v=Number(m&&m.value||0);
-  if(m&&m.signedValue!=null)return Number(m.signedValue||0);
-  var hint=String((m&&m.description)||'').toLowerCase();
-  if((m&&m.direction)==='negative'||(m&&m.adjustmentSign)==='negative'||hint.indexOf('perda')>=0||hint.indexOf('ajuste')>=0)return -Math.abs(v);
-  return v;
-}
-function investmentMovementSignedValue(m,costOnly){
-  var type=normalizeMovementType(m&&m.type),v=Number(m&&m.value||0);
-  if(type==='contribution')return v;
-  if(type==='withdrawal')return -v;
-  if(type==='yield')return costOnly?0:v;
-  if(type==='adjustment')return costOnly?0:investmentAdjustmentValue(m);
-  return costOnly?0:v;
-}
-function investmentMovementValueFor(i,ym,costOnly){
-  if(!i||!i.id)return 0;
-  return investmentMovementsUntil(i.id,ym||selectedMonth()).filter(function(m){return movementAfterBaseline(m,i)}).reduce(function(a,m){
-    return a+investmentMovementSignedValue(m,!!costOnly);
-  },0);
-}
 function investmentBaseContributionIn(ym){
-  return (state.investments||[]).reduce(function(a,i){
-    var d=String((i&&i.purchaseDate)||(i&&i.date)||(i&&i.createdAt)||'').slice(0,7);
-    if(d!==ym)return a;
-    return a+Number(i&&i.baseTotalInvested!=null?i.baseTotalInvested:investmentCostFromRaw(i));
-  },0);
+  var total=0;
+  (state.investments||[]).forEach(function(i){
+    if(!i||!i.id)return;
+    if(investmentDirectBaseMonth(i)!==ym)return;
+    var base=investmentDirectBaseValue(i);
+    if(!base)return;
+    if(investmentHasBaseMovementInMonth(i,ym,base))return;
+    total+=base;
+  });
+  return total;
 }
-function investmentWithdrawalValueIn(ym){
-  return (state.investmentMovements||[]).filter(function(m){return normalizeMovementType(m.type)==='withdrawal'&&movementInMonth(m,ym)}).reduce(function(a,m){return a+Number(m.value||0)},0);
+function investmentContributionValueYearToDate(ym){
+  return yearMonthsToDate(ym||selectedMonth()).reduce(function(a,m){return a+investmentContributionValueIn(m)},0);
 }
+
 function investmentContributionValueIn(ym){
   var total=investmentBaseContributionIn(ym), countedTx={};
   (state.investmentMovements||[]).forEach(function(m){
@@ -804,78 +792,54 @@ function monthsBetween(a,b){var ap=a.split('-'),bp=b.split('-');return (Number(b
 function projectedInvestment(i,ym){ym=ym||selectedMonth();var base=invBaseValue(i)+investmentMovementValueFor(i,ym,false);var last=(i.lastUpdate||i.movementBaselineDate||today()).slice(0,7);var m=Math.max(0,monthsBetween(last,ym));var rate=Number(i.annualRate||0);if(!rate&&i.type==='Renda fixa')rate=0;if(!rate)return base;return base*Math.pow(1+rate/100,m/12)}
 function dividendsIn(ym){return (state.dividends||[]).filter(function(d){return String(d.date||'').slice(0,7)===ym})}
 
-
-function firstFinancialMonth(){
-  var months=[];
-  (state.transactions||[]).forEach(function(t){var m=txBillingMonth(t)||String(t.date||'').slice(0,7);if(m)months.push(m)});
-  (state.investments||[]).forEach(function(i){var m=String(i.purchaseDate||i.date||i.createdAt||'').slice(0,7);if(m)months.push(m)});
-  (state.investmentMovements||[]).forEach(function(mv){var m=String(mv.date||'').slice(0,7);if(m)months.push(m)});
-  (state.dividends||[]).forEach(function(d){var m=String(d.date||'').slice(0,7);if(m)months.push(m)});
-  (state.debts||[]).forEach(function(d){var m=String(d.firstPaymentDate||d.startDate||'').slice(0,7);if(m)months.push(m)});
-  months.push(selectedMonth());
-  return months.filter(Boolean).sort()[0]||month();
-}
-function monthsRange(startYm,endYm){
-  var out=[],cur=startYm,guard=0;
-  while(cur<=endYm&&guard<360){out.push(cur);cur=addMonths(cur,1);guard++}
-  return out;
-}
-function rawCashForMonth(ym){
-  var tx=monthTransactions(ym),income=0,expense=0;
-  tx.forEach(function(t){
-    var v=Number(t.monthAmount!=null?t.monthAmount:t.value||0);
-    if(t.type==='income')income+=v;
-    else if(t.type==='dividend')income+=v;
-    else if(t.type==='investment'||t.type==='transfer'){}
-    else expense+=v;
-  });
-  return income+cashDividendsIn(ym).reduce(function(a,d){return a+Number(d.value||0)},0)+investmentWithdrawalValueIn(ym)-expense-investmentContributionValueIn(ym);
-}
-function cumulativeCashTo(ym){
-  var base=Number((state.cashflowSettings&&state.cashflowSettings.baseBalance)||0);
-  return monthsRange(firstFinancialMonth(),ym).reduce(function(a,m){return a+rawCashForMonth(m)},base);
-}
 function summary(ym){
-  ym=ym||selectedMonth();
-  var tx=monthTransactions(ym), income=0, expense=0;
+  var tx = monthTransactions(ym), income = 0, expense = 0;
 
   tx.forEach(function(t){
-    var v=Number(t.monthAmount!=null?t.monthAmount:t.value||0);
-    if(t.type==='income')income+=v;
-    else if(t.type==='dividend')income+=v;
-    else if(t.type==='investment'){}
-    else if(t.type==='transfer'){}
-    else expense+=v;
+    var v = Number(t.monthAmount != null ? t.monthAmount : t.value || 0);
+
+    if(t.type === 'income') income += v;
+    else if(t.type === 'dividend') income += v;
+    else if(t.type === 'investment') {}
+    else if(t.type === 'transfer') {}
+    else expense += v;
   });
 
-  var aporte=investmentContributionValueIn(ym);
-  var withdrawals=investmentWithdrawalValueIn(ym);
-  var cashDividends=cashDividendsIn(ym).reduce(function(a,d){return a+Number(d.value||0)},0);
-  var totalDividends=dividendsIn(ym).reduce(function(a,d){return a+Number(d.value||0)},0);
+  var aporte = investmentContributionValueIn(ym);
 
-  var debtMonth=debtPaymentsIn(ym).reduce(function(a,p){return a+Number(p.payment||0)},0);
-  var inv=(state.investments||[]).reduce(function(a,i){return a+projectedInvestment(i,ym)},0);
-  var debtBalance=(state.debts||[]).filter(function(d){return d.status!=='paid'}).reduce(function(a,d){return a+debtRemainingBalance(d)},0);
+  var debtMonth = debtPaymentsIn(ym).reduce(function(a,p){
+    return a + Number(p.payment || 0);
+  }, 0);
 
-  var monthlyCash=income+cashDividends+withdrawals-expense-aporte;
-  var availableCash=cumulativeCashTo(ym);
-  var wallet=inv;
+  var inv = (state.investments || []).reduce(function(a,i){
+    return a + projectedInvestment(i, ym);
+  }, 0);
+
+  var div = cashDividendsIn(ym).reduce(function(a,d){
+    return a + Number(d.value || 0);
+  }, 0);
+
+  var debtBalance = (state.debts || []).filter(function(d){
+    return d.status !== 'paid';
+  }).reduce(function(a,d){
+    return a + debtRemainingBalance(d);
+  }, 0);
+
+  var cash = income - expense - aporte + div;
+  var wallet = inv;
 
   return {
-    tx:tx,
-    income:income,
-    expense:expense,
-    aporte:aporte,
-    withdrawals:withdrawals,
-    investments:wallet,
-    investmentsMarket:inv,
-    dividends:totalDividends,
-    cashDividends:cashDividends,
-    debtPayments:debtMonth,
-    debtBalance:debtBalance,
-    cash:monthlyCash,
-    availableCash:availableCash,
-    net:availableCash+wallet
+    tx: tx,
+    income: income,
+    expense: expense,
+    aporte: aporte,
+    investments: wallet,
+    investmentsMarket: inv,
+    dividends: div,
+    debtPayments: debtMonth,
+    debtBalance: debtBalance,
+    cash: cash,
+    net: cash + wallet
   };
 }
 function byCat(tx){var m={};tx.forEach(function(t){if(t.type==='expense'){var c=categoryNameById(t.categoryId,t.category||'Sem categoria');m[c]=(m[c]||0)+Number(t.monthAmount!=null?t.monthAmount:t.value||0)}});return m}
@@ -928,7 +892,7 @@ function setupDecisionEvents(){if(!el('saveDecision'))return;['decisionAmount','
 
 function ensureComputedGoal(reason,force){if(!state||!state.profile)return null;var old=state.profile.computedGoal;if(!force&&old&&old.type&&old.title)return old;var goal=calculateComputedFinancialGoal(state);state.profile.computedGoal=goal;if(!state.profile.activeGoalSource)state.profile.activeGoalSource='computed';if(!state.profile.goal||state.profile.activeGoalSource==='computed')state.profile.goal=goal.title;state.profile.computedGoalReason=reason||'initial';return goal}
 function recalculateComputedGoal(reason){if(!state||!state.profile)return null;var goal=calculateComputedFinancialGoal(state);var old=state.profile.computedGoal||{};var changed=JSON.stringify({type:old.type,title:old.title,confidence:old.confidence,metrics:old.metrics})!==JSON.stringify({type:goal.type,title:goal.title,confidence:goal.confidence,metrics:goal.metrics});state.profile.computedGoal=goal;if(!state.profile.activeGoalSource)state.profile.activeGoalSource='computed';if(!state.profile.goal||state.profile.activeGoalSource==='computed')state.profile.goal=goal.title;state.profile.computedGoalReason=reason||'manual';if(changed)scheduleSave();return goal}
-function render(){if(!state)return;cleanupInvestmentAccounting();var ym=selectedMonth();if(el('monthPicker'))el('monthPicker').value=ym;if(el('monthHint'))el('monthHint').textContent='Visualizando '+monthName(ym);var s=summary(ym);var goal=ensureComputedGoal('render',false);setText('netWorth',money(s.net));setText('cashBalance',money(s.availableCash!=null?s.availableCash:s.cash));setText('monthExpense',money(s.expense));setText('suggestedSave',money(s.aporte));renderActions(s,ym);renderFlow(s);renderCategories(s.tx);renderDashboardExtras(ym,s);renderComputedGoalUI(goal);renderTxList(ym);renderBudgets(s.tx);renderForecast(ym,s);renderFutureCashflow();renderInvestments(ym);renderDebts(ym);renderDividends(ym);renderCategorySelects();renderCategoryManager();renderAnalysis(ym);renderWeeklyPlan();renderWeeklyStandalone();renderInvestmentSimulator(ym);renderFreedom(ym);renderProfile();renderInvestorProfile();renderAdvancedSettings();renderNotifications();renderPurchaseDecisions();updateUserIdentity();scheduleSave()}
+function render(){if(!state)return;cleanupInvestmentAccounting();var ym=selectedMonth();if(el('monthPicker'))el('monthPicker').value=ym;if(el('monthHint'))el('monthHint').textContent='Visualizando '+monthName(ym);var s=summary(ym);var goal=ensureComputedGoal('render',false);setText('netWorth',money(s.net));setText('cashBalance',money(s.cash));setText('monthExpense',money(s.expense));setText('suggestedSave',money(s.aporte));renderActions(s,ym);renderFlow(s);renderCategories(s.tx);renderDashboardExtras(ym,s);renderComputedGoalUI(goal);renderTxList(ym);renderBudgets(s.tx);renderForecast(ym,s);renderFutureCashflow();renderInvestments(ym);renderDebts(ym);renderDividends(ym);renderCategorySelects();renderCategoryManager();renderAnalysis(ym);renderWeeklyPlan();renderWeeklyStandalone();renderInvestmentSimulator(ym);renderFreedom(ym);renderProfile();renderInvestorProfile();renderAdvancedSettings();renderNotifications();renderPurchaseDecisions();updateUserIdentity();scheduleSave()}
 function item(title,sub,value,cls){return '<div class="item"><div><b>'+esc(title)+'</b><small>'+esc(sub||'')+'</small></div><div class="amount '+(cls||'neutral')+'">'+(value||'')+'</div></div>'}
 function renderActions(s,ym){var arr=[];if(!state.transactions.length)arr.push(item('Registre sua primeira movimentação','Use o botão + Novo lançamento para registrar receitas, despesas e parcelas.','','neutral'));if(s.expense>s.income&&s.income>0)arr.push(item('Atenção ao mês','As despesas estão acima das receitas neste mês.','','err'));if(!state.investments.length)arr.push(item('Cadastre seus investimentos','Separe ações, FIIs, ETFs, renda fixa, cripto e outros ativos.','','neutral'));if(monthsBetween(month(),ym)>0)arr.push(item('Você está olhando o futuro','Parcelas e projeções de investimentos aparecem automaticamente.','','warn'));if(!arr.length)arr.push(item('Tudo organizado','Continue registrando movimentações e atualizando investimentos.','','ok'));el('nextActions').innerHTML=arr.join('')}
 function renderFlow(s){var rows=[item('Receitas','Entradas do mês',money(s.income),'positive'),item('Despesas','Gastos e parcelas do mês',money(s.expense),'negative'),item('Aportes','Valores direcionados a investimentos',money(s.aporte),'neutral'),item('Dividendos e rendimentos','Recebidos no mês',money(s.dividends),'positive')];el('flowList').innerHTML=rows.join('')}
@@ -1069,7 +1033,7 @@ function investmentCost(i,ym){var base=i&&i.baseTotalInvested!=null?Number(i.bas
 function renderInvestments(ym){var changed=cleanupInvestmentAccounting();var list=state.investments||[];var sel=el('updateInvSelect');if(sel)sel.innerHTML=list.length?list.map(function(i){return '<option value="'+i.id+'">'+esc(invLabel(i))+'</option>'}).join(''):'<option>Nenhum investimento</option>';fillInvestmentTargetSelect();if(!el('investmentList'))return;if(!list.length){el('investmentList').innerHTML='<div class="empty">Nenhum investimento cadastrado.</div>';return}var groups={};list.forEach(function(i){groups[i.type||'Outro']=groups[i.type||'Outro']||[];groups[i.type||'Outro'].push(i)});var html=[];Object.keys(groups).sort().forEach(function(g){html.push('<div class="badge">'+esc(g)+'</div>');groups[g].forEach(function(i){var val=projectedInvestment(i,ym);var cost=investmentCost(i,ym);var gain=val-cost;var mov=investmentMovementSummary(i,ym);var sub='Total aportado até '+monthName(ym)+': '+money(cost)+' • Movimentos até o mês: '+money(mov.contribution)+' aportes, '+money(mov.yield)+' rendimentos, '+money(mov.withdrawal)+' resgates • Atualizado em '+(i.lastUpdate||today())+' • '+(i.indexer||'sem indexador');var actions='<div class="split"><div class="amount '+(gain>=0?'positive':'negative')+'">'+money(val)+'<br><small class="'+(gain>=0?'ok':'err')+'">'+money(gain)+'</small></div><button class="btn" onclick="editInvestment(&quot;'+i.id+'&quot;)">Editar</button><button class="btn danger" onclick="deleteInvestment(&quot;'+i.id+'&quot;)">Excluir</button></div>';html.push('<div class="item investment-card"><div><b>'+esc(invLabel(i))+'</b><small>'+esc(sub)+'</small>'+movementRowsForInvestment(i,ym)+'</div>'+actions+'</div>')})});el('investmentList').innerHTML=html.join('');if(changed)scheduleSave()}
 function clearInvestmentForm(){['invTicker','invQty','invAvg','invCurrent','invRate','invIndexer','invMaturity','invBroker','invExpectedDividend','invDate','invNotes'].forEach(function(id){if(el(id))el(id).value=''})}
 function setInvestmentEditMode(id){editingInvestmentId=id||null;el('invFormTitle').textContent=editingInvestmentId?'Editar investimento':'Adicionar investimento';el('saveInv').textContent=editingInvestmentId?'Salvar alterações':'Salvar investimento';el('cancelInvEdit').classList.toggle('hidden',!editingInvestmentId)}
-function investmentFromForm(existing){var type=el('invType').value;var qty=num(el('invQty').value)||1;var avg=num(el('invAvg').value);var cur=num(el('invCurrent').value)||avg;var total=type==='Renda fixa'?avg:qty*avg;var inv=Object.assign({},existing||{}, {id:existing&&existing.id?existing.id:uid(),type:type,ticker:el('invTicker').value,quantity:qty,average:avg,current:cur,totalInvested:total,annualRate:num(el('invRate').value),indexer:el('invIndexer').value,maturity:el('invMaturity').value,broker:el('invBroker').value,expectedDividend:num(el('invExpectedDividend').value),purchaseDate:el('invDate').value||((existing&&existing.purchaseDate)||today()),notes:el('invNotes').value,lastUpdate:today(),updatedAt:new Date().toISOString(),createdAt:(existing&&existing.createdAt)||new Date().toISOString()});inv.baseCurrent=cur;inv.baseTotalInvested=total;inv.movementBaselineDate=today();return inv}
+function investmentFromForm(existing){var type=el('invType').value;var qty=num(el('invQty').value)||1;var avg=num(el('invAvg').value);var cur=num(el('invCurrent').value)||avg;var total=type==='Renda fixa'?avg:qty*avg;var inv=Object.assign({},existing||{}, {id:existing&&existing.id?existing.id:uid(),type:type,ticker:el('invTicker').value,quantity:qty,average:avg,current:cur,totalInvested:total,annualRate:num(el('invRate').value),indexer:el('invIndexer').value,maturity:el('invMaturity').value,broker:el('invBroker').value,expectedDividend:num(el('invExpectedDividend').value),purchaseDate:el('invDate').value||((existing&&existing.purchaseDate)||today()),notes:el('invNotes').value,lastUpdate:today(),updatedAt:new Date().toISOString(),createdAt:(existing&&existing.createdAt)||new Date().toISOString()});inv.baseCurrent=cur;inv.baseTotalInvested=total;inv.movementBaselineDate=inv.purchaseDate||today();return inv}
 function editInvestment(id){var inv=(state.investments||[]).find(function(x){return x.id===id});if(!inv)return;setView('wallet');setInvestmentEditMode(id);el('invType').value=inv.type||'Outro';el('invTicker').value=inv.ticker||inv.name||'';el('invQty').value=inv.quantity||1;el('invAvg').value=inv.average||inv.unitPrice||inv.totalInvested||'';el('invCurrent').value=inv.current||inv.currentUnitPrice||inv.average||'';el('invRate').value=inv.annualRate||inv.contractedRate||'';el('invIndexer').value=inv.indexer||'';el('invMaturity').value=inv.maturity||inv.maturityDate||'';el('invBroker').value=inv.broker||'';el('invExpectedDividend').value=inv.expectedDividend||inv.expectedReturn||'';el('invDate').value=inv.purchaseDate||inv.date||inv.createdAt&&String(inv.createdAt).slice(0,10)||today();el('invNotes').value=inv.notes||'';el('saveInv').scrollIntoView({behavior:'smooth',block:'center'})}
 function cancelInvestmentEdit(){editingInvestmentId=null;clearInvestmentForm();setInvestmentEditMode(null);render()}
 function deleteInvestment(id){var inv=(state.investments||[]).find(function(x){return x.id===id});if(!inv)return;if(!confirm('Tem certeza que deseja excluir este investimento da carteira? Essa ação pode alterar seu patrimônio, projeções e relatórios.'))return;var linked=(state.dividends||[]).filter(function(d){return d.investmentId===id});if(linked.length){var choice=prompt('Existem rendimentos vinculados a este investimento. Digite 1 para manter rendimentos no histórico, 2 para excluir rendimentos vinculados, ou 3 para desvincular rendimentos do ativo.','1');if(choice==='2'){state.dividends=state.dividends.filter(function(d){return d.investmentId!==id})}else if(choice==='3'){state.dividends=state.dividends.map(function(d){if(d.investmentId===id){var x=Object.assign({},d);delete x.investmentId;x.ticker=x.ticker||inv.ticker;x.type=x.type||inv.type;return x}return d})}}
@@ -1090,23 +1054,31 @@ function barChartSvg(rows,opts){
   opts=opts||{};
   rows=(rows||[]).filter(function(r){return Number(r.value||0)>0}).slice(0,8);
   if(!rows.length)return '<div class="empty">Sem dados para o gráfico.</div>';
-  var w=520,rowH=18,h=Math.max(82,rows.length*rowH+24),left=116,right=76,barW=w-left-right;
-  var max=niceMax(Math.max.apply(null,rows.map(function(r){return Math.abs(Number(r.value||0))})));
+  var w=560,rowH=22,h=Math.max(92,rows.length*rowH+30),left=110,right=84,barW=w-left-right;
+  var max=niceMax(Math.max.apply(null,rows.map(function(r){return Math.abs(Number(r.value||0))}))); 
   var out=rows.map(function(r,i){
-    var y=18+i*rowH,v=Math.abs(Number(r.value||0)),bw=Math.max(3,(v/max)*barW),cls=r.cls||'chart-blue';
-    return '<text class="chart-small" x="8" y="'+(y+8)+'">'+escSvg(r.label)+'</text>'+ '<rect x="'+left+'" y="'+(y-3)+'" width="'+barW+'" height="8" rx="4" fill="rgba(255,255,255,.06)"></rect>'+ '<rect class="'+cls+'" x="'+left+'" y="'+(y-3)+'" width="'+bw+'" height="8" rx="4"></rect>'+ '<text class="chart-small" x="'+(left+barW+8)+'" y="'+(y+6)+'">'+escSvg(money(r.value))+'</text>';
+    var y=22+i*rowH, v=Math.abs(Number(r.value||0)), bw=Math.max(3,(v/max)*barW), cls=r.cls||'chart-blue';
+    return '<text class="chart-small" x="10" y="'+(y+10)+'">'+escSvg(r.label)+'</text>'+
+      '<rect x="'+left+'" y="'+(y-2)+'" width="'+barW+'" height="10" rx="5" fill="rgba(255,255,255,.06)"></rect>'+
+      '<rect class="'+cls+'" x="'+left+'" y="'+(y-2)+'" width="'+bw+'" height="10" rx="5"></rect>'+
+      '<text class="chart-small" x="'+(left+barW+8)+'" y="'+(y+8)+'">'+escSvg(money(r.value))+'</text>';
   }).join('');
   return '<svg viewBox="0 0 '+w+' '+h+'" role="img">'+out+'</svg>'
 }
 function pairedFlowSvg(rows){
   rows=rows||[];
   if(!rows.length)return '<div class="empty">Sem dados para o gráfico.</div>';
-  var w=680,h=132,padL=30,padR=12,padT=20,padB=24,base=h-padB;
+  var w=720,h=150,padL=32,padR=16,padT=22,padB=26,base=h-padB;
   var max=niceMax(Math.max.apply(null,[1].concat(rows.map(function(r){return Math.max(Number(r.income||0),Number(r.expense||0))}))));
-  var chartH=base-padT,group=(w-padL-padR)/Math.max(1,rows.length),bw=Math.max(4,Math.min(12,group*.22));
+  var chartH=base-padT, group=(w-padL-padR)/Math.max(1,rows.length), bw=Math.max(4,Math.min(14,group*.22));
   var grid=[0,.5,1].map(function(k){var y=base-chartH*k;return '<line class="chart-grid" x1="'+padL+'" y1="'+y+'" x2="'+(w-padR)+'" y2="'+y+'"></line>'}).join('');
-  var out=rows.map(function(r,i){var cx=padL+i*group+group/2,ih=Number(r.income||0)/max*chartH,eh=Number(r.expense||0)/max*chartH;return '<rect class="chart-income" x="'+(cx-bw-2)+'" y="'+(base-ih)+'" width="'+bw+'" height="'+Math.max(2,ih)+'" rx="4"></rect>'+'<rect class="chart-expense" x="'+(cx+2)+'" y="'+(base-eh)+'" width="'+bw+'" height="'+Math.max(2,eh)+'" rx="4"></rect>'+'<text class="chart-small" x="'+cx+'" y="'+(h-8)+'" text-anchor="middle">'+escSvg(r.label)+'</text>'}).join('');
-  var legend='<circle class="chart-income" cx="'+(w-138)+'" cy="14" r="4"></circle><text class="chart-small" x="'+(w-128)+'" y="18">Receita</text><circle class="chart-expense" cx="'+(w-70)+'" cy="14" r="4"></circle><text class="chart-small" x="'+(w-60)+'" y="18">Gasto</text>';
+  var out=rows.map(function(r,i){
+    var cx=padL+i*group+group/2, ih=Number(r.income||0)/max*chartH, eh=Number(r.expense||0)/max*chartH;
+    return '<rect class="chart-income" x="'+(cx-bw-2)+'" y="'+(base-ih)+'" width="'+bw+'" height="'+Math.max(2,ih)+'" rx="4"></rect>'+
+      '<rect class="chart-expense" x="'+(cx+2)+'" y="'+(base-eh)+'" width="'+bw+'" height="'+Math.max(2,eh)+'" rx="4"></rect>'+
+      '<text class="chart-small" x="'+cx+'" y="'+(h-10)+'" text-anchor="middle">'+escSvg(r.label)+'</text>';
+  }).join('');
+  var legend='<circle class="chart-income" cx="'+(w-138)+'" cy="15" r="4"></circle><text class="chart-small" x="'+(w-128)+'" y="19">Receita</text><circle class="chart-expense" cx="'+(w-70)+'" cy="15" r="4"></circle><text class="chart-small" x="'+(w-60)+'" y="19">Gasto</text>';
   return '<svg viewBox="0 0 '+w+' '+h+'">'+grid+out+legend+'</svg>'
 }
 function donutSvg(parts){
@@ -1122,7 +1094,7 @@ function donutSvg(parts){
 function lineChartSvg(points){
   points=points||[];
   if(!points.length)return '<div class="empty">Sem dados para o gráfico.</div>';
-  var w=680,h=132,padL=38,padR=16,padT=16,padB=24;
+  var w=720,h=150,padL=38,padR=16,padT=18,padB=26;
   var rawMax=Math.max.apply(null,points.map(function(p){return Number(p.value||0)}));
   var rawMin=Math.min.apply(null,points.map(function(p){return Number(p.value||0)}));
   var max=niceMax(Math.max(1,rawMax)),min=Math.min(0,rawMin),span=Math.max(1,max-min);
@@ -1130,56 +1102,11 @@ function lineChartSvg(points){
   var coords=points.map(function(p,i){var x=padL+i*step,y=padT+chartH-((Number(p.value||0)-min)/span)*chartH;return {x:x,y:y,p:p}});
   var line=coords.map(function(c){return c.x+','+c.y}).join(' '),base=padT+chartH;
   var area=padL+','+base+' '+line+' '+(w-padR)+','+base;
+  var labels=coords.map(function(c,i){return '<circle class="chart-blue" cx="'+c.x+'" cy="'+c.y+'" r="3"></circle><text class="chart-small" x="'+c.x+'" y="'+(h-9)+'" text-anchor="middle">'+escSvg(c.p.label)+'</text>'}).join('');
   var grid=[0,.5,1].map(function(k){var y=base-chartH*k;return '<line class="chart-grid" x1="'+padL+'" y1="'+y+'" x2="'+(w-padR)+'" y2="'+y+'"></line>'}).join('');
-  var labels=coords.map(function(c,i){return (i%Math.ceil(points.length/6)===0||i===points.length-1)?'<text class="chart-small" x="'+c.x+'" y="'+(h-8)+'" text-anchor="middle">'+escSvg(c.p.label)+'</text>':''}).join('');
   return '<svg viewBox="0 0 '+w+' '+h+'">'+grid+'<polygon class="chart-area" points="'+area+'"></polygon><polyline class="chart-line" points="'+line+'"></polyline>'+labels+'</svg>'
 }
-function renderAnalysis(ym){
-  if(!el('analysisIncomeYear'))return;
-  var months=yearMonthsToDate(ym),annual={income:0,expense:0,cash:0,aporte:0},flow=[];
-  months.forEach(function(m){
-    var s=summary(m);
-    annual.income+=s.income+s.cashDividends;
-    annual.expense+=s.expense;
-    annual.cash+=s.cash;
-    annual.aporte+=s.aporte;
-    flow.push({m:m,s:s});
-  });
-  el('analysisIncomeYear').textContent=money(annual.income);
-  el('analysisExpenseYear').textContent=money(annual.expense);
-  el('analysisCashYear').textContent=money(annual.cash);
-  el('analysisContribYear').textContent=money(annual.aporte);
-  var current=summary(ym),score=50;
-  if((current.income+current.cashDividends)>0)score+=Math.min(25,Math.round(current.cash/(current.income+current.cashDividends)*100));
-  if(current.aporte>0)score+=15;
-  if(current.expense>current.income+current.cashDividends&&current.income+current.cashDividends>0)score-=25;
-  if(current.debtPayments>(current.income+current.cashDividends)*.35&&current.income+current.cashDividends>0)score-=15;
-  score=Math.max(0,Math.min(100,score));
-  el('analysisScore').textContent=score;
-  el('analysisHeadline').textContent=score>=75?'Seu mês está saudável':score>=50?'Seu mês pede atenção':'Seu mês está apertado';
-  el('analysisInsight').textContent=(current.income+current.cashDividends)?('Entradas '+money(current.income+current.cashDividends)+', saídas '+money(current.expense)+' e resultado do mês '+money(current.cash)+'.'):'Registre sua renda para o app medir a saúde do mês.';
-  setSvg('analysisFlowSvg',pairedFlowSvg(flow.map(function(x){return {label:monthName(x.m).slice(0,3),income:x.s.income+x.s.cashDividends,expense:x.s.expense}})));
-  var cats=byCat(monthTransactions(ym)),catKeys=Object.keys(cats).sort(function(a,b){return cats[b]-cats[a]}).slice(0,7);
-  setSvg('analysisCategorySvg',barChartSvg(catKeys.map(function(k){return {label:k.slice(0,14),value:cats[k],cls:'chart-expense'}})));
-  var catMax=Math.max(1,...catKeys.map(function(k){return cats[k]}));
-  el('expenseCategoryChart').innerHTML=catKeys.length?catKeys.map(function(k){return chartRow(k,cats[k],catMax,'negative')}).join(''):'<div class="empty">Sem gastos no mês.</div>';
-  var invTypes={};(state.investments||[]).forEach(function(i){invTypes[i.type||'Outro']=(invTypes[i.type||'Outro']||0)+projectedInvestment(i,ym)});
-  var invParts=Object.keys(invTypes).map(function(k){return {label:k,value:invTypes[k]}}).sort(function(a,b){return b.value-a.value});
-  setSvg('analysisPortfolioSvg',donutSvg(invParts));
-  var invMax=Math.max(1,...invParts.map(function(p){return p.value}),current.aporte);
-  el('portfolioChart').innerHTML=(invParts.length?invParts.map(function(p){return chartRow(p.label,p.value,invMax,'')}).join(''):'<div class="empty">Sem investimentos cadastrados.</div>')+chartRow('Aportes no mês',current.aporte,Math.max(1,current.aporte),'');
-  var trend=months.map(function(m){var s=summary(m);return {label:monthName(m).slice(0,3),value:s.net}});
-  setSvg('analysisTrendSvg',lineChartSvg(trend));
-  var debt=debtPaymentsIn(ym),debtTotal=debt.reduce(function(a,p){return a+Number(p.payment||0)},0);
-  el('debtChart').innerHTML=item('Parcelas do mês','Compromissos que entram no extrato mensal',money(debtTotal),'negative')+item('Saldo devedor total','Mostrado separado para não distorcer o gasto do mês',money(current.debtBalance),'neutral');
-  var tips=[];
-  if(current.expense>current.income+current.cashDividends&&current.income+current.cashDividends>0)tips.push('<div class="item analysis-tip err"><div><b>Gasto acima da renda</b><small>Reduza despesas ou renegocie compromissos antes de investir mais.</small></div></div>');
-  if(catKeys[0])tips.push('<div class="item analysis-tip warn"><div><b>Maior gasto: '+esc(catKeys[0])+'</b><small>Essa categoria levou '+money(cats[catKeys[0]])+' no mês. Vale revisar.</small></div></div>');
-  if(current.aporte>0)tips.push('<div class="item analysis-tip ok"><div><b>Você investiu este mês</b><small>Aporte registrado: '+money(current.aporte)+'. Constância pesa mais que valor alto.</small></div></div>');
-  if(!tips.length)tips.push('<div class="item analysis-tip"><div><b>Comece pelo registro simples</b><small>Com alguns lançamentos, os gráficos ficam mais inteligentes.</small></div></div>');
-  el('analysisTips').innerHTML=tips.join('');
-  el('profileAlignment').innerHTML=portfolioProfileAlignment();
-}
+function renderAnalysis(ym){if(!el('analysisIncomeYear'))return;var months=yearMonthsToDate(ym),annual={income:0,expense:0,cash:0,aporte:0},flow=[];months.forEach(function(m){var s=summary(m);annual.income+=s.income;annual.expense+=s.expense;annual.cash+=s.cash;annual.aporte+=investmentContributionValueIn(m);flow.push({m:m,s:s})});el('analysisIncomeYear').textContent=money(annual.income);el('analysisExpenseYear').textContent=money(annual.expense);el('analysisCashYear').textContent=money(annual.cash);el('analysisContribYear').textContent=money(annual.aporte);var current=summary(ym),score=50;if(current.income>0)score+=Math.min(25,Math.round(current.cash/current.income*100));if(current.aporte>0)score+=15;if(current.expense>current.income&&current.income>0)score-=25;if(current.debtPayments>current.income*.35&&current.income>0)score-=15;score=Math.max(0,Math.min(100,score));el('analysisScore').textContent=score;el('analysisHeadline').textContent=score>=75?'Seu mês está saudável':score>=50?'Seu mês pede atenção':'Seu mês está apertado';el('analysisInsight').textContent=current.income?('Você ganhou '+money(current.income)+', gastou '+money(current.expense)+' e ficou com '+money(current.cash)+'.'):'Registre sua renda para o app medir a saúde do mês.';setSvg('analysisFlowSvg',pairedFlowSvg(flow.map(function(x){return {label:monthName(x.m).slice(0,3),income:x.s.income,expense:x.s.expense}})));var cats=byCat(monthTransactions(ym)),catKeys=Object.keys(cats).sort(function(a,b){return cats[b]-cats[a]}).slice(0,7);setSvg('analysisCategorySvg',barChartSvg(catKeys.map(function(k){return {label:k.slice(0,9),value:cats[k],cls:'chart-expense'}})));var catMax=Math.max(1,...catKeys.map(function(k){return cats[k]}));el('expenseCategoryChart').innerHTML=catKeys.length?catKeys.map(function(k){return chartRow(k,cats[k],catMax,'negative')}).join(''):'<div class="empty">Sem gastos no mês.</div>';var invTypes={};(state.investments||[]).forEach(function(i){invTypes[i.type||'Outro']=(invTypes[i.type||'Outro']||0)+projectedInvestment(i,ym)});var invParts=Object.keys(invTypes).map(function(k){return {label:k,value:invTypes[k]}}).sort(function(a,b){return b.value-a.value});setSvg('analysisPortfolioSvg',donutSvg(invParts));var invMax=Math.max(1,...invParts.map(function(p){return p.value}),current.aporte);el('portfolioChart').innerHTML=(invParts.length?invParts.map(function(p){return chartRow(p.label,p.value,invMax,'')}).join(''):'<div class="empty">Sem investimentos cadastrados.</div>')+chartRow('Aportes do mês',current.aporte,invMax,'');var trend=months.map(function(m){var s=summary(m);return {label:monthName(m).slice(0,3),value:s.net}});setSvg('analysisTrendSvg',lineChartSvg(trend));var debt=debtPaymentsIn(ym),debtTotal=debt.reduce(function(a,p){return a+Number(p.payment||0)},0);el('debtChart').innerHTML=chartRow('Parcelas do mês',debtTotal,Math.max(1,debtTotal,current.debtBalance),'negative')+chartRow('Saldo devedor',current.debtBalance,Math.max(1,debtTotal,current.debtBalance),'negative');var tips=[];if(current.expense>current.income&&current.income>0)tips.push('<div class="item analysis-tip err"><div><b>Gasto acima da renda</b><small>Reduza despesas ou renegocie compromissos antes de investir mais.</small></div></div>');if(catKeys[0])tips.push('<div class="item analysis-tip warn"><div><b>Maior gasto: '+esc(catKeys[0])+'</b><small>Essa categoria levou '+money(cats[catKeys[0]])+' no mês. Vale revisar.</small></div></div>');if(current.aporte>0)tips.push('<div class="item analysis-tip ok"><div><b>Você investiu este mês</b><small>Aporte registrado: '+money(current.aporte)+'. Constância pesa mais que valor alto.</small></div></div>');if(!tips.length)tips.push('<div class="item analysis-tip"><div><b>Comece pelo registro simples</b><small>Com alguns lançamentos, os gráficos ficam mais inteligentes.</small></div></div>');el('analysisTips').innerHTML=tips.join('');el('profileAlignment').innerHTML=portfolioProfileAlignment()}
 function investorMessage(profile){return {Conservador:'Prioriza segurança, liquidez e baixa oscilação. Foque em reserva, renda fixa e controle de risco.',Moderado:'Aceita algum risco em troca de crescimento. Combine renda fixa, ativos de renda variável e metas claras.',Arrojado:'Busca crescimento e tolera oscilações maiores. Controle concentração e mantenha reserva antes de aumentar risco.'}[profile]||'Responda ao questionário para descobrir seu perfil.'}
 function currentInvestorProfile(){var p=(state&&state.profile)||{},saved=p.investorProfile||{};if(saved&&saved.profile)return Object.assign({score:0,updatedAt:'',message:investorMessage(saved.profile)},saved);return {profile:p.risk||'Conservador',score:0,updatedAt:'',message:'Questionário ainda não respondido. Use o botão Calcular perfil para atualizar automaticamente.'}}
 function calculateInvestorProfile(){var ids=['riskHorizon','riskReaction','riskKnowledge','riskReserve','riskDebt'],answers={},score=0;ids.forEach(function(id){var v=num(el(id).value);answers[id]=v;score+=v});var profile=score>=10?'Arrojado':score>=7?'Moderado':'Conservador';return {profile:profile,score:score,answers:answers,message:investorMessage(profile),updatedAt:new Date().toISOString()}}
