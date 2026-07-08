@@ -259,6 +259,29 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
   #projection #futureCashflowSvg{height:190px!important}
 }
 
+
+/* Cockpit menu cleanup - remove icones corrompidos e deixa a lateral mais premium */
+.side-nav button .ico,
+.mobile-nav button .ico,
+.more-card .ico{
+  display:none!important;
+}
+.side-nav button,
+.mobile-nav button{
+  justify-content:flex-start!important;
+}
+.side-nav button{
+  padding-left:18px!important;
+  gap:0!important;
+}
+.mobile-nav button{
+  align-items:center!important;
+  justify-content:center!important;
+  gap:2px!important;
+}
+.more-card{
+  text-align:left!important;
+}
 </style>
 <body>
 <div class="auth hidden" id="authView">
