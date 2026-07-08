@@ -1250,9 +1250,86 @@ window.showTxDetails=showTxDetails;window.closeTxDetails=closeTxDetails;
 function renderBudgets(tx){var m=byCat(tx);el('budgetList').innerHTML=state.budgets.length?state.budgets.map(function(b){var name=categoryNameById(b.categoryId,b.category);var used=m[name]||0,p=b.value?Math.round(used/b.value*100):0;return item(name,'Usado: '+money(used)+' de '+money(b.value),p+'%',p>=100?'err':p>=80?'warn':'ok')}).join(''):'<div class="empty">Nenhum orçamento cadastrado.</div>'}
 function debtPrincipal(d){return Number(d.financed||0)||Math.max(0,Number(d.original||0)-Number(d.downPayment||0)+Number(d.fees||0)+Number(d.insurance||0))}
 function debtMonthlyRate(d){var r=Number(d.interestRate||0)/100;if(!r)return 0;return d.ratePeriod==='annual'?Math.pow(1+r,1/12)-1:r}
-function debtSchedule(d){var total=Math.max(1,Math.floor(Number(d.totalInstallments||1)));var paid=Math.max(0,Math.floor(Number(d.paidInstallments||0)));var first=(d.firstPaymentDate||d.startDate||today()).slice(0,7);var p=debtPrincipal(d);var rate=debtMonthlyRate(d);var system=d.amortizationSystem||'fixed_installment';var balance=Number(d.currentBalance||0)>0?Number(d.currentBalance||0):p;var arr=[];var manual=Number(d.manualPayment||0);var price=rate?balance*rate/(1-Math.pow(1+rate,-Math.max(1,total-paid))):balance/Math.max(1,total-paid);for(var n=1;n<=total;n++){var ym=addMonths(first,n-1);var interest=0,amort=0,pay=0;if(system==='sac'){amort=p/total;interest=Math.max(0,balance)*rate;pay=amort+interest}else if(system==='price'){interest=Math.max(0,balance)*rate;pay=price;amort=pay-interest}else if(system==='manual'){pay=manual||p/total;interest=Math.max(0,balance)*rate;amort=pay-interest}else{pay=p/total;amort=pay;interest=0}balance=Math.max(0,balance-amort);arr.push({debtId:d.id,number:n,month:ym,payment:pay,interest:interest,amortization:amort,balance:balance,paid:n<=paid})}return arr}
+function debtSchedule(d){
+  d=d||{};
+  var total=Math.max(1,Math.floor(Number(d.totalInstallments||1)));
+  var paid=Math.max(0,Math.min(total,Math.floor(Number(d.paidInstallments||0))));
+  var first=(d.firstPaymentDate||d.startDate||today()).slice(0,7);
+  var principal=debtPrincipal(d);
+  var rate=debtMonthlyRate(d);
+  var system=d.amortizationSystem||'fixed_installment';
+  var manual=Number(d.manualPayment||0);
+  var current=Number(d.currentBalance||0);
+  var arr=[];
+
+  function pushPayment(n, balanceBefore, remainingCount, alreadyPaid){
+    balanceBefore=Math.max(0,Number(balanceBefore||0));
+    remainingCount=Math.max(1,Number(remainingCount||1));
+    var interest=0,amort=0,pay=0;
+
+    if(system==='sac'){
+      amort=current>0?balanceBefore/remainingCount:principal/total;
+      interest=balanceBefore*rate;
+      pay=amort+interest;
+    }else if(system==='price'){
+      pay=rate?balanceBefore*rate/(1-Math.pow(1+rate,-remainingCount)):balanceBefore/remainingCount;
+      interest=balanceBefore*rate;
+      amort=pay-interest;
+    }else if(system==='manual'){
+      pay=manual||balanceBefore/remainingCount;
+      interest=balanceBefore*rate;
+      amort=pay-interest;
+    }else{
+      pay=manual||balanceBefore/remainingCount;
+      interest=0;
+      amort=pay;
+    }
+
+    if(!isFinite(pay)||pay<0)pay=0;
+    if(!isFinite(interest)||interest<0)interest=0;
+    if(!isFinite(amort)||amort<0)amort=0;
+    if(amort>balanceBefore){amort=balanceBefore;pay=amort+interest;}
+
+    var balanceAfter=Math.max(0,balanceBefore-amort);
+    arr.push({
+      debtId:d.id,
+      number:n,
+      month:addMonths(first,n-1),
+      payment:pay,
+      interest:interest,
+      amortization:amort,
+      balanceBefore:balanceBefore,
+      balance:balanceAfter,
+      balanceAfter:balanceAfter,
+      paid:!!alreadyPaid
+    });
+    return balanceAfter;
+  }
+
+  if(current>0){
+    var remaining=Math.max(1,total-paid);
+    var bal=current;
+    for(var k=0;k<remaining&&bal>0.005;k++){
+      bal=pushPayment(paid+1+k,bal,remaining-k,false);
+    }
+    return arr;
+  }
+
+  var balance=principal;
+  for(var n=1;n<=total&&balance>0.005;n++){
+    balance=pushPayment(n,balance,total-n+1,n<=paid);
+  }
+  return arr;
+}
 function debtPaymentsIn(ym){var out=[];(state&&state.debts||[]).filter(function(d){return d.status!=='paid'}).forEach(function(d){out=out.concat(debtSchedule(d).filter(function(p){return p.month===ym&&!p.paid}).map(function(p){return Object.assign({},p,{name:d.name||'Dívida',debtName:d.name||'Dívida',creditor:d.creditor||'',installment:p.number,totalInstallments:d.totalInstallments||'',dueDay:d.dueDay||1,status:p.paid?'pago':'pendente'})}))});return out}
-function debtRemainingBalance(d){var sch=debtSchedule(d).filter(function(p){return !p.paid});return sch.length?sch[0].balance+sch[0].amortization:0}
+function debtRemainingBalance(d){
+  d=d||{};
+  var current=Number(d.currentBalance||0);
+  if(current>0)return current;
+  var sch=debtSchedule(d).filter(function(p){return !p.paid});
+  if(!sch.length)return 0;
+  return Number(sch[0].balanceBefore!=null?sch[0].balanceBefore:(Number(sch[0].balance||0)+Number(sch[0].amortization||0)))||0;
+}
 function debtTypeLabel(v){return {real_estate_financing:'Financiamento imobiliário',vehicle_financing:'Financiamento de veículo',credit_card_installment:'Parcelamento de cartão',personal_loan:'Empréstimo pessoal',payroll_loan:'Consignado',consortium:'Consórcio',student_loan:'Financiamento estudantil',informal_debt:'Dívida informal',other:'Outra dívida'}[v]||'Dívida'}
 function clearDebtForm(){['debtName','debtCreditor','debtOriginal','debtFinanced','debtDownPayment','debtInterest','debtFees','debtInsurance','debtInstallmentsTotal','debtInstallmentsPaid','debtStartDate','debtFirstPayment','debtDueDay','debtManualPayment','debtCurrentBalance','debtNotes'].forEach(function(id){if(el(id))el(id).value=''});el('debtInstallmentsTotal').value=12;el('debtInstallmentsPaid').value=0;el('debtStartDate').value=today();el('debtFirstPayment').value=today();el('debtDueDay').value=new Date().getDate()}
 function setDebtEditMode(id){editingDebtId=id||null;el('debtFormTitle').textContent=editingDebtId?'Editar dívida':'Dívida / Financiamento';el('saveDebt').textContent=editingDebtId?'Salvar alterações':'Salvar dívida';el('cancelDebtEdit').classList.toggle('hidden',!editingDebtId)}
