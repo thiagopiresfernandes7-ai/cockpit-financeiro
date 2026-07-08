@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html lang="pt-BR">
 <head>
@@ -282,6 +282,28 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 .more-card{
   text-align:left!important;
 }
+
+
+/* Cockpit global icon cleanup - remove icones decorativos quebraveis em todo o app */
+.ico,
+.more-card>.ico,
+.launch-grid button>span:first-child,
+.sheet-import-action>span:first-child,
+.goal-mini-icon{
+  display:none!important;
+}
+.side-nav button,
+.more-card,
+.launch-grid button,
+.sheet-import-action{
+  gap:0!important;
+}
+.side-nav button{padding-left:18px!important;}
+.mobile-nav button .ico{display:none!important;}
+.mobile-nav button{justify-content:center!important;align-items:center!important;}
+.icon-btn{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif!important;}
+#privacyBtn{min-width:86px!important;width:auto!important;padding:0 14px!important;}
+
 </style>
 <body>
 <div class="auth hidden" id="authView">
@@ -310,37 +332,37 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 <nav class="nav-hub" id="nav">
 <div class="desktop-nav grouped-nav">
 <div class="nav-section"><div class="nav-label">Visão</div>
-<button class="active" data-view="dashboard"><span class="ico">â–¦</span>Início / Dashboard</button>
-<button data-view="analysis"><span class="ico">â—·</span>Análise</button>
+<button class="active" data-view="dashboard"><span class="ico" aria-hidden="true"></span>Início / Dashboard</button>
+<button data-view="analysis"><span class="ico" aria-hidden="true"></span>Análise</button>
 </div>
 <div class="nav-section"><div class="nav-label">Operação</div>
-<button data-view="register"><span class="ico">â†•</span>Extrato</button>
+<button data-view="register"><span class="ico" aria-hidden="true"></span>Extrato</button>
 </div>
 <div class="nav-section"><div class="nav-label">Patrimônio</div>
-<button data-view="wallet"><span class="ico">â—†</span>Investimentos</button>
-<button data-view="debts"><span class="ico">âš </span>Dívidas</button>
-<button data-view="dividends"><span class="ico">â—ˆ</span>Dividendos</button>
-<button data-view="simulator"><span class="ico">∞</span>Simulador</button>
+<button data-view="wallet"><span class="ico" aria-hidden="true"></span>Investimentos</button>
+<button data-view="debts"><span class="ico" aria-hidden="true"></span>Dívidas</button>
+<button data-view="dividends"><span class="ico" aria-hidden="true"></span>Dividendos</button>
+<button data-view="simulator"><span class="ico" aria-hidden="true"></span>Simulador</button>
 </div>
 <div class="nav-section"><div class="nav-label">Planejamento</div>
-<button data-view="plan"><span class="ico">●</span>Orçamento</button>
-<button data-view="projection"><span class="ico">↯</span>Fluxo de caixa</button>
-<button data-view="decisions"><span class="ico">âŒ</span>Decisões de compra</button>
-<button data-view="weekly"><span class="ico">âœ“</span>Plano da Semana</button>
+<button data-view="plan"><span class="ico" aria-hidden="true"></span>Orçamento</button>
+<button data-view="projection"><span class="ico" aria-hidden="true"></span>Fluxo de caixa</button>
+<button data-view="decisions"><span class="ico" aria-hidden="true"></span>Decisões de compra</button>
+<button data-view="weekly"><span class="ico" aria-hidden="true"></span>Plano da Semana</button>
 </div>
 <div class="nav-section"><div class="nav-label">Conta</div>
-<button data-view="profile"><span class="ico">â—‰</span>Perfil</button>
-<button data-view="settings"><span class="ico">⚙</span>Configurações</button>
-<button data-view="categories"><span class="ico">#</span>Categorias</button>
-<button data-view="help"><span class="ico">?</span>Ajuda</button>
+<button data-view="profile"><span class="ico" aria-hidden="true"></span>Perfil</button>
+<button data-view="settings"><span class="ico" aria-hidden="true"></span>Configurações</button>
+<button data-view="categories"><span class="ico" aria-hidden="true"></span>Categorias</button>
+<button data-view="help"><span class="ico" aria-hidden="true"></span>Ajuda</button>
 </div>
 </div>
 <div aria-label="Navegação principal mobile" class="mobile-nav">
-<button class="active" data-view="dashboard"><span class="ico">â–¦</span>Início</button>
-<button data-view="register"><span class="ico">â†•</span>Extrato</button>
-<button data-view="analysis"><span class="ico">â—·</span>Análise</button>
-<button data-view="wallet"><span class="ico">â—†</span>Patrimônio</button>
-<button data-view="more"><span class="ico">â˜°</span>Mais</button>
+<button class="active" data-view="dashboard"><span class="ico" aria-hidden="true"></span>Início</button>
+<button data-view="register"><span class="ico" aria-hidden="true"></span>Extrato</button>
+<button data-view="analysis"><span class="ico" aria-hidden="true"></span>Análise</button>
+<button data-view="wallet"><span class="ico" aria-hidden="true"></span>Patrimônio</button>
+<button data-view="more"><span class="ico" aria-hidden="true"></span>Mais</button>
 </div>
 </nav>
 <div class="side-footer"><button class="primary-btn" id="desktopGlobalAddBtn" type="button">+ Novo lançamento</button></div>
@@ -350,7 +372,7 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 <div class="title"><h1 id="pageTitle">Painel</h1><p id="monthHint">Mês selecionado</p></div>
 <div class="actions compact-actions">
 <div class="monthbar"><button class="icon-btn" id="prevMonth" title="Mês anterior">‹</button><input id="monthPicker" type="month"/><button class="icon-btn" id="nextMonth" title="Próximo mês">›</button><button class="btn ghost" id="todayBtn">Mês atual</button></div>
-<button aria-label="Ocultar ou mostrar valores" class="icon-btn" id="privacyBtn" title="Ocultar ou mostrar valores"><span id="eyeOpen">ðŸ‘</span><span class="hidden" id="eyeClosed">â—</span></button>
+<button aria-label="Ocultar ou mostrar valores" class="icon-btn" id="privacyBtn" title="Ocultar ou mostrar valores">Valores</button>
 <button class="btn ghost" id="exportBtn">Exportar</button>
 <button class="btn primary" id="topGlobalAddBtn" type="button">+ Novo lançamento</button>
 <div class="user-menu-wrap"><button aria-label="Menu do usuário" class="avatar user-avatar" id="userMenuButton" type="button"><span id="userAvatarText">CF</span></button><div class="user-menu hidden" id="userMenu"><button data-menu-view="profile" type="button">Perfil</button><button data-menu-view="help" type="button">Ajuda</button><button class="danger-text" id="logoutBtn" type="button">Sair</button></div></div>
@@ -444,13 +466,13 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 <section class="section" id="more">
 <div class="page-head"><div class="page-title"><div class="overline">App menu</div><h1>Mais</h1><p>Perfil, configurações e suporte sem misturar ações técnicas no fluxo principal.</p></div></div>
 <div class="grid cards3 more-grid clean-more-grid">
-<button class="panel more-card" data-more-target="profile" type="button"><span class="ico">â—‰</span><b>Perfil</b><small>Nome, e-mail, avatar e objetivo financeiro inteligente.</small></button>
-<button class="panel more-card" data-more-target="settings" type="button"><span class="ico">⚙</span><b>Configurações</b><small>Privacidade, notificações e preferências do app.</small></button>
-<button class="panel more-card" data-more-target="categories" type="button"><span class="ico">#</span><b>Categorias</b><small>Organize categorias e limites mensais.</small></button>
-<button class="panel more-card" data-more-target="wallet" type="button"><span class="ico">â—†</span><b>Contas/carteiras</b><small>Investimentos, rendimentos, dívidas e patrimônio.</small></button>
-<button class="panel more-card" data-more-action="tutorial" type="button"><span class="ico">?</span><b>Tutorial</b><small>Reabre o guia inicial de uso.</small></button>
-<button class="panel more-card" data-more-target="help" type="button"><span class="ico">i</span><b>Ajuda</b><small>Instalação no celular e dúvidas frequentes.</small></button>
-<button class="panel more-card" data-more-action="logout" type="button"><span class="ico">⎋</span><b>Sair</b><small>Encerra a sessão neste dispositivo.</small></button>
+<button class="panel more-card" data-more-target="profile" type="button"><span class="ico" aria-hidden="true"></span><b>Perfil</b><small>Nome, e-mail, avatar e objetivo financeiro inteligente.</small></button>
+<button class="panel more-card" data-more-target="settings" type="button"><span class="ico" aria-hidden="true"></span><b>Configurações</b><small>Privacidade, notificações e preferências do app.</small></button>
+<button class="panel more-card" data-more-target="categories" type="button"><span class="ico" aria-hidden="true"></span><b>Categorias</b><small>Organize categorias e limites mensais.</small></button>
+<button class="panel more-card" data-more-target="wallet" type="button"><span class="ico" aria-hidden="true"></span><b>Contas/carteiras</b><small>Investimentos, rendimentos, dívidas e patrimônio.</small></button>
+<button class="panel more-card" data-more-action="tutorial" type="button"><span class="ico" aria-hidden="true"></span><b>Tutorial</b><small>Reabre o guia inicial de uso.</small></button>
+<button class="panel more-card" data-more-target="help" type="button"><span class="ico" aria-hidden="true"></span><b>Ajuda</b><small>Instalação no celular e dúvidas frequentes.</small></button>
+<button class="panel more-card" data-more-action="logout" type="button"><span class="ico" aria-hidden="true"></span><b>Sair</b><small>Encerra a sessão neste dispositivo.</small></button>
 </div>
 <div class="panel hidden advanced-panel" id="manualImportPanel" style="margin-top:18px"><div class="panel-head"><div><h2>Importação avançada</h2><p>Cole linhas no formato: data; tipo; descrição; valor; categoria.</p></div></div>
 <label class="field"><span>Arquivo colado</span><textarea id="manualStatementText" placeholder="2026-07-03; despesa; Mercado; 125,90; Alimentação
@@ -516,14 +538,14 @@ body.tx-launch-open #launchWorkspace #debtFormPanel,body.debt-launch-open #launc
 <div class="sheet-handle"></div>
 <div class="sheet-head"><div><h2 id="registerSheetTitle">O que você quer registrar?</h2><p>Escolha uma ação e o Cockpit abre o formulário certo.</p></div><button aria-label="Fechar" class="icon-btn" id="closeRegisterSheet" type="button">Ã—</button></div>
 <div class="sheet-grid">
-<button data-register-action="income" type="button"><span>+</span><b>Receita</b><small>Entrada de dinheiro</small></button>
-<button data-register-action="expense" type="button"><span>âˆ’</span><b>Despesa</b><small>Gasto simples</small></button>
-<button data-register-action="investment" type="button"><span>â†—</span><b>Aporte</b><small>Investimento do mês</small></button>
-<button data-register-action="dividend" type="button"><span>â—†</span><b>Rendimento</b><small>Dividendo ou juros</small></button>
-<button data-register-action="installment" type="button"><span>â–¦</span><b>Compra parcelada</b><small>Parcelas futuras</small></button>
-<button data-register-action="debt" type="button"><span>âš </span><b>Dívida</b><small>Financiamento ou consórcio</small></button>
-<button data-register-action="transfer" type="button"><span>â‡„</span><b>Transferência</b><small>Entre contas/carteiras</small></button>
-<button class="sheet-import-action" data-register-action="import" type="button"><span>⇩</span><b>Importação avançada</b><small>Colar lançamentos</small></button>
+<button data-register-action="income" type="button"><b>Receita</b><small>Entrada de dinheiro</small></button>
+<button data-register-action="expense" type="button"><b>Despesa</b><small>Gasto simples</small></button>
+<button data-register-action="investment" type="button"><b>Aporte</b><small>Investimento do mês</small></button>
+<button data-register-action="dividend" type="button"><b>Rendimento</b><small>Dividendo ou juros</small></button>
+<button data-register-action="installment" type="button"><b>Compra parcelada</b><small>Parcelas futuras</small></button>
+<button data-register-action="debt" type="button"><b>Dívida</b><small>Financiamento ou consórcio</small></button>
+<button data-register-action="transfer" type="button"><b>Transferência</b><small>Entre contas/carteiras</small></button>
+<button class="sheet-import-action" data-register-action="import" type="button"><b>Importação avançada</b><small>Colar lançamentos</small></button>
 </div>
 </div>
 </div><div aria-hidden="true" class="sheet-backdrop hidden" id="launchWorkspace"><div aria-modal="true" class="bottom-sheet launch-workspace-panel" role="dialog"><div class="sheet-handle"></div><div class="sheet-head"><div><h2 id="launchWorkspaceTitle">Novo lançamento</h2><p>Preencha o formulário e salve sem sair da tela atual.</p></div><button aria-label="Fechar" class="icon-btn" id="closeLaunchWorkspace" type="button">Ã—</button></div><div class="panel launch-form" id="txFormPanel" style="margin-top:14px"><div class="panel-head"><div><h2 id="txFormTitle">Registrar movimentação</h2><p>Use esta tela apenas após acionar o botão global +.</p></div></div><div class="form-grid"><label class="field"><span>Tipo</span><select id="txType"><option value="income">Receita</option><option value="expense">Despesa</option><option value="investment">Aporte em investimento</option><option value="transfer">Transferência</option></select></label><label class="field"><span>Data</span><input id="txDate" type="date"/></label><label class="field"><span>Descrição</span><input id="txDesc" placeholder="Ex.: mercado, salário, aluguel"/></label><label class="field"><span>Categoria</span><select id="txCat"></select></label><label class="field hidden" id="txInvestmentTargetWrap"><span>Investimento de destino</span><select id="txInvestmentTarget"></select></label><label class="field"><span>Valor total</span><input id="txValue" min="0" placeholder="0,00" step="0.01" type="number"/></label><label class="field"><span>Parcelas</span><input id="txInstallments" min="1" type="number" value="1"/></label><label class="field"><span>Mês da fatura</span><input id="txBillingMonth" type="month"/></label><input id="txFirstMonth" type="hidden"/><label class="field"><span>Observações</span><input id="txNotes" placeholder="Opcional"/></label></div><div class="split" style="margin-top:14px"><button class="btn primary" id="saveTx">Salvar registro</button><button class="btn ghost" id="clearTx">Limpar</button><button class="btn ghost hidden" id="cancelTxEdit">Cancelar edição</button></div></div><div class="panel launch-form" id="debtFormPanel" style="margin-top:14px"><div class="panel-head"><div><h2 id="debtFormTitle">Dívida / Financiamento</h2><p>Use esta tela apenas após acionar o botão global +.</p></div></div><div class="form-grid"><label class="field"><span>Nome da dívida</span><input id="debtName" placeholder="Ex.: financiamento do apartamento"/></label><label class="field"><span>Tipo da dívida</span><select id="debtType"><option value="real_estate_financing">Financiamento imobiliário</option><option value="vehicle_financing">Financiamento de veículo</option><option value="credit_card_installment">Parcelamento de cartão</option><option value="personal_loan">Empréstimo pessoal</option><option value="payroll_loan">Consignado</option><option value="consortium">Consórcio</option><option value="student_loan">Financiamento estudantil</option><option value="informal_debt">Dívida informal</option><option value="other">Outra dívida</option></select></label><label class="field"><span>Instituição ou credor</span><input id="debtCreditor" placeholder="Banco, loja ou pessoa"/></label><label class="field"><span>Valor original da dívida</span><input id="debtOriginal" min="0" step="0.01" type="number"/></label><label class="field"><span>Valor financiado</span><input id="debtFinanced" min="0" step="0.01" type="number"/></label><label class="field"><span>Entrada paga</span><input id="debtDownPayment" min="0" step="0.01" type="number"/></label><label class="field"><span>Juros (%)</span><input id="debtInterest" min="0" step="0.0001" type="number"/></label><label class="field"><span>Periodicidade dos juros</span><select id="debtRatePeriod"><option value="monthly">Ao mês</option><option value="annual">Ao ano</option></select></label><label class="field"><span>Taxas adicionais</span><input id="debtFees" min="0" step="0.01" type="number"/></label><label class="field"><span>Seguros/tarifas</span><input id="debtInsurance" min="0" step="0.01" type="number"/></label><label class="field"><span>Total de parcelas</span><input id="debtInstallmentsTotal" min="1" type="number" value="12"/></label><label class="field"><span>Parcelas já pagas</span><input id="debtInstallmentsPaid" min="0" type="number" value="0"/></label><label class="field"><span>Data de início</span><input id="debtStartDate" type="date"/></label><label class="field"><span>Primeira parcela</span><input id="debtFirstPayment" type="date"/></label><label class="field"><span>Dia de vencimento</span><input id="debtDueDay" max="31" min="1" type="number"/></label><label class="field"><span>Sistema de cálculo</span><select id="debtSystem"><option value="fixed_installment">Sem juros / parcela fixa</option><option value="price">Price</option><option value="sac">SAC</option><option value="manual">Manual</option></select></label><label class="field"><span>Valor da parcela manual</span><input id="debtManualPayment" min="0" step="0.01" type="number"/></label><label class="field"><span>Saldo devedor atual</span><input id="debtCurrentBalance" min="0" step="0.01" type="number"/></label><label class="field"><span>Observações</span><textarea id="debtNotes" placeholder="Detalhes opcionais"></textarea></label></div><div class="split" style="margin-top:14px"><button class="btn primary" id="saveDebt">Salvar dívida</button><button class="btn ghost hidden" id="cancelDebtEdit">Cancelar edição</button></div></div></div></div>
@@ -1776,6 +1798,21 @@ exportExcel=function(){
   try{return cockpitOriginalExportExcel.apply(this,arguments)}finally{window.Blob=oldBlob}
 };
 setTimeout(function(){if(window.state)cockpitRepairDataStrings(window.state||state);cockpitFixVisibleText(document.body)},0);
+
+
+
+/* Cockpit icon text cleanup - protecao runtime */
+function cockpitRemoveDecorativeIcons(){
+  try{
+    document.querySelectorAll('.ico,.goal-mini-icon,.more-card>.ico,.launch-grid button>span:first-child,.sheet-import-action>span:first-child').forEach(function(n){n.setAttribute('aria-hidden','true');n.style.display='none'});
+    var p=document.getElementById('privacyBtn'); if(p) p.textContent='Valores';
+    var prev=document.getElementById('prevMonth'); if(prev) prev.textContent='‹';
+    var next=document.getElementById('nextMonth'); if(next) next.textContent='›';
+  }catch(e){}
+}
+var cockpitIconCleanupRender=render;
+render=function(){cockpitIconCleanupRender();cockpitRemoveDecorativeIcons()};
+setTimeout(cockpitRemoveDecorativeIcons,0);
 
 Object.assign(window,{setView:setView,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,deleteDebtAmortization:deleteDebtAmortization,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editInvestmentMovement:editInvestmentMovement,deleteInvestmentMovement:deleteInvestmentMovement,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend});
 setupEvents();load();
