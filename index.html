@@ -1349,7 +1349,7 @@ function exportExcel(){
   var sheets=[];
   function cleanSheetName(name){return String(name||'Planilha').replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Planilha'}
   function addSheet(name,heads,rows){sheets.push({name:cleanSheetName(name),heads:heads||[],rows:rows||[]})}
-  function xml(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function xml(v){v=(typeof cockpitFixEncodingText==='function'?cockpitFixEncodingText(v):v);return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
   function cell(v){
     if(v==null)v='';
     if(typeof v==='number'&&isFinite(v))return '<Cell><Data ss:Type="Number">'+v+'</Data></Cell>';
@@ -1398,7 +1398,7 @@ function exportExcel(){
   Object.keys(state.profile||{}).forEach(function(k){goalRows.push(['Perfil: '+k,state.profile[k]])});
   addSheet('Objetivo e perfil',['Campo','Valor'],goalRows);
   var workbook='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'+sheets.map(sheetXml).join('')+'</Workbook>';
-  var blob=new Blob([workbook],{type:'application/vnd.ms-excel;charset=utf-8'});
+  var blob=new Blob(['\ufeff',workbook],{type:'application/vnd.ms-excel;charset=utf-8'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='cockpit-financeiro-completo-'+ym+'.xls';
@@ -1697,6 +1697,62 @@ var cockpitOriginalRenderFutureCashflow=renderFutureCashflow;
 renderFutureCashflow=function(){cockpitOriginalRenderFutureCashflow();if(!el('cashflowFormulaList'))return;var cfg=state.cashflowSettings||{},ym=selectedMonth(),rows=futureProjectedMonths(ym),reserve=Number(cfg.safetyReserve||0),first=rows[0]||{expectedIncome:0,committed:0,net:0,balance:Number(cfg.baseBalance||0)};el('cashflowFormulaList').innerHTML=[item('Saldo inicial','Valor usado como ponto de partida da projeção',money(Number(cfg.baseBalance||0)),'neutral'),item('Entradas previstas','Receitas futuras e recebimentos cadastrados para o primeiro mês',money(first.expectedIncome),'positive'),item('Saídas previstas','Despesas futuras, parcelas, dívidas e compromissos do primeiro mês',money(first.committed),'negative'),item('Resultado do mês','Entradas previstas menos saídas previstas',money(first.net),first.net>=0?'positive':'negative'),item('Saldo final previsto','Saldo inicial acumulado após o resultado do mês',money(first.balance),first.balance>=reserve?'positive':'warn'),item('Margem para aportar','Saldo final menos a reserva mínima definida',money(Math.max(0,first.balance-reserve)),first.balance>=reserve?'positive':'warn')].join('')};
 var cockpitOriginalRenderFreedom=renderFreedom;
 renderFreedom=function(ym){cockpitOriginalRenderFreedom(ym);if(!el('freedomExplainList'))return;el('freedomExplainList').innerHTML=[item('Conta usada','Patrimônio-alvo = custo mensal desejado x 12 / taxa de retirada anual. A margem de segurança aumenta essa meta.','','neutral'),item('Exemplo simples','Se você quer R$ 10.000 por mês e usa retirada de 4% ao ano, a meta base é R$ 3.000.000.','','neutral'),item('O que muda a previsão','Aporte mensal, carteira atual, retorno esperado, custo de vida e margem de segurança.','','neutral')].join('')};
+
+
+
+/* Cockpit encoding guard - corrige acentos no app e no Excel */
+function cockpitFixEncodingText(value){
+  var s=String(value==null?'':value);
+  var map={
+    'Ã¡':'á','Ã ':'à','Ã¢':'â','Ã£':'ã','Ã¤':'ä','Ã§':'ç','Ã©':'é','Ãª':'ê','Ã«':'ë','Ã­':'í','Ã¯':'ï','Ã³':'ó','Ã´':'ô','Ãµ':'õ','Ã¶':'ö','Ãº':'ú','Ã¼':'ü','Ã±':'ñ',
+    'Ã':'Á','Ã€':'À','Ã‚':'Â','Ãƒ':'Ã','Ã‡':'Ç','Ã‰':'É','ÃŠ':'Ê','Ã':'Í','Ã“':'Ó','Ã”':'Ô','Ã•':'Õ','Ãš':'Ú',
+    'â€¢':'•','â€“':'-','â€”':'-','â€˜':'‘','â€™':'’','â€œ':'“','â€':'”','â€¹':'‹','â€º':'›','ï¼‹':'+','âˆž':'∞','â—Ž':'●','â†¯':'↯','â‡©':'⇩','âŽ‹':'⎋','âš™':'⚙'
+  };
+  Object.keys(map).forEach(function(k){s=s.split(k).join(map[k])});
+  return s;
+}
+function cockpitRepairDataStrings(obj,seen){
+  if(!obj||typeof obj!=='object')return obj;
+  seen=seen||[]; if(seen.indexOf(obj)>=0)return obj; seen.push(obj);
+  Object.keys(obj).forEach(function(k){
+    var v=obj[k];
+    if(typeof v==='string')obj[k]=cockpitFixEncodingText(v);
+    else if(v&&typeof v==='object')cockpitRepairDataStrings(v,seen);
+  });
+  return obj;
+}
+function cockpitFixVisibleText(root){
+  root=root||document.body;
+  try{
+    var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:function(n){var p=n.parentNode;if(!p||['SCRIPT','STYLE','TEXTAREA'].indexOf(p.nodeName)>=0)return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}});
+    var nodes=[],n; while(n=walker.nextNode())nodes.push(n);
+    nodes.forEach(function(t){var fixed=cockpitFixEncodingText(t.nodeValue);if(fixed!==t.nodeValue)t.nodeValue=fixed});
+    root.querySelectorAll('input[placeholder],textarea[placeholder],button,option').forEach(function(elm){['placeholder','title','aria-label'].forEach(function(a){if(elm.hasAttribute&&elm.hasAttribute(a)){var v=elm.getAttribute(a),f=cockpitFixEncodingText(v);if(f!==v)elm.setAttribute(a,f)}});if(elm.childNodes.length===1&&elm.firstChild&&elm.firstChild.nodeType===3){var txt=elm.textContent,fx=cockpitFixEncodingText(txt);if(fx!==txt)elm.textContent=fx}});
+  }catch(e){}
+}
+var cockpitOriginalEsc=esc;
+esc=function(s){return cockpitOriginalEsc(cockpitFixEncodingText(s))};
+var cockpitOriginalSetText=setText;
+setText=function(id,value){cockpitOriginalSetText(id,cockpitFixEncodingText(value))};
+var cockpitOriginalItem=item;
+item=function(title,sub,value,cls){return cockpitOriginalItem(cockpitFixEncodingText(title),cockpitFixEncodingText(sub),value,cls)};
+var cockpitOriginalRender=render;
+render=function(){if(window.state)cockpitRepairDataStrings(window.state||state);cockpitOriginalRender();cockpitFixVisibleText(document.body)};
+var cockpitOriginalExportExcel=exportExcel;
+exportExcel=function(){
+  var oldBlob=window.Blob;
+  window.Blob=function(parts,opts){
+    try{
+      if(opts&&String(opts.type||'').indexOf('application/vnd.ms-excel')>=0){
+        parts=(parts||[]).map(function(p){return typeof p==='string'?cockpitFixEncodingText(p):p});
+        if(typeof parts[0]==='string'&&parts[0].slice(0,1)!=='\ufeff')parts.unshift('\ufeff');
+      }
+    }catch(e){}
+    return new oldBlob(parts,opts);
+  };
+  try{return cockpitOriginalExportExcel.apply(this,arguments)}finally{window.Blob=oldBlob}
+};
+setTimeout(function(){if(window.state)cockpitRepairDataStrings(window.state||state);cockpitFixVisibleText(document.body)},0);
 
 Object.assign(window,{setView:setView,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,deleteDebtAmortization:deleteDebtAmortization,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editInvestmentMovement:editInvestmentMovement,deleteInvestmentMovement:deleteInvestmentMovement,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend});
 setupEvents();load();
