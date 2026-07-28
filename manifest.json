@@ -1,0 +1,31 @@
+{
+  "name": "Cockpit Financeiro",
+  "short_name": "Cockpit",
+  "description": "Controle financeiro pessoal rápido, seguro e organizado.",
+  "start_url": "./#view=dashboard",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#030b16",
+  "theme_color": "#061425",
+  "lang": "pt-BR",
+  "shortcuts": [
+    {
+      "name": "Lançar despesa",
+      "short_name": "Despesa",
+      "description": "Abrir o registro de despesa rápida",
+      "url": "./#quick=expense"
+    },
+    {
+      "name": "Ver extrato",
+      "short_name": "Extrato",
+      "description": "Abrir o extrato financeiro",
+      "url": "./#view=register"
+    },
+    {
+      "name": "Ver painel",
+      "short_name": "Painel",
+      "description": "Abrir o painel financeiro",
+      "url": "./#view=dashboard"
+    }
+  ]
+}
