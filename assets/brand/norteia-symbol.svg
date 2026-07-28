@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" role="img" aria-labelledby="t">
+  <title id="t">Símbolo Norteia</title>
+  <defs><linearGradient id="g" x1="10" y1="20" x2="96" y2="122"><stop stop-color="#20D6BE"/><stop offset="1" stop-color="#00BFA5"/></linearGradient></defs>
+  <path d="M15 118V38l29 22v58L15 96z" fill="url(#g)"/>
+  <path d="M44 60l34 30V24l27-20v116L44 76z" fill="#F6F7F8"/>
+  <path d="M15 38l29 22 34 30V55L44 25z" fill="url(#g)"/>
+  <path d="M44 0l10 20H34zM44 140l-10-20h20z" fill="#20D6BE"/>
+</svg>
