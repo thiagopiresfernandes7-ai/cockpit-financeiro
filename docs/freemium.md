@@ -1,4 +1,4 @@
-# Freemium do Cockpit Financeiro
+# Freemium do Norteia
 
 ## Implementado
 
@@ -8,7 +8,7 @@
 - Limites gratuitos preservam dados existentes e bloqueiam apenas novas inclusões.
 - Modal Premium com a oferta web atual: 7 dias grátis e depois R$ 19,90 por ano.
 - Plano e status aparecem em Configurações.
-- Hotmart é apenas o provedor web; o direito Premium pertence à conta Cockpit.
+- Hotmart é apenas o provedor web; o direito Premium pertence à conta Norteia.
 
 ## Limites gratuitos
 
