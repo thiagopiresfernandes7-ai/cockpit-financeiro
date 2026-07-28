@@ -1,16 +1,17 @@
 {
-  "name": "Cockpit Financeiro",
-  "short_name": "Cockpit",
-  "description": "Controle financeiro pessoal rápido, seguro e organizado.",
+  "name": "Norteia",
+  "short_name": "Norteia",
+  "description": "Organize seu dinheiro, acompanhe gastos, dívidas, investimentos e tome decisões com mais direção.",
   "start_url": "./#view=dashboard",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#030b16",
-  "theme_color": "#061425",
+  "background_color": "#020817",
+  "theme_color": "#0B1D33",
   "lang": "pt-BR",
   "icons": [
-    {"src": "icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable"},
-    {"src": "icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "maskable-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
   ],
   "shortcuts": [
     {"name": "Lançar despesa", "short_name": "Despesa", "description": "Abrir o registro de despesa rápida", "url": "./#quick=expense"},
