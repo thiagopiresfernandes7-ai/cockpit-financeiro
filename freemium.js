@@ -60,7 +60,7 @@ function ensureModal(){
   document.head.appendChild(style);
   var modal=document.createElement("div");
   modal.id="premiumFeatureModal";modal.className="premium-feature-modal hidden";modal.setAttribute("aria-hidden","true");
-  modal.innerHTML='<div class="premium-card" role="dialog" aria-modal="true" aria-labelledby="premiumModalTitle"><span class="premium-badge">COCKPIT PREMIUM</span><h2 id="premiumModalTitle">Desbloqueie o Cockpit Premium</h2><p id="premiumModalText">Tenha projeções, dívidas, investimentos avançados e inteligência financeira para decidir melhor.</p><ul><li>Fluxo de caixa futuro</li><li>Dívidas e financiamentos</li><li>Investimentos e dividendos</li><li>Análise anual e objetivo inteligente</li><li>Plano da Semana e fechamento mensal</li></ul><div class="premium-price">7 dias grátis, depois R$ 19,90 por ano</div><div class="premium-actions"><button class="btn primary" id="premiumCheckoutBtn" type="button">Assinar pela Hotmart</button><button class="btn" id="premiumCloseBtn" type="button">Continuar no gratuito</button></div><p class="notice tiny">O plano gratuito continua disponível. A liberação Premium depende da confirmação segura do pagamento.</p></div>';
+  modal.innerHTML='<div class="premium-card" role="dialog" aria-modal="true" aria-labelledby="premiumModalTitle"><span class="premium-badge">NORTEIA PREMIUM</span><h2 id="premiumModalTitle">Desbloqueie o Norteia Premium</h2><p id="premiumModalText">Planeje dívidas, investimentos e seu futuro financeiro com mais clareza.</p><ul><li>Fluxo de caixa futuro</li><li>Dívidas e financiamentos</li><li>Investimentos e dividendos</li><li>Análise anual e objetivo inteligente</li><li>Plano da Semana e fechamento mensal</li></ul><div class="premium-price">7 dias grátis, depois R$ 19,90 por ano</div><div class="premium-actions"><button class="btn primary" id="premiumCheckoutBtn" type="button">Assinar pela Hotmart</button><button class="btn" id="premiumCloseBtn" type="button">Continuar no gratuito</button></div><p class="notice tiny">O plano gratuito continua disponível. A liberação Premium depende da confirmação segura do pagamento.</p></div>';
   document.body.appendChild(modal);
   document.getElementById("premiumCloseBtn").onclick=closePremiumModal;
   document.getElementById("premiumCheckoutBtn").onclick=function(){PaymentProviders[APP_ENV.paymentProvider].startCheckout()};
@@ -69,7 +69,7 @@ function ensureModal(){
 function openPremiumModal(featureId,message){
   ensureModal();
   var modal=document.getElementById("premiumFeatureModal");
-  document.getElementById("premiumModalText").textContent=message||("“"+featureCopy(featureId)+"” está disponível no Cockpit Premium. O plano gratuito continua funcionando normalmente.");
+  document.getElementById("premiumModalText").textContent=message||("“"+featureCopy(featureId)+"” está disponível no Norteia Premium. O plano gratuito continua funcionando normalmente.");
   document.getElementById("premiumCheckoutBtn").style.display=APP_ENV.paymentProvider==="hotmart"&&!platform.isNative?"":"none";
   modal.classList.remove("hidden");modal.setAttribute("aria-hidden","false");
 }
@@ -86,7 +86,7 @@ function syncEntitlement(){
 }
 function planMessage(){
   var sub=normalizeSubscription(state&&state.subscription);
-  if(hasPremiumAccess(state))return"Cockpit Premium ativo"+(sub.expiresAt?" até "+formatDate(sub.expiresAt):".");
+  if(hasPremiumAccess(state))return"Norteia Premium ativo"+(sub.expiresAt?" até "+formatDate(sub.expiresAt):".");
   if(sub.status==="cancelled")return"Seu Premium foi cancelado"+(sub.expiresAt?" e ficará disponível até "+formatDate(sub.expiresAt):".");
   if(sub.status==="expired")return"Seu Premium expirou. Seus dados permanecem preservados.";
   return"Você está no plano gratuito.";
