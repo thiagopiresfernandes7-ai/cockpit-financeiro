@@ -4,6 +4,8 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<meta content="#061425" name="theme-color"/>
+<link href="manifest.json" rel="manifest"/>
 <meta content="#07111f" name="theme-color"/>
 <meta content="Cockpit Financeiro: controle de finanças pessoais, parcelas, investimentos e projeções." name="description"/>
 <title>Cockpit Financeiro</title>
@@ -380,6 +382,22 @@ body.auth-mode{overflow:hidden}
 body.auth-mode #appView,body.auth-mode #appView.app{display:none!important;visibility:hidden!important;pointer-events:none!important}
 body.auth-mode .mobile-nav,body.auth-mode .global-add-btn,body.auth-mode #launchWorkspace{display:none!important}
 body.app-mode #authView,body.app-mode #paywallView{display:none!important}
+.habit-mobile-only{display:none}
+.quick-expense-sheet{max-width:560px}
+.quick-expense-sheet .quick-primary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.quick-expense-sheet .quick-value-field{grid-column:1/-1}
+.quick-expense-sheet .quick-value-field input{min-height:58px;font-size:26px;font-weight:900}
+.quick-expense-sheet details{margin-top:10px}
+.quick-expense-sheet summary{cursor:pointer;color:var(--cyan-2);font-weight:850;padding:8px 0}
+.quick-favorites{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.quick-favorite{min-height:38px;border-radius:999px;padding:0 14px;border:1px solid var(--line);background:rgba(255,255,255,.045);color:var(--text);font-weight:850}
+.habit-toast{white-space:pre-line;max-width:min(420px,calc(100vw - 28px))}
+.habit-toast .toast-action{margin-left:10px}
+.habit-summary-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.habit-summary-card{min-height:88px;padding:14px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(27,45,71,.80),rgba(14,28,47,.84))}
+.habit-summary-card small{display:block;color:var(--muted);font-size:11px;font-weight:850}
+.habit-summary-card b{display:block;margin-top:7px;color:var(--text);font-size:18px}
+.daily-review-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .auth:not(.hidden){position:relative;z-index:120;min-height:100dvh;width:100%;align-items:start;padding-top:calc(24px + env(safe-area-inset-top));padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 .paywall-card{width:min(860px,100%);border-radius:34px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(22,38,61,.96),rgba(5,16,30,.98));box-shadow:var(--shadow);padding:34px}
 .paywall-card h1{margin:12px 0 10px;font-size:44px;line-height:.95;letter-spacing:-.06em}
@@ -387,7 +405,7 @@ body.app-mode #authView,body.app-mode #paywallView{display:none!important}
 .paywall-price{display:inline-flex;align-items:center;gap:10px;margin:14px 0;padding:12px 16px;border-radius:18px;border:1px solid rgba(76,201,255,.25);background:rgba(76,201,255,.09);font-weight:1000;color:var(--cyan-2)}
 .paywall-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
 .paywall-grid span{padding:12px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--soft);font-size:13px;font-weight:800}
-@media(max-width:820px){body.auth-mode{height:100dvh;min-height:100dvh}.auth:not(.hidden){position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;padding:calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));background:radial-gradient(circle at 82% 8%,rgba(76,201,255,.18),transparent 31%),radial-gradient(circle at 10% 92%,rgba(247,200,106,.12),transparent 30%),linear-gradient(135deg,#030b16,#061424 58%,#020711)}.auth-card{width:100%;max-width:520px;display:block;overflow:hidden;flex:0 0 auto}.auth-hero,.auth-form{padding:22px}.auth-hero{border-bottom:1px solid var(--line)}.auth-hero h1{font-size:34px;line-height:1;letter-spacing:-.055em}.auth-form .split{gap:10px}.auth-form .split .btn{flex:1}.paywall-card{padding:24px;border-radius:26px}.paywall-card h1{font-size:34px}.paywall-grid{grid-template-columns:1fr}}
+@media(max-width:820px){body.auth-mode{height:100dvh;min-height:100dvh}.auth:not(.hidden){position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;padding:calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));background:radial-gradient(circle at 82% 8%,rgba(76,201,255,.18),transparent 31%),radial-gradient(circle at 10% 92%,rgba(247,200,106,.12),transparent 30%),linear-gradient(135deg,#030b16,#061424 58%,#020711)}.auth-card{width:100%;max-width:520px;display:block;overflow:hidden;flex:0 0 auto}.auth-hero,.auth-form{padding:22px}.auth-hero{border-bottom:1px solid var(--line)}.auth-hero h1{font-size:34px;line-height:1;letter-spacing:-.055em}.auth-form .split{gap:10px}.auth-form .split .btn{flex:1}.paywall-card{padding:24px;border-radius:26px}.paywall-card h1{font-size:34px}.paywall-grid{grid-template-columns:1fr}.habit-mobile-only{display:block}.quick-expense-sheet .quick-primary-grid{grid-template-columns:1fr}.quick-expense-sheet .quick-value-field{grid-column:auto}.habit-summary-row{grid-template-columns:1fr 1fr}.habit-summary-row .daily-review-card{grid-column:1/-1}}
 </style>
 <body class="auth-mode">
 <div class="auth hidden" id="authView">
@@ -476,6 +494,13 @@ body.app-mode #authView,body.app-mode #paywallView{display:none!important}
 </header>
 <div class="content">
 <section class="section active dashboard-clean" id="dashboard">
+<div class="habit-mobile-only" id="habitMobileSummary">
+<div class="habit-summary-row">
+<div class="habit-summary-card"><small>Pode gastar hoje</small><b id="dailyAllowanceMobile">Complete seus dados</b><small id="dailyAllowanceReason">Registre receitas e despesas para calcular.</small></div>
+<div class="habit-summary-card"><small>Sequência de controle</small><b id="controlStreakMobile">0 dias</b><small>Registrando ou revisando movimentações.</small></div>
+<div class="habit-summary-card daily-review-card"><small>Revisão rápida do dia</small><b id="pendingReviewMobile">0 movimentações para revisar</b><small>Teve gasto, recebeu dinheiro ou pagou parcela hoje?</small><div class="daily-review-actions"><button class="btn" id="markDayReviewed" type="button">Está tudo certo</button><button class="btn primary" id="addForgottenPurchase" type="button">Adicionar compra esquecida</button></div></div>
+</div>
+</div>
 <div class="grid kpis dashboard-kpis">
 <div class="card kpi"><span>Patrimônio líquido</span><b data-money="" id="netWorth">R$ 0,00</b><div class="delta neutral" id="netWorthStatus">Visão geral</div></div>
 <div class="card kpi"><span>Saldo disponível</span><b data-money="" id="cashBalance">R$ 0,00</b><div class="delta good">Liquidez do mês</div></div>
@@ -514,6 +539,8 @@ body.app-mode #authView,body.app-mode #paywallView{display:none!important}
 <button class="chip" data-tx-filter="investment" type="button">Aportes</button>
 <button class="chip" data-tx-filter="debt" type="button">Dívidas</button>
 <button class="chip" data-tx-filter="installment" type="button">Cartão/Parcelas</button>
+<button class="chip" data-tx-filter="pending_review" type="button">Pendentes de revisão</button>
+<button class="chip" data-tx-filter="reviewed" type="button">Revisadas</button>
 </div>
 <label class="field statement-search"><span>Buscar movimentação</span><input id="txSearch" placeholder="Buscar por descrição, categoria ou tipo"/></label>
 </div>
@@ -634,6 +661,7 @@ body.app-mode #authView,body.app-mode #paywallView{display:none!important}
 <div class="sheet-handle"></div>
 <div class="sheet-head"><div><h2 id="registerSheetTitle">O que você quer registrar?</h2><p>Escolha uma ação e o Cockpit abre o formulário certo.</p></div><button aria-label="Fechar" class="icon-btn" id="closeRegisterSheet" type="button">Ã—</button></div>
 <div class="sheet-grid">
+<button data-register-action="quick_expense" type="button"><b>Despesa rápida</b><small>Registre uma compra em segundos</small></button>
 <button data-register-action="income" type="button"><b>Receita</b><small>Entrada de dinheiro</small></button>
 <button data-register-action="expense" type="button"><b>Despesa</b><small>Gasto simples</small></button>
 <button data-register-action="investment" type="button"><b>Aporte</b><small>Investimento do mês</small></button>
@@ -643,15 +671,31 @@ body.app-mode #authView,body.app-mode #paywallView{display:none!important}
 <button data-register-action="transfer" type="button"><b>Transferência</b><small>Entre contas/carteiras</small></button>
 <button class="sheet-import-action" data-register-action="import" type="button"><b>Importação avançada</b><small>Colar lançamentos</small></button>
 </div>
+<div id="quickFavoritesBlock"><h3>Favoritos</h3><div class="quick-favorites" id="quickFavorites"></div></div>
 </div>
 </div><div aria-hidden="true" class="sheet-backdrop hidden" id="launchWorkspace"><div aria-modal="true" class="bottom-sheet launch-workspace-panel" role="dialog"><div class="sheet-handle"></div><div class="sheet-head"><div><h2 id="launchWorkspaceTitle">Novo lançamento</h2><p>Preencha o formulário e salve sem sair da tela atual.</p></div><button aria-label="Fechar" class="icon-btn" id="closeLaunchWorkspace" type="button">Ã—</button></div><div class="panel launch-form" id="txFormPanel" style="margin-top:14px"><div class="panel-head"><div><h2 id="txFormTitle">Registrar movimentação</h2><p>Use esta tela apenas após acionar o botão global +.</p></div></div><div class="form-grid"><label class="field"><span>Tipo</span><select id="txType"><option value="income">Receita</option><option value="expense">Despesa</option><option value="investment">Aporte em investimento</option><option value="transfer">Transferência</option></select></label><label class="field"><span>Data</span><input id="txDate" type="date"/></label><label class="field"><span>Descrição</span><input id="txDesc" placeholder="Ex.: mercado, salário, aluguel"/></label><label class="field"><span>Categoria</span><select id="txCat"></select></label><label class="field hidden" id="txInvestmentTargetWrap"><span>Investimento de destino</span><select id="txInvestmentTarget"></select></label><label class="field"><span>Valor total</span><input id="txValue" min="0" placeholder="0,00" step="0.01" type="number"/></label><label class="field"><span>Parcelas</span><input id="txInstallments" min="1" type="number" value="1"/></label><label class="field"><span>Mês da fatura</span><input id="txBillingMonth" type="month"/></label><input id="txFirstMonth" type="hidden"/><label class="field"><span>Observações</span><input id="txNotes" placeholder="Opcional"/></label></div><div class="split" style="margin-top:14px"><button class="btn primary" id="saveTx">Salvar registro</button><button class="btn ghost" id="clearTx">Limpar</button><button class="btn ghost hidden" id="cancelTxEdit">Cancelar edição</button></div></div><div class="panel launch-form" id="debtFormPanel" style="margin-top:14px"><div class="panel-head"><div><h2 id="debtFormTitle">Dívida / Financiamento</h2><p>Use esta tela apenas após acionar o botão global +.</p></div></div><div class="form-grid"><label class="field"><span>Nome da dívida</span><input id="debtName" placeholder="Ex.: financiamento do apartamento"/></label><label class="field"><span>Tipo da dívida</span><select id="debtType"><option value="real_estate_financing">Financiamento imobiliário</option><option value="vehicle_financing">Financiamento de veículo</option><option value="credit_card_installment">Parcelamento de cartão</option><option value="personal_loan">Empréstimo pessoal</option><option value="payroll_loan">Consignado</option><option value="consortium">Consórcio</option><option value="student_loan">Financiamento estudantil</option><option value="informal_debt">Dívida informal</option><option value="other">Outra dívida</option></select></label><label class="field"><span>Instituição ou credor</span><input id="debtCreditor" placeholder="Banco, loja ou pessoa"/></label><label class="field"><span>Valor original da dívida</span><input id="debtOriginal" min="0" step="0.01" type="number"/></label><label class="field"><span>Valor financiado</span><input id="debtFinanced" min="0" step="0.01" type="number"/></label><label class="field"><span>Entrada paga</span><input id="debtDownPayment" min="0" step="0.01" type="number"/></label><label class="field"><span>Juros (%)</span><input id="debtInterest" min="0" step="0.0001" type="number"/></label><label class="field"><span>Periodicidade dos juros</span><select id="debtRatePeriod"><option value="monthly">Ao mês</option><option value="annual">Ao ano</option></select></label><label class="field"><span>Taxas adicionais</span><input id="debtFees" min="0" step="0.01" type="number"/></label><label class="field"><span>Seguros/tarifas</span><input id="debtInsurance" min="0" step="0.01" type="number"/></label><label class="field"><span>Total de parcelas</span><input id="debtInstallmentsTotal" min="1" type="number" value="12"/></label><label class="field"><span>Parcelas já pagas</span><input id="debtInstallmentsPaid" min="0" type="number" value="0"/></label><label class="field"><span>Data de início</span><input id="debtStartDate" type="date"/></label><label class="field"><span>Primeira parcela</span><input id="debtFirstPayment" type="date"/></label><label class="field"><span>Dia de vencimento</span><input id="debtDueDay" max="31" min="1" type="number"/></label><label class="field"><span>Sistema de cálculo</span><select id="debtSystem"><option value="fixed_installment">Sem juros / parcela fixa</option><option value="price">Price</option><option value="sac">SAC</option><option value="manual">Manual</option></select></label><label class="field"><span>Valor da parcela manual</span><input id="debtManualPayment" min="0" step="0.01" type="number"/></label><label class="field"><span>Saldo devedor atual</span><input id="debtCurrentBalance" min="0" step="0.01" type="number"/></label><label class="field"><span>Observações</span><textarea id="debtNotes" placeholder="Detalhes opcionais"></textarea></label></div><div class="split" style="margin-top:14px"><button class="btn primary" id="saveDebt">Salvar dívida</button><button class="btn ghost hidden" id="cancelDebtEdit">Cancelar edição</button></div></div></div></div>
+</div>
+<div aria-hidden="true" class="sheet-backdrop hidden" id="quickExpenseSheet">
+<div aria-labelledby="quickExpenseTitle" aria-modal="true" class="bottom-sheet quick-expense-sheet" role="dialog">
+<div class="sheet-handle"></div>
+<div class="sheet-head"><div><h2 id="quickExpenseTitle">Despesa rápida</h2><p>Registre uma compra comum sem sair da tela atual.</p></div><button aria-label="Fechar" class="icon-btn" id="closeQuickExpense" type="button">Ã—</button></div>
+<div class="quick-primary-grid">
+<label class="field quick-value-field"><span>Valor</span><input id="quickExpenseValue" inputmode="decimal" min="0" placeholder="0,00" step="0.01" type="number"/></label>
+<label class="field"><span>Categoria</span><select id="quickExpenseCategory"></select></label>
+<label class="field"><span>Conta</span><select id="quickExpenseAccount"></select></label>
+<label class="field"><span>Descrição opcional</span><input id="quickExpenseDescription" placeholder="Ex.: mercado, Uber, farmácia"/></label>
+</div>
+<details id="quickExpenseMore"><summary>Mais opções</summary><label class="field"><span>Data</span><input id="quickExpenseDate" type="date"/></label></details>
+<div class="split" style="margin-top:14px"><button class="btn primary" id="saveQuickExpense" type="button">Salvar compra</button><button class="btn ghost" id="cancelQuickExpense" type="button">Cancelar</button></div>
+</div>
+</div>
 </div>
 <div aria-hidden="true" class="sheet-backdrop hidden" id="txDetailsSheet">
 <div aria-labelledby="txDetailsTitle" aria-modal="true" class="bottom-sheet tx-details-sheet" role="dialog">
 <div class="sheet-handle"></div>
 <div class="sheet-head"><div><h2 id="txDetailsTitle">Detalhes da movimentação</h2><p>Consulte, edite ou exclua este lançamento.</p></div><button aria-label="Fechar" class="icon-btn" id="closeTxDetails" type="button">Ã—</button></div>
 <div class="list" id="txDetailsContent"></div>
-<div class="split" style="margin-top:14px"><button class="btn primary" id="txDetailEdit" type="button">Editar</button><button class="btn" id="txDetailReview" type="button">Revisar status</button><button class="btn" id="txDetailDuplicate" type="button">Duplicar</button><button class="btn danger" id="txDetailDelete" type="button">Excluir</button></div>
+<div class="split" style="margin-top:14px"><button class="btn primary" id="txDetailEdit" type="button">Editar</button><button class="btn" id="txDetailReview" type="button">Marcar como revisada</button><button class="btn" id="txDetailDuplicate" type="button">Duplicar</button><button class="btn danger" id="txDetailDelete" type="button">Excluir</button></div>
 </div>
 </div>
 <div aria-live="polite" class="toast hidden" id="toast" role="status"></div>
@@ -1337,7 +1381,7 @@ function txSignedMoney(t,v){var sign=t.type==='income'||t.type==='dividend'?'+':
 function dayLabel(date){var d=String(date||today()).slice(0,10);if(d===today())return 'Hoje';var y=new Date();y.setDate(y.getDate()-1);var yd=y.toISOString().slice(0,10);if(d===yd)return 'Ontem';var p=d.split('-');return (p[2]||'')+' '+['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'][Number(p[1]||1)-1]}
 function dateBR(date){var p=String(date||'').slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(date||'')}
 
-function renderTxList(ym){var all=monthTransactions(ym);var entries=all.filter(function(t){return txFilterMatch(t)&&txSearchMatch(t)}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))});var s=summary(ym),income=s.income+s.dividends,out=s.ordinaryExpense+s.debtPayments+s.investmentCashOutflow;setText('statementPeriodLabel',monthName(ym));setText('statementIncome',money(income));setText('statementExpense',money(out));setText('statementNet',money(s.cash));var chips=document.querySelectorAll('[data-tx-filter]');chips.forEach(function(c){c.classList.toggle('active',c.dataset.txFilter===txFilter)});if(el('txSearch')&&el('txSearch').value!==txSearch)el('txSearch').value=txSearch;if(!entries.length){el('txList').innerHTML='<div class="empty">Nenhuma movimentação encontrada neste período.</div>';return}var grouped={};entries.forEach(function(t){var k=String(t.date||today()).slice(0,10);(grouped[k]=grouped[k]||[]).push(t)});var html=Object.keys(grouped).sort().reverse().map(function(day){return '<div class="statement-day"><div class="statement-day-title">'+esc(dayLabel(day))+'</div>'+grouped[day].map(function(t){var v=Number(t.monthAmount!=null?t.monthAmount:t.value||0);var cat=categoryNameById(t.categoryId,t.category);var inv=t.investmentId||t.linkedInvestmentId?investmentById(t.investmentId||t.linkedInvestmentId):null;var status=cockpitTxStatus(t,ym);var subParts=[cat,typeLabel(t.type),status!=='completed'?('Status: '+status):'',inv?('Destino: '+invLabel(inv)):'',t.parcelLabel||'',t.notes?'com observação':''].filter(Boolean);var bill=txBillingMonth(t),purchaseMonth=t.originalPurchaseDate?String(t.originalPurchaseDate).slice(0,7):(t.date?String(t.date).slice(0,7):'');if(t.originalPurchaseDate&&bill&&purchaseMonth&&bill!==purchaseMonth){subParts.push('Compra: '+dateBR(t.originalPurchaseDate)+' • Fatura: '+monthName(bill))}var sub=subParts.join(' • ');var editCall=(t.type==='debt'&&t.debtId)?"editDebt('"+t.debtId+"')":"editTx('"+t.id+"')";var delCall=(t.type==='debt'&&t.debtId)?"deleteDebt('"+t.debtId+"')":"deleteTx('"+t.id+"')";return '<div class="statement-tx" onclick="showTxDetails(\''+t.id+'\')"><div class="statement-tx-icon '+txClass(t)+'">'+txIcon(t)+'</div><div class="statement-tx-main"><b>'+esc(t.description||'Movimentação')+'</b><small>'+esc(sub)+'</small></div><div class="statement-tx-side"><span class="amount '+txAmountClass(t)+'">'+txSignedMoney(t,v)+'</span><div class="statement-tx-actions"><button class="btn" onclick="event.stopPropagation();'+editCall+'">Editar</button><button class="btn danger" onclick="event.stopPropagation();'+delCall+'">Excluir</button></div></div></div>'}).join('')+'</div>'}).join('');el('txList').innerHTML=html}
+function renderTxList(ym){var all=monthTransactions(ym);var entries=all.filter(function(t){return txFilterMatch(t)&&txSearchMatch(t)}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))});var s=summary(ym),income=s.income+s.dividends,out=s.ordinaryExpense+s.debtPayments+s.investmentCashOutflow;setText('statementPeriodLabel',monthName(ym));setText('statementIncome',money(income));setText('statementExpense',money(out));setText('statementNet',money(s.cash));var chips=document.querySelectorAll('[data-tx-filter]');chips.forEach(function(c){c.classList.toggle('active',c.dataset.txFilter===txFilter)});if(el('txSearch')&&el('txSearch').value!==txSearch)el('txSearch').value=txSearch;if(!entries.length){el('txList').innerHTML='<div class="empty">Nenhuma movimentação encontrada neste período.</div>';return}var grouped={};entries.forEach(function(t){var k=String(t.date||today()).slice(0,10);(grouped[k]=grouped[k]||[]).push(t)});var html=Object.keys(grouped).sort().reverse().map(function(day){return '<div class="statement-day"><div class="statement-day-title">'+esc(dayLabel(day))+'</div>'+grouped[day].map(function(t){var v=Number(t.monthAmount!=null?t.monthAmount:t.value||0);var cat=categoryNameById(t.categoryId,t.category);var inv=t.investmentId||t.linkedInvestmentId?investmentById(t.investmentId||t.linkedInvestmentId):null;var status=cockpitTxStatus(t,ym);var subParts=[cat,typeLabel(t.type),status!=='completed'?('Status: '+status):'',inv?('Destino: '+invLabel(inv)):'',t.parcelLabel||'',t.notes?'com observação':''].filter(Boolean);var bill=txBillingMonth(t),purchaseMonth=t.originalPurchaseDate?String(t.originalPurchaseDate).slice(0,7):(t.date?String(t.date).slice(0,7):'');if(t.originalPurchaseDate&&bill&&purchaseMonth&&bill!==purchaseMonth){subParts.push('Compra: '+dateBR(t.originalPurchaseDate)+' • Fatura: '+monthName(bill))}var sub=subParts.join(' • ');var editCall=(t.type==='debt'&&t.debtId)?"editDebt('"+t.debtId+"')":"editTx('"+t.id+"')";var delCall=(t.type==='debt'&&t.debtId)?"deleteDebt('"+t.debtId+"')":"deleteTx('"+t.id+"')";var extraActions=t.debtId?'':'<button class="btn" onclick="event.stopPropagation();duplicateTx(\''+t.id+'\')">Duplicar</button><button class="btn" onclick="event.stopPropagation();markTransactionReviewed(\''+t.id+'\')">'+(t.reviewedAt?'Revisada':'Revisar')+'</button>';return '<div class="statement-tx" onclick="showTxDetails(\''+t.id+'\')"><div class="statement-tx-icon '+txClass(t)+'">'+txIcon(t)+'</div><div class="statement-tx-main"><b>'+esc(t.description||'Movimentação')+'</b><small>'+esc(sub)+'</small></div><div class="statement-tx-side"><span class="amount '+txAmountClass(t)+'">'+txSignedMoney(t,v)+'</span><div class="statement-tx-actions"><button class="btn" onclick="event.stopPropagation();'+editCall+'">Editar</button>'+extraActions+'<button class="btn danger" onclick="event.stopPropagation();'+delCall+'">Excluir</button></div></div></div>'}).join('')+'</div>'}).join('');el('txList').innerHTML=html}
 
 function showTxDetails(id){var t=txSource(id);if(!t)return;selectedTxDetailId=id;var generated=monthTransactions(selectedMonth()).find(function(x){return x.id===id})||t;var v=Number(generated.monthAmount!=null?generated.monthAmount:t.value||0);var rows=[item('Descrição',t.description||'Movimentação','','neutral'),item('Tipo',typeLabel(t.type),'','neutral'),item('Categoria',categoryNameById(t.categoryId,t.category),'','neutral'),item('Data no extrato',generated.date||t.date||'Sem data','','neutral'),item('Valor',txSignedMoney(t,v),'','neutral')];if(generated.parcelLabel)rows.push(item('Parcela',generated.parcelLabel,'','warn'));var bill=txBillingMonth(generated);var purchaseDate=generated.originalPurchaseDate||t.date;var purchaseMonth=purchaseDate?String(purchaseDate).slice(0,7):'';if(purchaseDate&&bill&&bill!==purchaseMonth){rows.push(item('Competência da fatura','Compra: '+dateBR(purchaseDate)+' • Fatura: '+monthName(bill),'','neutral'))}if(generated.debtId)rows.push(item('Vínculo','Parcela mensal de dívida/financiamento','','warn'));var detailInv=investmentById(t.investmentId||t.linkedInvestmentId);if(detailInv)rows.push(item('Investimento vinculado',invLabel(detailInv),'','neutral'));if(t.notes)rows.push(item('Observações',t.notes,'','neutral'));safeHTML('txDetailsContent',rows.join(''));var sh=el('txDetailsSheet');if(sh){sh.classList.remove('hidden');sh.setAttribute('aria-hidden','false')}}
 function closeTxDetails(){var sh=el('txDetailsSheet');if(sh){sh.classList.add('hidden');sh.setAttribute('aria-hidden','true')}selectedTxDetailId=null}
@@ -2025,6 +2069,121 @@ render=function(){cockpitIconCleanupRender();cockpitRemoveDecorativeIcons()};
 setTimeout(cockpitRemoveDecorativeIcons,0);
 
 /* Cockpit persist guard - qualquer alteração renderizada pelo usuário logado é salva */
+var cockpitHabitMigrate=migrate;
+migrate=function(raw){
+  var s=cockpitHabitMigrate(raw);
+  s.quickTemplates=Array.isArray(s.quickTemplates)?s.quickTemplates:[];
+  s.dailyReviews=Array.isArray(s.dailyReviews)?s.dailyReviews:[];
+  s.accounts=Array.isArray(s.accounts)&&s.accounts.length?s.accounts:[{id:'account_main',name:'Conta principal',isDefault:true,isArchived:false}];
+  s.transactions=(s.transactions||[]).map(function(t){if(t.reviewedAt==null)t.reviewedAt='';if(!t.accountId)t.accountId='account_main';return t});
+  s.schemaVersion=Math.max(11,Number(s.schemaVersion||0));
+  return s;
+};
+
+function daysInMonthFor(ym){var p=String(ym||month()).split('-');return new Date(Number(p[0]),Number(p[1]),0).getDate()}
+function calculateDailySpendAllowance(financialState,selectedMonthArg){
+  var st=financialState||state||{},ym=selectedMonthArg||(st.ui&&st.ui.selectedMonth)||month(),now=today(),currentYm=now.slice(0,7);
+  var days=daysInMonthFor(ym),remainingDays=ym===currentYm?Math.max(1,days-Number(now.slice(8,10))+1):(ym>currentYm?days:1);
+  var oldState=state,position;
+  try{state=st;position=calculateFinancialPosition(st,ym)}finally{state=oldState}
+  var base=Number(st.cashflowSettings&&st.cashflowSettings.baseBalance||0),reserve=Number(st.cashflowSettings&&st.cashflowSettings.safetyReserve||0);
+  var futureExpenses=(st.futureCashflowItems||[]).filter(function(i){var start=String(i.startDate||'').slice(0,7),end=String(i.endDate||'').slice(0,7),type=String(i.type||'');return (!start||start<=ym)&&(!end||end>=ym)&&i.status!=='cancelled'&&!/income|receivable/.test(type)}).reduce(function(a,i){return a+Number(i.amount||0)},0);
+  var plannedExpenses=(st.transactions||[]).filter(function(t){return String(t.date||'').slice(0,7)===ym&&cockpitTxStatus(t,ym)==='planned'&&t.type==='expense'}).reduce(function(a,t){return a+cockpitTxAmount(t)},0);
+  var plannedContribution=(st.futureCashflowItems||[]).filter(function(i){return String(i.startDate||'').slice(0,7)===ym&&/investment_contribution/.test(String(i.type||''))&&i.status!=='cancelled'}).reduce(function(a,i){return a+Number(i.amount||0)},0);
+  var debtCommitment=typeof debtPaymentsIn==='function'?debtPaymentsIn(ym).reduce(function(a,p){return a+Number(p.payment||0)},0):0;
+  var budgetLimit=(st.budgets||[]).reduce(function(a,b){return a+Number(b.value||0)},0);
+  var budgetUsed=(position.tx||[]).filter(function(t){return t.type==='expense'&&cockpitTxStatus(t,ym)==='completed'}).reduce(function(a,t){return a+cockpitTxAmount(t)},0);
+  var budgetRemaining=budgetLimit>0?Math.max(0,budgetLimit-budgetUsed):Infinity;
+  var available=Math.max(0,base+Number(position.cash||0)-reserve-futureExpenses-plannedExpenses-plannedContribution-debtCommitment);
+  var daily=available/remainingDays;if(isFinite(budgetRemaining))daily=Math.min(daily,budgetRemaining/remainingDays);
+  var hasIncome=(st.transactions||[]).some(function(t){return t.type==='income'})||Number(st.profile&&st.profile.income||0)>0;
+  var hasEnough=base!==0||hasIncome;
+  return {amount:hasEnough?Math.max(0,daily):0,confidence:hasEnough?(base!==0&&budgetLimit>0?'high':'medium'):'low',reason:hasEnough?'Considera caixa, compromissos, reserva, orçamento e '+remainingDays+' dia(s) restante(s).':'Informe saldo ou renda e continue registrando movimentações.'};
+}
+
+function activeHabitAccounts(){return (state.accounts||[]).filter(function(a){return !a.isArchived})}
+function fillQuickExpenseFields(template){
+  var categoryNode=el('quickExpenseCategory'),accountNode=el('quickExpenseAccount');
+  categoryNode.innerHTML=categoryOptions('expense',template&&template.categoryId||'');
+  if(template&&template.categoryId)categoryNode.value=template.categoryId;
+  var accounts=activeHabitAccounts();accountNode.innerHTML=accounts.map(function(a){return '<option value="'+esc(a.id)+'">'+esc(a.name)+'</option>'}).join('');
+  accountNode.value=template&&template.accountId||((accounts.find(function(a){return a.isDefault})||accounts[0]||{}).id||'account_main');
+  el('quickExpenseDescription').value=template&&template.defaultDescription||'';
+  el('quickExpenseValue').value='';
+  el('quickExpenseDate').value=today();
+  if(el('quickExpenseMore'))el('quickExpenseMore').open=false;
+}
+function openQuickExpense(templateId,options){
+  closeRegisterSheet();var template=(state.quickTemplates||[]).find(function(t){return t.id===templateId});
+  fillQuickExpenseFields(template);if(options&&options.date)el('quickExpenseDate').value=options.date;
+  var sheet=el('quickExpenseSheet');sheet.classList.remove('hidden');sheet.setAttribute('aria-hidden','false');
+  setTimeout(function(){el('quickExpenseValue').focus()},40);
+}
+function closeQuickExpense(){var sheet=el('quickExpenseSheet');if(!sheet)return;sheet.classList.add('hidden');sheet.setAttribute('aria-hidden','true')}
+function categoryBudgetUsage(categoryId,ym){
+  var budget=(state.budgets||[]).find(function(b){return b.categoryId===categoryId}),limit=Number(budget&&budget.value||0);
+  var used=monthTransactions(ym).filter(function(t){return t.type==='expense'&&t.categoryId===categoryId&&cockpitTxStatus(t,ym)==='completed'}).reduce(function(a,t){return a+cockpitTxAmount(t)},0);
+  return {limit:limit,used:used,percent:limit>0?Math.round(used/limit*100):null};
+}
+function repeatedQuickCandidate(tx){
+  var key=[String(tx.description||'').toLowerCase(),tx.categoryId||'',tx.accountId||'account_main'].join('|');
+  var count=(state.transactions||[]).filter(function(t){return t.type==='expense'&&[String(t.description||'').toLowerCase(),t.categoryId||'',t.accountId||'account_main'].join('|')===key}).length;
+  var exists=(state.quickTemplates||[]).some(function(t){return [String(t.defaultDescription||'').toLowerCase(),t.categoryId||'',t.accountId||'account_main'].join('|')===key});
+  return count>=3&&!exists?tx:null;
+}
+function createQuickTemplateFromTransaction(tx){
+  if(!tx)return;state.quickTemplates.push({id:uid(),label:tx.description||categoryNameById(tx.categoryId,tx.category)||'Compra',type:'expense',categoryId:tx.categoryId||'',accountId:tx.accountId||'account_main',defaultDescription:tx.description||'',useCount:0,lastUsedAt:''});render();toast('Atalho criado em Favoritos.');
+}
+function showQuickExpenseFeedback(tx){
+  var allowance=calculateDailySpendAllowance(state,selectedMonth()),usage=categoryBudgetUsage(tx.categoryId,selectedMonth()),candidate=repeatedQuickCandidate(tx),t=el('toast');
+  var lines=['Compra registrada.'];
+  if(allowance.confidence==='low')lines.push('Continue registrando para o Cockpit calcular seu limite diário.');
+  else lines.push('Você ainda pode gastar '+money(allowance.amount)+' hoje.');
+  if(usage.percent!=null)lines.push(categoryNameById(tx.categoryId,tx.category)+' está em '+usage.percent+'% do limite.');
+  lines.push('Saldo projetado do mês: '+money(summary(selectedMonth()).cash)+'.');
+  t.classList.add('habit-toast');t.textContent=lines.join('\n');
+  if(candidate){var b=document.createElement('button');b.className='btn ghost toast-action';b.type='button';b.textContent='Criar atalho';b.onclick=function(){createQuickTemplateFromTransaction(candidate)};t.appendChild(b)}
+  t.classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.add('hidden');t.classList.remove('habit-toast')},6000);
+}
+function saveQuickExpense(){
+  var value=num(el('quickExpenseValue').value);if(!(value>0)){alert('Informe um valor maior que zero.');return}
+  var cat=selectedCategoryFor('quickExpenseCategory','expense'),accountId=el('quickExpenseAccount').value||'account_main',description=el('quickExpenseDescription').value.trim()||cat.name||'Compra';
+  var tx={id:uid(),type:'expense',date:el('quickExpenseDate').value||today(),description:description,categoryId:cat.id,category:cat.name,accountId:accountId,value:value,status:'completed',completed:true,reviewedAt:'',source:'quick_expense',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  state.transactions.push(tx);var template=(state.quickTemplates||[]).find(function(t){return t.categoryId===cat.id&&t.accountId===accountId&&String(t.defaultDescription||'').toLowerCase()===description.toLowerCase()});if(template){template.useCount=Number(template.useCount||0)+1;template.lastUsedAt=new Date().toISOString()}
+  closeQuickExpense();recalculateComputedGoal('quick_expense');render();showQuickExpenseFeedback(tx);
+}
+function renderQuickFavorites(){
+  var wrap=el('quickFavorites'),block=el('quickFavoritesBlock');if(!wrap||!block)return;
+  var list=(state.quickTemplates||[]).slice().sort(function(a,b){return Number(b.useCount||0)-Number(a.useCount||0)||String(b.lastUsedAt||'').localeCompare(String(a.lastUsedAt||''))}).slice(0,8);
+  block.classList.toggle('hidden',!list.length);wrap.innerHTML=list.map(function(t){return '<button class="quick-favorite" data-quick-template="'+esc(t.id)+'" type="button">'+esc(t.label)+'</button>'}).join('');
+}
+function controlledDayKeys(){var keys={};(state.transactions||[]).forEach(function(t){if(t.date)keys[String(t.date).slice(0,10)]=true});(state.dailyReviews||[]).forEach(function(d){keys[String(d).slice(0,10)]=true});return keys}
+function calculateControlStreak(){var keys=controlledDayKeys(),d=new Date(today()+'T12:00:00'),count=0;for(var i=0;i<366;i++){var key=d.toISOString().slice(0,10);if(!keys[key])break;count++;d.setDate(d.getDate()-1)}return count}
+function markTodayReviewed(){if(state.dailyReviews.indexOf(today())<0)state.dailyReviews.push(today());render();toast('Dia revisado. Sua sequência de controle foi atualizada.')}
+function pendingReviewCount(){return (state.transactions||[]).filter(function(t){return !t.reviewedAt&&t.type!=='transfer'&&String(t.date||'').slice(0,7)===selectedMonth()}).length}
+function renderHabitSummary(){
+  if(!state)return;var allowance=calculateDailySpendAllowance(state,selectedMonth()),allowNode=el('dailyAllowanceMobile');
+  if(allowNode)allowNode.textContent=allowance.confidence==='low'?'Complete seus dados':(visibleMoney?money(allowance.amount):'•••');
+  setText('dailyAllowanceReason',allowance.reason);setText('controlStreakMobile',calculateControlStreak()+' dia(s)');setText('pendingReviewMobile',pendingReviewCount()+' movimentação(ões) para revisar');renderQuickFavorites();
+}
+function markTransactionReviewed(id){var tx=txSource(id);if(!tx||tx.debtId)return;tx.reviewedAt=new Date().toISOString();tx.updatedAt=tx.reviewedAt;render();toast('Movimentação marcada como revisada.')}
+reviewTx=markTransactionReviewed;
+var cockpitHabitTxFilterMatch=txFilterMatch;
+txFilterMatch=function(t){if(txFilter==='pending_review')return !t.reviewedAt;if(txFilter==='reviewed')return !!t.reviewedAt;return cockpitHabitTxFilterMatch(t)};
+var cockpitHabitGlobalAction=handleGlobalRegisterAction;
+handleGlobalRegisterAction=function(kind){if(kind==='quick_expense')return openQuickExpense();return cockpitHabitGlobalAction(kind)};
+var cockpitHabitRender=render;
+var habitHashHandled=false;
+render=function(){
+  cockpitHabitRender();renderHabitSummary();
+  if(!habitHashHandled&&state){habitHashHandled=true;setTimeout(applyHabitHash,0)}
+};
+function applyHabitHash(){
+  var params=new URLSearchParams(String(location.hash||'').replace(/^#/,'')),view=params.get('view'),quick=params.get('quick');
+  if(view==='register'||view==='dashboard')setView(view);
+  if(quick==='expense')openQuickExpense();else if(quick==='income')openTxFromGlobal('income',{focusValue:true});else if(quick==='investment')openTxFromGlobal('investment',{focusValue:true});
+}
+
 var cockpitPersistRender=render;
 render=function(){
   cockpitPersistRender();
@@ -2034,8 +2193,16 @@ render=function(){
 function setupFinancialCrudEnhancements(){
   if(el('txDetailReview'))el('txDetailReview').onclick=function(){var id=selectedTxDetailId;closeTxDetails();if(id)reviewTx(id)};
   if(el('txDetailDuplicate'))el('txDetailDuplicate').onclick=function(){var id=selectedTxDetailId;closeTxDetails();if(id)duplicateTx(id)};
+  if(el('closeQuickExpense'))el('closeQuickExpense').onclick=closeQuickExpense;
+  if(el('cancelQuickExpense'))el('cancelQuickExpense').onclick=closeQuickExpense;
+  if(el('saveQuickExpense'))el('saveQuickExpense').onclick=saveQuickExpense;
+  if(el('quickExpenseSheet'))el('quickExpenseSheet').onclick=function(e){if(e.target.id==='quickExpenseSheet')closeQuickExpense()};
+  if(el('quickExpenseCategory'))el('quickExpenseCategory').onchange=function(){if(this.value==='__new__')createCategoryFromPrompt('expense','quickExpenseCategory')};
+  if(el('quickFavorites'))el('quickFavorites').onclick=function(e){var b=e.target.closest('[data-quick-template]');if(b)openQuickExpense(b.dataset.quickTemplate)};
+  if(el('markDayReviewed'))el('markDayReviewed').onclick=markTodayReviewed;
+  if(el('addForgottenPurchase'))el('addForgottenPurchase').onclick=function(){openQuickExpense(null,{date:today()})};
 }
-Object.assign(window,{setView:setView,summary:summary,calculateFinancialPosition:calculateFinancialPosition,cockpitFinancialEngine:cockpitFinancialEngine,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,duplicateTx:duplicateTx,reviewTx:reviewTx,undoDeleteTx:undoDeleteTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,deleteDebtAmortization:deleteDebtAmortization,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editInvestmentMovement:editInvestmentMovement,deleteInvestmentMovement:deleteInvestmentMovement,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend});
+Object.assign(window,{setView:setView,summary:summary,calculateFinancialPosition:calculateFinancialPosition,calculateDailySpendAllowance:calculateDailySpendAllowance,cockpitFinancialEngine:cockpitFinancialEngine,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openQuickExpense:openQuickExpense,closeQuickExpense:closeQuickExpense,saveQuickExpense:saveQuickExpense,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,duplicateTx:duplicateTx,reviewTx:reviewTx,undoDeleteTx:undoDeleteTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,deleteDebtAmortization:deleteDebtAmortization,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editInvestmentMovement:editInvestmentMovement,deleteInvestmentMovement:deleteInvestmentMovement,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend});
 setupEvents();setupFinancialCrudEnhancements();load();
 })();
 }catch(e){console.error('Cockpit init error',e&&e.stack?e.stack:e)}
