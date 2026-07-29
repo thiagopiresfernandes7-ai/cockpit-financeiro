@@ -199,6 +199,7 @@ input[type="file"]::file-selector-button{
   background:#fff;color:#253930;cursor:pointer;
 }
 .theme-picker button.active{border-color:#149277;box-shadow:0 0 0 3px rgba(15,159,131,.12)}
+.sheet-grid button:active{transform:translateY(1px)!important}
 .theme-picker button b{font-size:12px}.theme-picker button small{font-size:9px;color:#78887f}
 .theme-preview{grid-row:1/3;width:34px;height:34px;border-radius:9px;border:1px solid #d8e2dd}
 .theme-preview-light{background:linear-gradient(135deg,#fff 52%,#e5f2ed 52%)}
@@ -284,8 +285,8 @@ html[data-theme="dark"] .data-table th,html[data-theme="dark"] .data-table td{co
   .mobile-nav button[data-view="dashboard"]{order:1!important}
   .mobile-nav button[data-view="register"]{order:2!important}
   .mobile-nav button[data-view="wallet"]{order:3!important}
-  .mobile-nav button[data-view="analysis"]{order:4!important}
-  .mobile-nav button[data-view="community"]{order:5!important}
+  .mobile-nav button[data-view="community"]{order:4!important}
+  .mobile-nav button[data-view="more"]{order:5!important}
   .mobile-nav button{min-width:0!important;padding:3px 2px!important;overflow:hidden}
   .mobile-nav button[data-view="community"]{font-size:9px}
 }
