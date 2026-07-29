@@ -1,10 +1,11 @@
 (function(){
 'use strict';
+var sb=window.cockpitSupabase;
 var CATS=['Aprendi','Dúvida','Organização financeira','Dívidas','Renda fixa','Ações','Fundos imobiliários','ETFs','Criptomoedas','Economia','Imposto de renda','Meta','Conquista','Opinião','Notícia'];
 var tab='for_you',cursor=null,busy=false,posts=[],liked=new Set(),saved=new Set(),communityChannel=null;
 function h(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function node(id){return document.getElementById(id)}
-function currentUser(){return window.user||null}
+function currentUser(){return window.cockpitUser||null}
 function requireUser(){if(currentUser())return true; alert('Entre ou crie uma conta gratuita para participar da Comunidade.');return false}
 function init(){
  var nav=node('nav'),main=document.querySelector('main.main'); if(!nav||!main||node('community'))return;document.querySelectorAll('h1,.brand strong').forEach(function(x){if(x.textContent.trim()==='Cockpit Financeiro')x.textContent='Norteia'});
