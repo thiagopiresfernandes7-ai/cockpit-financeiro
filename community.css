@@ -4,4 +4,4 @@
 .community-repost-label{font-size:12px;color:var(--green);font-weight:800;margin-bottom:8px}
 body.community-mode .monthbar{display:none}
 @media(min-width:921px){.community-fab{display:none}}
-@media(max-width:920px){.nav button[data-view="community"]{display:flex!important;order:5}.nav button[data-view="profile"]{display:none!important}.community-shell{max-width:none}.community-post{padding:14px 2px}.community-fab{bottom:92px}.community-actions{justify-content:space-between}.community-actions button{min-height:42px}.community-composer>.split{display:grid;grid-template-columns:1fr}.community-composer>.split>*{width:100%;min-height:44px}.community-search input{min-width:0}}
+@media(max-width:920px){.mobile-nav button[data-view="community"]{display:flex!important;order:5}.community-shell{max-width:none}.community-post{padding:14px 2px}.community-fab{bottom:92px}.community-actions{justify-content:space-between}.community-actions button{min-height:42px}.community-composer>.split{display:grid;grid-template-columns:1fr}.community-composer>.split>*{width:100%;min-height:44px}.community-search input{min-width:0}}
