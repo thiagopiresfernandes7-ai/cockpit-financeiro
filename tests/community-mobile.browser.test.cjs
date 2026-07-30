@@ -75,6 +75,13 @@ const server = http.createServer((req, res) => {
         await page.locator('#globalAddBtn').click();
         assert.equal(await page.locator('#communityComposerScreen').evaluate(x => !x.classList.contains('hidden')), true);
         await page.locator('[data-community-mobile="cancel-compose"]').click();
+        assert.equal(await page.locator('[data-community-share]').count(), 1);
+        assert.equal(await page.locator('[data-community-delete]').count(), 1);
+        page.once('dialog', dialog => dialog.accept());
+        await page.locator('[data-community-delete]').click();
+        await page.waitForTimeout(250);
+        assert.equal(await page.locator('.community-post').count(), 0);
+        assert.match(await page.locator('#communityMobileToast').textContent(), /excluída/i);
 
         const light = await page.evaluate(() => {
           const style = getComputedStyle(document.querySelector('.community-mobile-layer'));
@@ -101,6 +108,8 @@ const server = http.createServer((req, res) => {
     await desktop.locator('.desktop-nav [data-view="community"]').evaluate(button => button.click());
     await desktop.waitForTimeout(500);
     assert.equal(await desktop.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth), true);
+    assert.equal(await desktop.locator('[data-community-share] .community-action-label').isVisible(), true);
+    assert.equal(await desktop.locator('[data-community-delete] .community-action-label').isVisible(), true);
     await desktop.locator('.community-compact-composer').click();
     const composerBox = await desktop.locator('#communityComposerScreen').boundingBox();
     assert.ok(composerBox.width <= 680 && composerBox.height <= 780);

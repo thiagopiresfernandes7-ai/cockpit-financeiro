@@ -22,6 +22,7 @@ function icon(name){var paths={
  repost:'<path d="m17 1 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="m7 23-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/>',
  bookmark:'<path d="M6 3h12v18l-6-4-6 4Z"/>',
+ trash:'<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="m7 7 1 14h8l1-14"/><path d="M10 11v6M14 11v6"/>',
  photo:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
  close:'<path d="m6 6 12 12M18 6 6 18"/>',
  chevron:'<path d="m9 18 6-6-6-6"/>',
@@ -109,6 +110,7 @@ function bindLayer(){
  section.addEventListener('click',function(event){
   var image=event.target.closest('.community-post .community-image');if(image){event.preventDefault();openImage(image.src)}
   var share=event.target.closest('[data-community-share]');if(share){event.preventDefault();sharePost(share.closest('[data-post]'))}
+  var remove=event.target.closest('[data-community-delete]');if(remove){event.preventDefault();deletePost(remove.closest('[data-post]'))}
  },true);
  var global=byId('globalAddBtn');if(global)global.addEventListener('click',function(event){if(document.body.classList.contains('community-mode')){event.preventDefault();event.stopImmediatePropagation();openComposer()}},true);
 }
@@ -170,10 +172,30 @@ function openImage(src){byId('communityImageViewer').querySelector('img').src=sr
 function closeImage(){byId('communityImageViewer').classList.add('hidden');document.body.classList.remove('community-overlay-open')}
 async function sharePost(article){
  var text=article&&article.querySelector('.community-body')&&article.querySelector('.community-body').innerText||'Publicação no Norteia',url=location.href.split('#')[0]+'#post-'+article.dataset.post;
- try{if(navigator.share)await navigator.share({title:'Norteia Comunidade',text:text.slice(0,180),url:url});else{await navigator.clipboard.writeText(url);toast('Link copiado.')}}catch(e){}
+ try{
+  if(navigator.share)await navigator.share({title:'Norteia Comunidade',text:text.slice(0,180),url:url});
+  else{await navigator.clipboard.writeText(url);toast('Link da publicação copiado.')}
+ }catch(e){if(e&&e.name!=='AbortError')toast('Não foi possível compartilhar. Tente novamente.','error')}
+}
+async function deletePost(article){
+ if(!article||!window.cockpitSupabase||!window.cockpitUser)return;
+ if(!confirm('Excluir esta publicação? Esta ação não poderá ser desfeita.'))return;
+ var button=article.querySelector('[data-community-delete]'),id=article.dataset.post;
+ if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+ try{
+  var result=await window.cockpitSupabase.from('community_posts').update({deleted_at:new Date().toISOString()}).eq('id',id).eq('author_id',window.cockpitUser.id);
+  if(result.error)throw result.error;
+  var image=article.querySelector('.community-image'),url=image&&image.src||'',marker='/object/public/community-media/',pos=url.indexOf(marker);
+  if(pos>=0)await window.cockpitSupabase.storage.from('community-media').remove([decodeURIComponent(url.slice(pos+marker.length))]);
+  article.remove();toast('Publicação excluída.');
+ }catch(e){
+  if(button){button.disabled=false;button.removeAttribute('aria-busy')}
+  toast('Não foi possível excluir a publicação.','error');
+ }
 }
 function transformPost(article){
  if(article.dataset.mobileReady)return;article.dataset.mobileReady='true';
+ article.id='post-'+article.dataset.post;
  var profileButton=article.querySelector('.community-name'),meta=article.querySelector('.community-meta small'),profileText=profileButton&&profileButton.innerText||'Pessoa';
  if(meta){
   var raw=meta.textContent,username=(raw.match(/@([^\s·]+)/)||[])[1]||'',dateText=(raw.split('·')[1]||'').trim();
@@ -188,9 +210,11 @@ function transformPost(article){
   if(buttons[1])buttons[1].innerHTML=icon('comment')+'<span>'+((buttons[1].textContent.match(/\d+/)||['0'])[0])+'</span>';
   if(buttons[2]){buttons[2].innerHTML=icon('bookmark')+'<span>'+((buttons[2].textContent.match(/\d+/)||['0'])[0])+'</span>';buttons[2].classList.add('community-save-action')}
   if(buttons[3])buttons[3].innerHTML=icon('repost')+'<span>'+((buttons[3].textContent.match(/\d+/)||['0'])[0])+'</span>';
-  if(!actions.querySelector('[data-community-share]'))actions.insertAdjacentHTML('beforeend','<button data-community-share aria-label="Compartilhar">'+icon('share')+'</button>');
+  if(menu&&!actions.querySelector('[data-community-delete]'))actions.insertAdjacentHTML('beforeend','<button class="community-delete-action" data-community-delete aria-label="Excluir publicação">'+icon('trash')+'<span class="community-action-label">Excluir</span></button>');
+  if(!actions.querySelector('[data-community-share]'))actions.insertAdjacentHTML('beforeend','<button class="community-share-action" data-community-share aria-label="Compartilhar publicação">'+icon('share')+'<span class="community-action-label">Compartilhar</span></button>');
   buttons.forEach(function(button){if(!button.getAttribute('aria-label'))button.setAttribute('aria-label',button.dataset.action==='like'?'Curtir':button.dataset.action==='comment'?'Comentar':button.dataset.action==='save'?'Salvar':'Republicar')});
  }
+ if(location.hash==='#'+article.id)setTimeout(function(){article.scrollIntoView({block:'center'});article.classList.add('community-shared-post')},80);
 }
 function watchFeed(){
  var feed=byId('communityFeed');if(!feed)return;
