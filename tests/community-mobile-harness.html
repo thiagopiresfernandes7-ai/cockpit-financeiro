@@ -26,6 +26,8 @@ body{margin:0;background:#f7faf8;color:#14231d;font-family:Inter,system-ui,sans-
  }
  function query(table){let method='list';const q={};['select','eq','is','order','limit','lt','in','or','ilike','match','not','update','insert','upsert','delete'].forEach(k=>q[k]=function(){if(k==='insert')method='single';return q});q.single=async()=>result(table,'single');q.maybeSingle=async()=>result(table,'single');q.then=(ok,fail)=>Promise.resolve(result(table,method)).then(ok,fail);return q}
  window.cockpitUser=user;window.cockpitSupabase={from:query,channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:async()=>({data:null,error:null}),getPublicUrl:()=>({data:{publicUrl:''}}),remove:async()=>({error:null})})}};
+ window.state={transactions:[{id:'tx-1',date:new Date().toISOString().slice(0,10),reviewedAt:'',type:'expense'}],budgets:[{id:'budget-1',value:500}],investments:[{id:'inv-1',type:'Renda fixa'}],debts:[],debtAmortizations:[],dailyReviews:[],gamification:{unlocked:{},shared:{}}};
+ window.calculateControlStreak=()=>1;window.toast=()=>{};
 })();
 </script>
 </head>
@@ -40,8 +42,12 @@ body{margin:0;background:#f7faf8;color:#14231d;font-family:Inter,system-ui,sans-
 </div>
 <script>
 document.getElementById('nav').addEventListener('click',function(event){const button=event.target.closest('[data-view]');if(!button)return;document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));const section=document.getElementById(button.dataset.view);if(section)section.classList.add('active')});
+window.setView=function(view){document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===view))};
+window.render=function(){};
 </script>
 <script src="../community.js"></script>
 <script src="../community-mobile.js"></script>
+<link rel="stylesheet" href="../gamification.css">
+<script src="../gamification.js"></script>
 </body>
 </html>
