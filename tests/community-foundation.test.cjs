@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const sql=fs.readFileSync('supabase/migrations/202607280001_community_foundation.sql','utf8');
+const tables=['community_profiles','community_follows','community_blocks','community_posts','community_post_media','community_comments','community_post_likes','community_comment_likes','community_saved_posts','community_reposts','community_notifications','community_mutes','community_hidden_posts','community_reports','community_moderation_actions','community_admin_roles','community_audit_logs','community_topics','community_post_topics','community_challenges','community_challenge_progress','community_user_settings'];
+for(const table of tables){assert.ok(sql.includes('table if not exists public.'+table),table+' ausente');assert.ok(sql.includes("'"+table+"'")||sql.includes('table public.'+table+' enable row level security'),table+' fora da lista RLS')}
+for(const helper of ['community_is_admin','community_is_blocked','community_can_view_post'])assert.ok(sql.includes('function public.'+helper),helper+' ausente');
+for(const protection of ['security definer','set search_path=\'\'','revoke all on function','community_block_cleanup','community_rate_limit'])assert.ok(sql.toLowerCase().includes(protection.toLowerCase()),protection+' ausente');
+assert.ok(sql.includes("values('community-media','community-media',false"),'bucket social deve ser privado');
+assert.ok(!sql.includes('service_role'),'migration não pode expor service role');
+assert.ok(!sql.includes('finance_states'),'comunidade não pode ler estado financeiro');
+assert.ok(sql.includes("visibility in('public','followers','private')"),'visibilidade incompleta');
+assert.ok(sql.includes("status in('pending','accepted')"),'solicitações de acompanhamento ausentes');
+console.log('Fundação social, RLS, privacidade e Storage: OK');
