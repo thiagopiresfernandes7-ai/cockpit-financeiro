@@ -72,6 +72,7 @@ function addThemePreference(){
 function normalizePrimaryNavigation(){
   document.querySelectorAll('[data-view="dashboard"]').forEach(function(button){var label=button.querySelector('.ico');button.textContent='';if(label)button.appendChild(label);button.appendChild(document.createTextNode('Hoje'))});
   document.querySelectorAll('[data-view="register"]').forEach(function(button){var label=button.querySelector('.ico');button.textContent='';if(label)button.appendChild(label);button.appendChild(document.createTextNode('Movimentos'))});
+  var desktop=document.querySelector('.desktop-nav'),official=new Set(['dashboard','register','plan','community']);if(desktop){desktop.querySelectorAll('button[data-view]').forEach(function(button){button.hidden=!official.has(button.dataset.view);if(button.dataset.view==='plan'){var icon=button.querySelector('.ico');button.textContent='';if(icon)button.appendChild(icon);button.appendChild(document.createTextNode('Planos'))}});desktop.querySelectorAll('.nav-section').forEach(function(section){section.hidden=!section.querySelector('button[data-view]:not([hidden])')})}
   var mobile=document.querySelector('.mobile-nav');
   if(!mobile)return;
   var analysis=mobile.querySelector('[data-view="analysis"]'),more=mobile.querySelector('[data-view="more"]'),plans=mobile.querySelector('[data-view="wallet"]');

@@ -29,6 +29,7 @@
   .mobile-nav button[data-view="community"]{order:5!important}
 }
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid color-mix(in srgb,var(--color-primary,#087a64) 34%,transparent)!important;outline-offset:3px!important}
+[hidden]{display:none!important}
 [data-money],.value,.amount{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important;font-variant-numeric:tabular-nums}
 .mark:before,.mark:after,.search-wrap:before{content:none!important}
 .sheet-head .icon-btn{width:auto;min-width:44px;padding:0 12px}
