@@ -1321,7 +1321,7 @@ function renderActions(s,ym){var arr=[];if(!state.transactions.length)arr.push(i
 function renderFlow(s){var rows=[item('Receitas','Entradas do mês',money(s.income),'positive'),item('Despesas','Gastos e parcelas do mês',money(s.expense),'negative'),item('Aportes','Valores direcionados a investimentos',money(s.aporte),'neutral'),item('Dividendos e rendimentos','Recebidos no mês',money(s.dividends),'positive')];el('flowList').innerHTML=rows.join('')}
 function renderCategories(tx){var m=byCat(tx),keys=Object.keys(m).sort(function(a,b){return m[b]-m[a]});el('categoryList').innerHTML=keys.length?keys.map(function(k){return item(k,'Gastos no mês selecionado',money(m[k]),'negative')}).join(''):'<div class="empty">Nenhuma despesa neste mês.</div>'}
 function txSource(id){return (state.transactions||[]).find(function(t){return t.id===id})||monthTransactions(selectedMonth()).find(function(t){return t.id===id})}
-function clearTxForm(){['txDesc','txValue','txNotes'].forEach(function(id){el(id).value=''});el('txInstallments').value=1;el('txDate').value=today();if(el('txFirstMonth'))el('txFirstMonth').value=month();if(el('txBillingMonth'))el('txBillingMonth').value=month();fillCategorySelect('txCat',categoryTypeForTx(el('txType').value));fillInvestmentTargetSelect();toggleInvestmentTargetField()}
+ function clearTxForm(){['txDesc','txValue','txNotes'].forEach(function(id){el(id).value=''});if(el('txCard'))el('txCard').value='';el('txInstallments').value=1;el('txDate').value=today();if(el('txFirstMonth'))el('txFirstMonth').value=month();if(el('txBillingMonth'))el('txBillingMonth').value=month();fillCategorySelect('txCat',categoryTypeForTx(el('txType').value));fillInvestmentTargetSelect();toggleInvestmentTargetField()}
 function setTxEditMode(id){editingTxId=id||null;el('txFormTitle').textContent=editingTxId?'Editar lançamento':'Registrar movimentação';el('saveTx').textContent=editingTxId?'Salvar alterações':'Salvar registro';el('cancelTxEdit').classList.toggle('hidden',!editingTxId)}
 
 function txFromForm(existing){
@@ -1347,6 +1347,7 @@ function txFromForm(existing){
     investmentId: existing && existing.investmentId || '',
     linkedInvestmentId: existing && existing.linkedInvestmentId || '',
     linkedInvestmentMovementId: existing && existing.linkedInvestmentMovementId || '',
+    cardId: el('txCard') ? el('txCard').value : (existing && existing.cardId || ''),
     value: value,
     notes: el('txNotes').value,
     updatedAt: new Date().toISOString(),
@@ -1381,7 +1382,7 @@ function editTx(id){
   closeTxDetails();if(state&&state.ui)state.ui.returnViewAfterGlobal=currentView();document.body.classList.add('tx-launch-open','mobile-tx-open');document.body.classList.remove('debt-launch-open','mobile-debt-open');var lw=el('launchWorkspace');if(lw){lw.classList.remove('hidden');lw.setAttribute('aria-hidden','false')}setTxEditMode(id);
   el('txType').value=tx.type||'expense';
   fillCategorySelect('txCat',categoryTypeForTx(el('txType').value),categorySelectValue(categoryTypeForTx(el('txType').value),tx.categoryId,tx.category));
-  el('txDate').value=tx.date||today();el('txDesc').value=tx.description||'';el('txValue').value=tx.value||'';el('txNotes').value=tx.notes||'';el('txInstallments').value=(tx.installments&&tx.installments.count)||1;
+   el('txDate').value=tx.date||today();el('txDesc').value=tx.description||'';el('txValue').value=tx.value||'';el('txNotes').value=tx.notes||'';el('txInstallments').value=(tx.installments&&tx.installments.count)||1;if(el('txCard'))el('txCard').value=tx.cardId||'';
   var billMonth = txBillingMonth(tx);
   if(el('txFirstMonth'))el('txFirstMonth').value=billMonth;
   if(el('txBillingMonth'))el('txBillingMonth').value=billMonth;

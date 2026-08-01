@@ -6,5 +6,6 @@ for(const field of ['goals','resetPlans','monthlyClosings','cards'])assert.ok(ht
 for(const feature of ['Reset Financeiro','Fechamento do mês','Metas','Cartões e faturas'])assert.ok(js.includes(feature),feature+' ausente');
 for(const fn of ['generateReset','saveGoal','closeMonth','exportClosing','saveCard'])assert.ok(js.includes('function '+fn+'('),fn+' ausente');
 assert.ok(js.includes("last4")&&!js.includes('data-norteia-field="cvv"'),'cartões devem guardar apenas final e nunca CVV');
+assert.ok(html.includes("cardId: el('txCard')")&&js.includes('window.monthTransactions'),'cartões devem vincular compras e projetar parcelas por fatura');
 assert.ok(html.includes("d.comandoPrincipal")&&html.includes("d.explicacao"),'Plano semanal não consome decisão central');
 console.log('Contratos de Reset, metas, fechamento e cartões: OK');
