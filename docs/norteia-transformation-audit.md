@@ -44,11 +44,11 @@ O motor recebe apenas o estado financeiro do próprio usuário já carregado na 
 
 ## Riscos remanescentes
 
-- O arquivo principal ainda é grande e exige extrações pequenas com teste após cada etapa.
-- Alguns textos históricos ainda usam “Cockpit” internamente; a interface os corrige em tempo de execução, mas a limpeza definitiva deve ser incremental.
-- A comunidade existente usa bucket público; conteúdo privado exigirá bucket privado e URLs assinadas numa fase social posterior.
-- O teste RLS completo com usuários A/B/C/admin depende de um projeto Supabase de teste configurado.
+- O arquivo principal continua grande; a transformação foi incremental para preservar dados e reduzir risco de regressão.
+- O nome técnico do repositório e algumas chaves internas `cockpit_*` foram preservados por compatibilidade, sem exposição da marca antiga na interface.
+- Cobrança real Hotmart e credenciais de produção Supabase exigem smoke test no ambiente autorizado após a implantação.
+- Excel `.xlsx` depende do carregamento inicial da biblioteca gratuita; CSV permanece processado localmente sem essa dependência.
 
 ## Rollback
 
-Reverter os arquivos desta fase restaura o painel anterior. Não há migration nem transformação de dados, portanto o rollback não exige restauração de banco.
+Reverter os commits restaura a experiência anterior. A migration social deve ser mantida durante rollback para preservar dados; remova tabelas ou buckets somente após backup e confirmação explícita.
