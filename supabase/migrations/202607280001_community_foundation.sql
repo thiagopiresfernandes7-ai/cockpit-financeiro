@@ -68,6 +68,7 @@ create policy "profiles update own" on public.community_profiles for update to a
 create policy "posts view permitted" on public.community_posts for select to authenticated using(public.community_can_view_post(community_posts));
 create policy "posts own insert" on public.community_posts for insert to authenticated with check(author_id=(select auth.uid()) and not public.community_is_blocked(author_id));
 create policy "posts own update" on public.community_posts for update to authenticated using(author_id=(select auth.uid()) or public.community_is_admin()) with check(author_id=(select auth.uid()) or public.community_is_admin());
+create policy "posts own delete" on public.community_posts for delete to authenticated using(author_id=(select auth.uid()) or public.community_is_admin());
 create policy "comments view with post" on public.community_comments for select to authenticated using(deleted_at is null and exists(select 1 from public.community_posts p where p.id=post_id and public.community_can_view_post(p)));
 create policy "comments create permitted" on public.community_comments for insert to authenticated with check(author_id=(select auth.uid()) and exists(select 1 from public.community_posts p where p.id=post_id and public.community_can_view_post(p)) and (parent_id is null or exists(select 1 from public.community_comments parent where parent.id=parent_id and parent.post_id=post_id and parent.parent_id is null)));
 create policy "comments own update" on public.community_comments for update to authenticated using(author_id=(select auth.uid()) or public.community_is_admin()) with check(author_id=(select auth.uid()) or public.community_is_admin());
@@ -152,7 +153,15 @@ revoke all on function private.community_block_cleanup() from public,anon,authen
 create trigger community_block_cleanup after insert on public.community_blocks for each row execute function private.community_block_cleanup();
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('community-media','community-media',false,5242880,array['image/jpeg','image/png','image/webp']) on conflict(id) do update set public=false,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
-create policy "community media authenticated read" on storage.objects for select to authenticated using(bucket_id='community-media');
+create policy "community media permitted read" on storage.objects for select to authenticated using(
+  bucket_id='community-media' and (
+    owner_id=(select auth.uid())::text or
+    (array_length(storage.foldername(name),1)>=3 and (storage.foldername(name))[2]~'^[0-9a-f-]{36}$' and exists(
+      select 1 from public.community_posts p
+      where p.id=((storage.foldername(name))[2])::uuid and public.community_can_view_post(p)
+    ))
+  )
+);
 create policy "community media own upload" on storage.objects for insert to authenticated with check(bucket_id='community-media' and (storage.foldername(name))[1]=(select auth.uid())::text);
 create policy "community media own update" on storage.objects for update to authenticated using(bucket_id='community-media' and owner_id=(select auth.uid())::text) with check(bucket_id='community-media' and owner_id=(select auth.uid())::text);
 create policy "community media own delete" on storage.objects for delete to authenticated using(bucket_id='community-media' and owner_id=(select auth.uid())::text);

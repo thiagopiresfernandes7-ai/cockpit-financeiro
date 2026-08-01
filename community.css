@@ -119,3 +119,6 @@ body.community-mode .content{padding-bottom:calc(84px + env(safe-area-inset-bott
  .community-bottom-sheet .community-sheet-panel{left:50%;right:auto;width:min(560px,calc(100vw - 40px));transform:translateX(-50%);border-radius:22px 22px 0 0}
 }
 @media(prefers-reduced-motion:reduce){.community-mobile-layer *,.community-full-screen,.community-mobile-toast{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.community-compose-field{display:grid;gap:6px;margin-top:14px;color:var(--community-muted);font-size:13px;font-weight:600}
+.community-compose-field input,.community-compose-field select{min-height:46px;padding:10px 12px;border:1px solid var(--community-border);border-radius:12px;background:var(--community-surface);color:var(--community-text);font:inherit}
+.community-compose-field input:focus-visible,.community-compose-field select:focus-visible{outline:3px solid color-mix(in srgb,var(--community-primary) 28%,transparent);outline-offset:2px}

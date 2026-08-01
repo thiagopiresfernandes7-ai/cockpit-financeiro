@@ -74,7 +74,7 @@ function buildLayer(){
   '<main><div class="community-compose-author"><span class="community-avatar">N</span><div><b id="communityComposeName">Você</b><small id="communityComposeUsername">@pessoa</small></div></div>'+
   '<textarea id="communityMobileText" maxlength="1000" placeholder="Compartilhe algo sobre sua jornada financeira…" aria-label="Texto da publicação"></textarea>'+
   '<div class="community-character-count"><span id="communityMobileCount">0</span>/1000</div><div id="communityMobileImagePreview" class="community-compose-preview hidden"></div>'+
-  '<div class="community-compose-tools"><button id="communityMobilePhoto">'+icon('photo')+'<span>Adicionar foto</span></button><button id="communityMobileCategory"><span id="communityMobileCategoryLabel">Categoria</span>'+icon('chevron')+'</button></div>'+
+  '<div class="community-compose-tools"><button id="communityMobilePhoto">'+icon('photo')+'<span>Adicionar foto</span></button><button id="communityMobileCategory"><span id="communityMobileCategoryLabel">Categoria</span>'+icon('chevron')+'</button></div><label class="community-compose-field"><span>Quem pode ver</span><select id="communityMobileVisibility"><option value="public">Todos</option><option value="followers">Seguidores</option><option value="private">Somente eu</option></select></label><label id="communityMobileAltField" class="community-compose-field hidden"><span>Descrição da imagem</span><input id="communityMobileImageAlt" maxlength="300" placeholder="Ex.: gráfico mostrando progresso da meta"></label>'+
   '<p class="community-financial-warning">Não publique documentos, saldos, dados bancários ou informações pessoais.</p><button class="community-rules-link" data-community-mobile="rules">Ver regras da Comunidade</button></main>'+
  '</div>'+
  '<div id="communityCategorySheet" class="community-bottom-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="communityCategoryTitle"><button class="community-sheet-backdrop" data-community-mobile="close-category" aria-label="Fechar"></button><div class="community-sheet-panel"><div class="community-sheet-handle"></div><header><h2 id="communityCategoryTitle">Escolha uma categoria</h2><button data-community-mobile="close-category" aria-label="Fechar">'+icon('close')+'</button></header><div id="communityMobileCategoryOptions"></div></div></div>'+
@@ -104,6 +104,8 @@ function bindLayer(){
  byId('communityMobileText').addEventListener('input',updatePublishState);
  byId('communityMobilePhoto').onclick=function(){byId('communityImage').click()};
  byId('communityImage').addEventListener('change',previewImage);
+ byId('communityMobileVisibility').addEventListener('change',function(){byId('communityVisibility').value=this.value});
+ byId('communityMobileImageAlt').addEventListener('input',updatePublishState);
  byId('communityMobileCategory').onclick=openCategory;
  byId('communityMobilePublish').onclick=publish;
  var searchTimer;byId('communityMobileSearch').addEventListener('input',function(){clearTimeout(searchTimer);var query=this.value.trim();byId('communityMobileSearchState').innerHTML=query?'<div class="community-skeleton small"></div>':'<p>Encontre conversas, pessoas e assuntos da Comunidade.</p>';searchTimer=setTimeout(function(){if(!query)return;var legacy=byId('communitySearch');legacy.value=query;byId('communitySearchBtn').click();closeSearch()},350)});
@@ -133,19 +135,19 @@ function openComposer(){
 }
 function closeComposer(){byId('communityComposerScreen').classList.add('hidden');document.body.classList.remove('community-overlay-open');state.open=false}
 function resetComposer(){
- byId('communityMobileText').value='';byId('communityText').value='';byId('communityImage').value='';byId('communityCategory').value='';byId('communityMobileCategoryLabel').textContent='Categoria';
+ byId('communityMobileText').value='';byId('communityText').value='';byId('communityImage').value='';byId('communityImageAlt').value='';byId('communityMobileImageAlt').value='';byId('communityCategory').value='';byId('communityVisibility').value='public';byId('communityMobileVisibility').value='public';byId('communityMobileCategoryLabel').textContent='Categoria';byId('communityMobileAltField').classList.add('hidden');
  var preview=byId('communityMobileImagePreview');preview.innerHTML='';preview.classList.add('hidden');if(state.imageUrl)URL.revokeObjectURL(state.imageUrl);state.imageUrl='';updatePublishState();
 }
 function updatePublishState(){
- var text=byId('communityMobileText').value,count=text.length,category=byId('communityCategory').value;
- byId('communityMobileCount').textContent=count;byId('communityText').value=text;byId('communityMobilePublish').disabled=!text.trim()||!category;
+ var text=byId('communityMobileText').value,count=text.length,category=byId('communityCategory').value,file=byId('communityImage').files[0],alt=byId('communityMobileImageAlt').value.trim();
+ byId('communityMobileCount').textContent=count;byId('communityText').value=text;byId('communityImageAlt').value=alt;byId('communityMobilePublish').disabled=!text.trim()||!category||(file&&!alt);
 }
 function previewImage(){
- var file=byId('communityImage').files[0],preview=byId('communityMobileImagePreview');if(!file){preview.classList.add('hidden');return}
+ var file=byId('communityImage').files[0],preview=byId('communityMobileImagePreview');byId('communityMobileAltField').classList.toggle('hidden',!file);if(!file){preview.classList.add('hidden');updatePublishState();return}
  if(state.imageUrl)URL.revokeObjectURL(state.imageUrl);state.imageUrl=URL.createObjectURL(file);
  preview.innerHTML='<img src="'+state.imageUrl+'" alt="Prévia da imagem"><div><button type="button" id="communityChangeImage">Trocar</button><button type="button" id="communityRemoveImage">Remover</button></div>';preview.classList.remove('hidden');
  byId('communityChangeImage').onclick=function(){byId('communityImage').click()};
- byId('communityRemoveImage').onclick=function(){byId('communityImage').value='';preview.innerHTML='';preview.classList.add('hidden');URL.revokeObjectURL(state.imageUrl);state.imageUrl=''};
+ byId('communityRemoveImage').onclick=function(){byId('communityImage').value='';byId('communityMobileImageAlt').value='';preview.innerHTML='';preview.classList.add('hidden');byId('communityMobileAltField').classList.add('hidden');URL.revokeObjectURL(state.imageUrl);state.imageUrl='';updatePublishState()};updatePublishState();
 }
 function renderCategoryOptions(){
  var select=byId('communityCategory'),wrap=byId('communityMobileCategoryOptions');if(!select||!wrap)return;

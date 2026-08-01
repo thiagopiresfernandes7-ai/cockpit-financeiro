@@ -62,6 +62,8 @@ const server = http.createServer((req, res) => {
         await page.locator('#communityMobileCategoryOptions button').filter({ hasText: 'Organização financeira' }).click();
         await page.locator('#communityImage').setInputFiles(path.join(root, 'icon-192.png'));
         assert.equal(await page.locator('#communityMobileImagePreview img').isVisible(), true);
+        assert.equal(await page.locator('#communityMobilePublish').isDisabled(), true);
+        await page.locator('#communityMobileImageAlt').fill('Símbolo verde do Norteia apontando para o norte.');
         assert.equal(await page.locator('#communityMobilePublish').isEnabled(), true);
         await page.locator('#communityMobilePublish').click();
         await page.waitForTimeout(800);
