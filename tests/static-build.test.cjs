@@ -14,4 +14,5 @@ for(const id of ['todayGreeting','todayCommand','todaySafeValue','todayFormula',
 assert.ok(html.includes('financial-decision-engine.js'),'motor não carregado');
 assert.ok(html.includes('norteia-completion.js'),'módulos de conclusão não carregados');
 assert.ok(!html.includes('Cockpit'),'a marca antiga ainda aparece na interface principal');
+assert.ok(html.includes("localStorage.getItem('norteia_last_user')")&&html.includes("localStorage.removeItem('norteia_last_user')"),'sessão local offline incompleta');
 console.log('Build estático e integração da tela Hoje: OK');
