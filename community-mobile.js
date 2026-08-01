@@ -186,8 +186,9 @@ async function deletePost(article){
  if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
  try{
   var media=await window.cockpitSupabase.from('community_post_media').select('storage_path').eq('post_id',id),paths=(media.data||[]).map(function(x){return x.storage_path});
-  if(media.error)throw media.error;if(paths.length){var removed=await window.cockpitSupabase.storage.from('community-media').remove(paths);if(removed.error)throw removed.error}
-  var result=await window.cockpitSupabase.from('community_posts').delete().eq('id',id).eq('author_id',window.cockpitUser.id);if(result.error)throw result.error;
+  if(media.error)throw media.error;
+  var result=await window.cockpitSupabase.from('community_posts').update({deleted_at:new Date().toISOString()},{count:'exact'}).eq('id',id).eq('author_id',window.cockpitUser.id);if(result.error)throw result.error;if(result.count!==1)throw Error('Publicação não encontrada ou sem permissão para excluir.');
+  if(paths.length){var removed=await window.cockpitSupabase.storage.from('community-media').remove(paths);if(removed.error)console.warn('A publicação foi excluída, mas a limpeza da imagem será repetida depois.',removed.error)}
   article.remove();toast('Publicação excluída.');
  }catch(e){
   if(button){button.disabled=false;button.removeAttribute('aria-busy')}
@@ -211,7 +212,7 @@ function transformPost(article){
   if(buttons[1])buttons[1].innerHTML=icon('comment')+'<span>'+((buttons[1].textContent.match(/\d+/)||['0'])[0])+'</span>';
   if(buttons[2]){buttons[2].innerHTML=icon('bookmark')+'<span>'+((buttons[2].textContent.match(/\d+/)||['0'])[0])+'</span>';buttons[2].classList.add('community-save-action')}
   if(buttons[3])buttons[3].innerHTML=icon('repost')+'<span>'+((buttons[3].textContent.match(/\d+/)||['0'])[0])+'</span>';
-  if(menu&&!actions.querySelector('[data-community-delete]'))actions.insertAdjacentHTML('beforeend','<button class="community-delete-action" data-community-delete aria-label="Excluir publicação">'+icon('trash')+'<span class="community-action-label">Excluir</span></button>');
+  if(menu&&menu.dataset.action==='post-menu'&&!actions.querySelector('[data-community-delete]'))actions.insertAdjacentHTML('beforeend','<button class="community-delete-action" data-community-delete aria-label="Excluir publicação">'+icon('trash')+'<span class="community-action-label">Excluir</span></button>');
   if(!actions.querySelector('[data-community-share]'))actions.insertAdjacentHTML('beforeend','<button class="community-share-action" data-community-share aria-label="Compartilhar publicação">'+icon('share')+'<span class="community-action-label">Compartilhar</span></button>');
   buttons.forEach(function(button){if(!button.getAttribute('aria-label'))button.setAttribute('aria-label',button.dataset.action==='like'?'Curtir':button.dataset.action==='comment'?'Comentar':button.dataset.action==='save'?'Salvar':'Republicar')});
  }

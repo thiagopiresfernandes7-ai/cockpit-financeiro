@@ -1,0 +1,15 @@
+/* Contraste global WCAG AA: texto, controles, estados e foco. */
+:root{--soft:#43564d;--muted:#5f7168;--dim:#6d7c75}
+html[data-theme="dark"]{--text:#f3faf7;--soft:#c5d7cf;--muted:#a7bbb1;--dim:#91a69c}
+::placeholder{color:var(--muted)!important;opacity:1}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid #0b8069!important;outline-offset:3px!important}
+html[data-theme="dark"] button:focus-visible,html[data-theme="dark"] a:focus-visible,html[data-theme="dark"] input:focus-visible,html[data-theme="dark"] select:focus-visible,html[data-theme="dark"] textarea:focus-visible,html[data-theme="dark"] [tabindex]:focus-visible{outline-color:#62e2c4!important}
+.panel p,.card p,.label,.page-title p,.title p,.item small,.row-sub,.empty,.community-meta small,.community-post small,.community-disclaimer,.community-empty,.achievement-copy p,.achievement-copy>small,.achievement-progress small{color:var(--soft)!important}
+.field span,.eyebrow,.kpi span,.statement-day-title,.statement-tx-main small,.community-character-count,.community-financial-warning{color:var(--muted)!important}
+.btn:disabled,button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:1!important;color:#596961!important;background:#e2e8e5!important;border-color:#bcc8c2!important;cursor:not-allowed}
+html[data-theme="dark"] .btn:disabled,html[data-theme="dark"] button:disabled,html[data-theme="dark"] input:disabled,html[data-theme="dark"] select:disabled,html[data-theme="dark"] textarea:disabled{color:#a6b8af!important;background:#26352f!important;border-color:#50635a!important}
+.bad,.negative,.err,.danger-text,.community-delete-action{color:#b4232d!important}
+html[data-theme="dark"] .bad,html[data-theme="dark"] .negative,html[data-theme="dark"] .err,html[data-theme="dark"] .danger-text,html[data-theme="dark"] .community-delete-action{color:#ff9ca3!important}
+.good,.positive,.ok{color:#08725e!important}html[data-theme="dark"] .good,html[data-theme="dark"] .positive,html[data-theme="dark"] .ok{color:#65dfc1!important}
+.warn{color:#8a5700!important}html[data-theme="dark"] .warn{color:#ffd17a!important}
+@media (forced-colors:active){*{forced-color-adjust:auto}.card,.panel,.btn,input,select,textarea{border:1px solid CanvasText!important}}
