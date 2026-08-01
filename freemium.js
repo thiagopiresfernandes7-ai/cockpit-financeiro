@@ -100,7 +100,7 @@ function renderPlanPanel(){
   var sub=normalizeSubscription(state.subscription),premium=hasPremiumAccess(state);
   panel.innerHTML='<div class="plan-panel-grid"><div><span class="premium-badge">'+(premium?"PREMIUM":"PLANO GRATUITO")+'</span><h2 style="margin:8px 0 4px">Plano</h2><p>'+planMessage()+'</p><div class="label">Status: '+sub.status+' • Provedor: '+sub.provider+' • Início: '+formatDate(sub.startedAt)+' • Validade: '+formatDate(sub.expiresAt)+'</div></div><div class="split"><button class="btn primary" id="planSubscribeBtn" type="button">'+(premium?"Ver benefícios":"Assinar Premium")+'</button><button class="btn" id="planRefreshBtn" type="button">Atualizar status</button></div></div>';
   document.getElementById("planSubscribeBtn").onclick=function(){openPremiumModal("advancedAnalysis")};
-  document.getElementById("planRefreshBtn").onclick=async function(){this.disabled=true;try{if(typeof verifyCockpitAccess==="function")await verifyCockpitAccess();syncEntitlement();renderPlanPanel();if(typeof scheduleSave==="function")scheduleSave();if(typeof toast==="function")toast("Status da assinatura atualizado.")}finally{this.disabled=false}};
+  document.getElementById("planRefreshBtn").onclick=async function(){this.disabled=true;try{if(typeof verifyNorteiaAccess==="function")await verifyNorteiaAccess();syncEntitlement();renderPlanPanel();if(typeof scheduleSave==="function")scheduleSave();if(typeof toast==="function")toast("Status da assinatura atualizado.")}finally{this.disabled=false}};
 }
 function limitReached(kind,count){
   if(hasPremiumAccess(state))return false;

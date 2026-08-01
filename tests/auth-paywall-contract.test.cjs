@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const html=fs.readFileSync('index.html','utf8');
+const premium=fs.readFileSync('freemium.js','utf8');
+const sql=fs.readFileSync('supabase/migrations/hotmart_entitlements.sql','utf8');
+for(const method of ['getSession','signInWithPassword','signInWithOAuth','signUp','signOut','onAuthStateChange'])assert.ok(html.includes(method),method+' ausente');
+assert.ok(html.includes("from('finance_states').upsert"),'sincronização financeira ausente');
+assert.ok(html.includes("rpc('claim_my_entitlement')"),'consulta de entitlement ausente');
+assert.ok(premium.includes('https://pay.hotmart.com/'),'checkout Hotmart inválido');
+assert.ok(premium.includes('verifyNorteiaAccess'),'atualização de acesso aponta para função antiga');
+assert.ok(premium.includes('installGates()')&&premium.includes('hasPremiumAccess'),'gates freemium ausentes');
+assert.ok(sql.includes('enable row level security')&&sql.includes('revoke all on public.pending_entitlements'),'entitlements sem proteção');
+assert.ok(!html.toLowerCase().includes('service_role'),'chave administrativa exposta no cliente');
+console.log('Autenticação, sessão, sincronização e paywall: OK');
