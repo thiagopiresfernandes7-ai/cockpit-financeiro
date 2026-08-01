@@ -13,4 +13,5 @@ assert.deepEqual(duplicates,[],'IDs duplicados: '+duplicates.join(', '));
 for(const id of ['todayGreeting','todayCommand','todaySafeValue','todayFormula','todayPositiveImpact','todayIgnoreRisk'])assert.ok(html.includes('id="'+id+'"'),id+' ausente');
 assert.ok(html.includes('financial-decision-engine.js'),'motor não carregado');
 assert.ok(html.includes('norteia-completion.js'),'módulos de conclusão não carregados');
+assert.ok(!html.includes('Cockpit'),'a marca antiga ainda aparece na interface principal');
 console.log('Build estático e integração da tela Hoje: OK');
