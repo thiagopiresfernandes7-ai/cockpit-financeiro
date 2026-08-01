@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');
+const engine=require('../financial-decision-engine.js');
+const base={income:5000,expense:3000,cash:1800,debtBalance:0,debtPayments:0,safeToSpend:60,reserveMonths:4,transactionCount:12,hasBalance:true,futureBalance:900,now:'2026-07-31T12:00:00.000Z'};
+assert.equal(engine.evaluate({}).prioridadeAtual,'completar_dados');
+assert.equal(engine.evaluate({...base,cash:-400}).prioridadeAtual,'corrigir_fluxo_atual');
+assert.equal(engine.evaluate({...base,futureBalance:-700}).prioridadeAtual,'proteger_fluxo_futuro');
+assert.equal(engine.evaluate({...base,debtPayments:2000}).prioridadeAtual,'reduzir_pressao_das_dividas');
+assert.equal(engine.evaluate({...base,reserveMonths:1}).prioridadeAtual,'formar_reserva');
+const stable=engine.evaluate(base);
+assert.equal(stable.prioridadeAtual,'manter_margem_segura');
+assert.equal(stable.nivelDeConfianca,'alta');
+for(const key of ['statusFinanceiro','resumoDoMomento','prioridadeAtual','comandoPrincipal','explicacao','valorRelacionado','prazo','destinoDaAcao','impactoPositivo','riscoDeIgnorar','nivelDeUrgencia','nivelDeConfianca','dadosUtilizados','formulaSimplificada','atualizadoEm','proximasAcoesSecundarias'])assert.ok(Object.hasOwn(stable,key),key);
+console.log('Financial Decision Engine: OK');

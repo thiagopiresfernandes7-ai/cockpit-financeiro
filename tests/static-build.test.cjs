@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const html=fs.readFileSync('index.html','utf8');
+JSON.parse(fs.readFileSync('manifest.json','utf8'));
+for(const file of ['financial-decision-engine.js','norteia-v2.js','service-worker.js','community.js','community-mobile.js'])new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
+const inline=[...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/gi)];
+inline.forEach((match,index)=>new vm.Script(match[1],{filename:'index-inline-'+index+'.js'}));
+const staticHtml=html.replace(/<script[\s\S]*?<\/script>/gi,'');
+const ids=[...staticHtml.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]);
+const duplicates=[...new Set(ids.filter((id,index)=>ids.indexOf(id)!==index))];
+assert.deepEqual(duplicates,[],'IDs duplicados: '+duplicates.join(', '));
+for(const id of ['todayGreeting','todayCommand','todaySafeValue','todayFormula','todayPositiveImpact','todayIgnoreRisk'])assert.ok(html.includes('id="'+id+'"'),id+' ausente');
+assert.ok(html.includes('financial-decision-engine.js'),'motor não carregado');
+console.log('Build estático e integração da tela Hoje: OK');

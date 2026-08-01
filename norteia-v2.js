@@ -69,9 +69,20 @@ function addThemePreference(){
   });
   setTheme(document.documentElement.dataset.theme);
 }
+function normalizePrimaryNavigation(){
+  document.querySelectorAll('[data-view="dashboard"]').forEach(function(button){var label=button.querySelector('.ico');button.textContent='';if(label)button.appendChild(label);button.appendChild(document.createTextNode('Hoje'))});
+  document.querySelectorAll('[data-view="register"]').forEach(function(button){var label=button.querySelector('.ico');button.textContent='';if(label)button.appendChild(label);button.appendChild(document.createTextNode('Movimentos'))});
+  var mobile=document.querySelector('.mobile-nav');
+  if(!mobile)return;
+  var analysis=mobile.querySelector('[data-view="analysis"]'),more=mobile.querySelector('[data-view="more"]'),plans=mobile.querySelector('[data-view="wallet"]');
+  if(analysis)analysis.hidden=true;if(more)more.hidden=true;
+  if(plans){plans.dataset.view='plan';plans.innerHTML='<span class="ico" aria-hidden="true"></span>Planos'}
+  if(!document.getElementById('mobilePrimaryAdd')){var add=document.createElement('button');add.id='mobilePrimaryAdd';add.type='button';add.className='mobile-primary-add';add.innerHTML='<span aria-hidden="true">+</span><small>Adicionar</small>';add.addEventListener('click',function(){if(window.openRegisterSheet)window.openRegisterSheet()});var community=mobile.querySelector('[data-view="community"]');mobile.insertBefore(add,community||plans&&plans.nextSibling||null)}
+}
 function watch(){
   cleanCopy();
   addThemePreference();
+  normalizePrimaryNavigation();
   var observer=new MutationObserver(function(records){
     if(records.some(function(record){return record.type==='childList'||record.type==='characterData'}))cleanCopy();
   });
