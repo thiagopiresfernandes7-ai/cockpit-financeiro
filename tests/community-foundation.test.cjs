@@ -7,8 +7,10 @@ for(const table of tables){assert.ok(sql.includes('table if not exists public.'+
 for(const helper of ['community_is_admin','community_is_blocked','community_can_view_post'])assert.ok(sql.includes('function public.'+helper),helper+' ausente');
 for(const protection of ['security definer','set search_path=\'\'','revoke all on function','community_block_cleanup','community_rate_limit'])assert.ok(sql.toLowerCase().includes(protection.toLowerCase()),protection+' ausente');
 assert.ok(sql.includes("values('community-media','community-media',false"),'bucket social deve ser privado');
+assert.ok(sql.includes("values('community-avatars','community-avatars',true"),'bucket de avatar ausente');
 assert.ok(!sql.includes('service_role'),'migration não pode expor service role');
 assert.ok(!sql.includes('finance_states'),'comunidade não pode ler estado financeiro');
 assert.ok(sql.includes("visibility in('public','followers','private')"),'visibilidade incompleta');
 assert.ok(sql.includes("status in('pending','accepted')"),'solicitações de acompanhamento ausentes');
+for(const feature of ['community_create_notification','community_follow_privacy','community_social_rate_limit','archived_at'])assert.ok(sql.includes(feature),feature+' ausente');
 console.log('Fundação social, RLS, privacidade e Storage: OK');

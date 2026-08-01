@@ -233,6 +233,7 @@ revoke all on function private.community_block_cleanup() from public,anon,authen
 create trigger community_block_cleanup after insert on public.community_blocks for each row execute function private.community_block_cleanup();
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('community-media','community-media',false,5242880,array['image/jpeg','image/png','image/webp']) on conflict(id) do update set public=false,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('community-avatars','community-avatars',true,2097152,array['image/jpeg','image/png','image/webp']) on conflict(id) do update set public=true,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
 create policy "community media permitted read" on storage.objects for select to authenticated using(
   bucket_id='community-media' and (
     owner_id=(select auth.uid())::text or
@@ -245,6 +246,10 @@ create policy "community media permitted read" on storage.objects for select to 
 create policy "community media own upload" on storage.objects for insert to authenticated with check(bucket_id='community-media' and (storage.foldername(name))[1]=(select auth.uid())::text);
 create policy "community media own update" on storage.objects for update to authenticated using(bucket_id='community-media' and owner_id=(select auth.uid())::text) with check(bucket_id='community-media' and owner_id=(select auth.uid())::text);
 create policy "community media own delete" on storage.objects for delete to authenticated using(bucket_id='community-media' and owner_id=(select auth.uid())::text);
+create policy "community avatars public read" on storage.objects for select using(bucket_id='community-avatars');
+create policy "community avatars own upload" on storage.objects for insert to authenticated with check(bucket_id='community-avatars' and (storage.foldername(name))[1]=(select auth.uid())::text);
+create policy "community avatars own update" on storage.objects for update to authenticated using(bucket_id='community-avatars' and owner_id=(select auth.uid())::text) with check(bucket_id='community-avatars' and owner_id=(select auth.uid())::text);
+create policy "community avatars own delete" on storage.objects for delete to authenticated using(bucket_id='community-avatars' and owner_id=(select auth.uid())::text);
 
 grant select on public.community_categories,public.community_interests,public.community_topics,public.community_challenges,public.community_report_reasons,public.community_rules to authenticated;
 grant select,insert,update,delete on public.community_profiles,public.community_user_interests,public.community_follows,public.community_blocks,public.community_posts,public.community_post_media,public.community_comments,public.community_post_likes,public.community_comment_likes,public.community_saved_posts,public.community_reposts,public.community_notifications,public.community_mutes,public.community_hidden_posts,public.community_reports,public.community_challenge_progress,public.community_user_settings,public.community_specialist_requests,public.community_hashtags,public.community_post_hashtags,public.community_mentions to authenticated;
