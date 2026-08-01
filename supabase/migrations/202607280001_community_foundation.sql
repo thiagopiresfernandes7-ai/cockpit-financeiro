@@ -74,7 +74,7 @@ create policy "comments create permitted" on public.community_comments for inser
 create policy "comments own update" on public.community_comments for update to authenticated using(author_id=(select auth.uid()) or public.community_is_admin()) with check(author_id=(select auth.uid()) or public.community_is_admin());
 create policy "follows view involved" on public.community_follows for select to authenticated using(follower_id=(select auth.uid()) or following_id=(select auth.uid()) or status='accepted');
 create policy "follows create own" on public.community_follows for insert to authenticated with check(follower_id=(select auth.uid()) and not public.community_is_blocked(following_id));
-create policy "follows update involved" on public.community_follows for update to authenticated using(follower_id=(select auth.uid()) or following_id=(select auth.uid())) with check(follower_id=(select auth.uid()) or following_id=(select auth.uid()));
+create policy "follows recipient update" on public.community_follows for update to authenticated using(following_id=(select auth.uid())) with check(following_id=(select auth.uid()));
 create policy "follows delete involved" on public.community_follows for delete to authenticated using(follower_id=(select auth.uid()) or following_id=(select auth.uid()));
 create policy "blocks own" on public.community_blocks for all to authenticated using(blocker_id=(select auth.uid())) with check(blocker_id=(select auth.uid()));
 create policy "user interests own" on public.community_user_interests for all to authenticated using(user_id=(select auth.uid())) with check(user_id=(select auth.uid()));
@@ -148,6 +148,52 @@ revoke all on function public.community_rate_limit() from public,anon;grant exec
 create trigger community_posts_rate before insert on public.community_posts for each row execute function public.community_rate_limit();
 create trigger community_comments_rate before insert on public.community_comments for each row execute function public.community_rate_limit();
 create trigger community_reports_rate before insert on public.community_reports for each row execute function public.community_rate_limit();
+
+create or replace function private.community_create_notification() returns trigger language plpgsql security definer set search_path='' as $$
+declare
+  recipient uuid;
+  actor uuid;
+  event_type text;
+  target_post uuid;
+  target_comment uuid;
+begin
+  if tg_table_name='community_follows' then
+    if tg_op='UPDATE' then recipient=new.follower_id;actor=new.following_id;event_type='follow_accepted';else recipient=new.following_id;actor=new.follower_id;event_type=case when new.status='pending' then 'follow_request' else 'new_follower' end;end if;
+  elsif tg_table_name='community_post_likes' then
+    select author_id into recipient from public.community_posts where id=new.post_id;
+    actor=new.user_id;event_type='support';target_post=new.post_id;
+  elsif tg_table_name='community_comments' then
+    if new.parent_id is not null then select author_id into recipient from public.community_comments where id=new.parent_id;event_type='reply';else select author_id into recipient from public.community_posts where id=new.post_id;event_type='comment';end if;
+    actor=new.author_id;target_post=new.post_id;target_comment=new.id;
+  elsif tg_table_name='community_reposts' then
+    select author_id into recipient from public.community_posts where id=new.post_id;
+    actor=new.user_id;event_type=case when new.comment is null then 'repost' else 'quote' end;target_post=new.post_id;
+  elsif tg_table_name='community_mentions' then
+    recipient=new.mentioned_user_id;actor=(select coalesce((select author_id from public.community_posts where id=new.post_id),(select author_id from public.community_comments where id=new.comment_id)));event_type='mention';target_post=new.post_id;target_comment=new.comment_id;
+  end if;
+  if recipient is null or actor is null or recipient=actor or exists(select 1 from public.community_blocks where (blocker_id=recipient and blocked_id=actor) or (blocker_id=actor and blocked_id=recipient)) then return new;end if;
+  insert into public.community_notifications(recipient_id,actor_id,type,dedupe_key,post_id,comment_id)
+  values(recipient,actor,event_type,tg_table_name||':'||coalesce(target_post::text,target_comment::text,actor::text)||':'||actor::text,target_post,target_comment)
+  on conflict(recipient_id,dedupe_key) do nothing;
+  return new;
+end$$;
+revoke all on function private.community_create_notification() from public,anon,authenticated;
+create trigger community_follow_notify after insert on public.community_follows for each row execute function private.community_create_notification();
+create trigger community_follow_accept_notify after update of status on public.community_follows for each row when (old.status is distinct from new.status and new.status='accepted') execute function private.community_create_notification();
+create trigger community_support_notify after insert on public.community_post_likes for each row execute function private.community_create_notification();
+create trigger community_comment_notify after insert on public.community_comments for each row execute function private.community_create_notification();
+create trigger community_repost_notify after insert on public.community_reposts for each row execute function private.community_create_notification();
+create trigger community_mention_notify after insert on public.community_mentions for each row execute function private.community_create_notification();
+
+create or replace function private.community_follow_privacy() returns trigger language plpgsql security definer set search_path='' as $$
+begin
+  if new.follower_id<>(select auth.uid()) then raise exception 'Acompanhamento inválido' using errcode='42501';end if;
+  if exists(select 1 from public.community_profiles where user_id=new.following_id and privacy='private') then new.status='pending';else new.status='accepted';end if;
+  return new;
+end$$;
+revoke all on function private.community_follow_privacy() from public,anon,authenticated;
+create trigger community_follow_privacy before insert on public.community_follows for each row execute function private.community_follow_privacy();
+
 create or replace function private.community_block_cleanup() returns trigger language plpgsql security definer set search_path='' as $$begin delete from public.community_follows where (follower_id=new.blocker_id and following_id=new.blocked_id) or (follower_id=new.blocked_id and following_id=new.blocker_id);return new;end$$;
 revoke all on function private.community_block_cleanup() from public,anon,authenticated;
 create trigger community_block_cleanup after insert on public.community_blocks for each row execute function private.community_block_cleanup();

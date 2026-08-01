@@ -227,6 +227,12 @@ function enhanceProfileDialog(){
  var dialog=byId('communityDialogBody');if(!dialog)return;
  var username=byId('cpUser');if(!username||byId('communityUsernameStatus'))return;
  username.maxLength=30;username.setAttribute('pattern','[a-z0-9._]{3,30}');username.insertAdjacentHTML('afterend','<small id="communityUsernameStatus" class="community-username-status" aria-live="polite"></small>');
+ var saveProfile=byId('saveCommunityProfile'),profile=currentProfile();
+ if(saveProfile&&!byId('communityProfilePrivacy')){
+  saveProfile.insertAdjacentHTML('beforebegin','<label class="field"><span>Privacidade do perfil</span><select id="communityProfilePrivacy"><option value="public">Público — qualquer pessoa pode acompanhar</option><option value="private">Privado — você aprova solicitações</option></select></label>');
+  byId('communityProfilePrivacy').value=profile.privacy||'public';
+  var originalSave=saveProfile.onclick;saveProfile.onclick=async function(event){var privacy=byId('communityProfilePrivacy').value,result=await window.cockpitSupabase.from('community_profiles').update({privacy:privacy}).eq('user_id',window.cockpitUser.id);if(result.error){event.preventDefault();toast('Não foi possível salvar a privacidade.','error');return}if(state.profile)state.profile.privacy=privacy;return originalSave&&originalSave.call(this,event)};
+ }
  if(!username.value||/^u_[a-f0-9]{8,}$/i.test(username.value)){
   var displayName=byId('cpName')&&byId('cpName').value||currentProfile().display_name||'pessoa';
   username.value=displayName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,'.').replace(/[^a-z0-9._]/g,'').replace(/^[._]+|[._]+$/g,'').slice(0,30);
