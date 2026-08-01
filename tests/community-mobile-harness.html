@@ -19,7 +19,7 @@ body{margin:0;background:#f7faf8;color:#14231d;font-family:Inter,system-ui,sans-
  function result(table,method){
   if(table==='community_profiles')return method==='list'?{data:[profile],error:null}:{data:profile,error:null};
   if(table==='community_categories')return{data:['Aprendi','Dúvida','Organização financeira','Dívidas','Renda fixa','Ações','Fundos imobiliários','ETFs','Criptomoedas','Economia','Imposto de renda','Meta','Conquista','Opinião','Notícia'].map((label,i)=>({label,sort_order:i})),error:null};
-  if(table==='community_posts')return method==='single'?{data:posts[0],error:null}:{data:posts,error:null};
+  if(table==='community_posts')return method==='single'?{data:posts[0],error:null}:{data:posts,error:null,count:1};
   if(table==='community_user_interests')return{data:[{interest_slug:'organizar-minhas-financas'}],error:null};
   if(table==='community_post_likes'||table==='community_saved_posts'||table==='community_follows'||table==='community_notifications')return{data:[],error:null,count:0};
   return{data:[],error:null,count:0};

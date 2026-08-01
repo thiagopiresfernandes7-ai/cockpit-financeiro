@@ -12,4 +12,30 @@ html[data-theme="dark"] .btn:disabled,html[data-theme="dark"] button:disabled,ht
 html[data-theme="dark"] .bad,html[data-theme="dark"] .negative,html[data-theme="dark"] .err,html[data-theme="dark"] .danger-text,html[data-theme="dark"] .community-delete-action{color:#ff9ca3!important}
 .good,.positive,.ok{color:#08725e!important}html[data-theme="dark"] .good,html[data-theme="dark"] .positive,html[data-theme="dark"] .ok{color:#65dfc1!important}
 .warn{color:#8a5700!important}html[data-theme="dark"] .warn{color:#ffd17a!important}
+
+/* Superfícies de marca escuras precisam de uma paleta local, independente do tema. */
+.auth-hero,.auth-hero h1,.auth-hero h2,.auth-hero .brand strong{color:#fff!important}
+.auth-hero p,.auth-hero .brand span{color:#d9f2e9!important}
+.auth-hero .auth-badges span{color:#f2fff9!important;border-color:rgba(255,255,255,.7)!important;background:rgba(0,0,0,.12)!important}
+.auth-hero .mark{background:#e9fff8!important}
+.auth-hero .mark img{filter:none!important}
+.auth-form{background:#fff!important;color:#172820!important}
+.auth-form h2{color:#172820!important}.auth-form>p{color:#5a6c63!important}
+html .auth-form .field span{color:#42564d!important}
+html .auth-form .field input{background:#fff!important;color:#172820!important;border-color:#bfd0c8!important;box-shadow:none!important}
+html .auth-form .field input::placeholder{color:#667970!important}
+html .auth-form .btn:not(.primary){background:#fff!important;color:#30463c!important;border-color:#c9d8d1!important}
+html .auth-form .btn.primary{background:#0b8069!important;color:#fff!important}
+.analysis-hero,.analysis-hero h2,.analysis-hero p,.analysis-hero small,
+.goal-mini-card,.goal-mini-card h2,.goal-mini-card p,.goal-mini-card small{color:#fff!important}
+
+/* Cartões de hábito ainda herdavam o antigo fundo azul do protótipo. */
+.habit-summary-card{background:#fff!important;border-color:#d9e4df!important;color:var(--text)!important;box-shadow:var(--shadow)!important}
+.habit-summary-card small{color:var(--muted)!important}.habit-summary-card b{color:var(--text)!important}
+html[data-theme="dark"] .habit-summary-card{background:#10201a!important;border-color:#30473d!important}
+
+/* Opções de onboarding: caixa e texto na mesma linha, com alvo de toque inteiro. */
+.community-choices label{display:flex!important;align-items:center!important;gap:12px!important;min-height:52px!important;cursor:pointer}
+.community-choices label input{flex:0 0 auto!important;width:18px!important;height:18px!important;margin:0!important}
+
 @media (forced-colors:active){*{forced-color-adjust:auto}.card,.panel,.btn,input,select,textarea{border:1px solid CanvasText!important}}
