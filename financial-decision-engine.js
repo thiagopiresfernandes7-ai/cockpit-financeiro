@@ -32,5 +32,26 @@
     if(reserveMonths<3&&cash>0)return result(input,Object.assign({},common,{statusFinanceiro:'em construção',resumoDoMomento:'Seu mês tem margem, mas sua proteção contra imprevistos ainda é curta.',prioridadeAtual:'formar_reserva',comandoPrincipal:'Direcione parte da sobra para sua reserva de emergência.',explicacao:'A reserva estimada ainda não cobre três meses de despesas.',valorRelacionado:cash,destinoDaAcao:'plan',impactoPositivo:'Você reduz a chance de usar crédito em um imprevisto.',riscoDeIgnorar:'Uma despesa inesperada pode consumir o saldo do mês.',nivelDeUrgencia:'média',formulaSimplificada:'meses de reserva = valor disponível em reserva ÷ despesas mensais'}));
     return result(input,Object.assign({},common,{statusFinanceiro:'estável',resumoDoMomento:'Seu mês está equilibrado e há margem para seguir o plano.',prioridadeAtual:'manter_margem_segura',comandoPrincipal:safe>0?'Mantenha os gastos flexíveis em até '+safe.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+' por dia.':'Continue registrando e preserve a margem do mês.',explicacao:'Receitas cobrem as saídas e os compromissos conhecidos não indicam saldo negativo.',valorRelacionado:safe||null,destinoDaAcao:'register',impactoPositivo:'Você mantém as contas protegidas até o fim do mês.',riscoDeIgnorar:'Gastos fora do plano podem reduzir a margem disponível.',nivelDeUrgencia:'baixa',formulaSimplificada:'valor seguro diário = caixa livre após compromissos e reserva ÷ dias restantes'}));
   }
-  return {evaluate:evaluate,version:'1.0.0',clamp:clamp};
+  function evaluatePurchase(raw){
+    var input=raw||{},amount=Math.max(0,n(input.amount)),income=n(input.income),workHours=Math.max(1,n(input.workHours)||176),hourly=income/workHours,
+      hours=hourly?amount/hourly:0,annual=input.recurrence==='monthly'?amount*12:amount,after=n(input.availableBalance)-amount,
+      reserve=n(input.minimumReserve),rate=n(input.annualReturn)/100,future=amount*Math.pow(1+rate,5),score=72,tag='Comprar consciente',tone='good',why=[],base=input.baseDecision||{};
+    if(!amount){score=0;tag='Preencha a compra';tone='warn';why.push('Informe o valor para o Norteia calcular a decisão.');}
+    else{
+      if(hourly)why.push('Essa compra equivale a '+hours.toFixed(1).replace('.',',')+' hora(s) do seu trabalho.');else why.push('Cadastre renda líquida e horas trabalhadas para ver o custo em tempo de vida.');
+      if(base.nivelDeUrgencia==='crítica'||base.prioridadeAtual==='corrigir_fluxo_atual'||base.prioridadeAtual==='proteger_conta_essencial'){score-=50;tag='Esperar';tone='bad';why.push('A prioridade financeira atual precisa ser resolvida antes desta compra.');}
+      if(after<reserve){score-=35;tag='Esperar';tone='bad';why.push('A compra reduz o saldo projetado abaixo da reserva mínima.');}
+      if((input.reason==='impulso'||input.reason==='status')&&input.priority!=='alta'){score-=22;tag='Pausar';tone='warn';why.push('Motivo ligado a impulso ou status pede reflexão antes de comprar.');}
+      if(hours>40){score-=18;tag='Refletir';tone='warn';why.push('O custo passa de uma semana cheia de trabalho.');}
+      if(input.recurrence==='monthly'&&income&&annual>income){score-=25;tag='Revisar recorrência';tone='bad';why.push('A recorrência custa mais de um mês de renda por ano.');}
+      if(input.priority==='alta'&&input.reason==='necessidade'&&after>=reserve&&score>=50){score+=10;tag='Compra defensável';tone='good';why.push('Prioridade alta e necessidade tornam a compra defensável dentro do caixa.');}
+      why.push('Se mantido por 5 anos a '+(n(input.annualReturn)||0).toFixed(1).replace('.',',')+'% a.a., esse valor seria '+future.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+'.');
+    }
+    score=clamp(Math.round(score),0,100);
+    if(amount&&score<30){tag='Esperar';tone='bad';}else if(amount&&score<50){tag='Pausar';tone='warn';}
+    return {score:score,tag:tag,tone:tone,hours:hours,annual:annual,future:future,after:after,why:why,
+      comandoPrincipal:tag,explicacao:why.join(' '),formulaSimplificada:'saldo após compra = saldo projetado - valor da compra; custo anual = recorrência × 12',
+      basePriority:base.prioridadeAtual||null,engineVersion:'1.1.0'};
+  }
+  return {evaluate:evaluate,evaluatePurchase:evaluatePurchase,version:'1.1.0',clamp:clamp};
 });
