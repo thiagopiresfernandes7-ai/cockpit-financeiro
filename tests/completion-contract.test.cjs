@@ -8,4 +8,6 @@ for(const fn of ['generateReset','saveGoal','saveReserve','closeMonth','exportCl
 assert.ok(js.includes("last4")&&!js.includes('data-norteia-field="cvv"'),'cartões devem guardar apenas final e nunca CVV');
 assert.ok(html.includes("cardId: el('txCard')")&&js.includes('window.monthTransactions'),'cartões devem vincular compras e projetar parcelas por fatura');
 assert.ok(html.includes("d.comandoPrincipal")&&html.includes("d.explicacao"),'Plano semanal não consome decisão central');
+assert.ok(js.includes('function startDemo(')&&js.includes('demoBackup'),'demonstração isolada ausente');
+assert.ok(html.includes('state.ui&&state.ui.demoMode'),'demonstração não está protegida contra salvamento');
 console.log('Contratos de Reset, metas, fechamento e cartões: OK');

@@ -837,7 +837,7 @@ async function load(){try{var r=await sb.auth.getSession();user=r.data.session&&
 
 function showAuth(){document.body.classList.add('auth-mode');document.body.classList.remove('app-mode');el('authView').classList.remove('hidden');el('appView').classList.add('hidden');if(el('paywallView'))el('paywallView').classList.add('hidden')}
 function showApp(){document.body.classList.remove('auth-mode');document.body.classList.add('app-mode');el('authView').classList.add('hidden');if(el('paywallView'))el('paywallView').classList.add('hidden');el('appView').classList.remove('hidden')}
-async function saveNow(){if(!user||!state||appAccess.allowed===false)return;localStorage.setItem('cockpit_state_'+user.id,JSON.stringify(state));el('syncStatus').textContent='Salvando...';var res=await sb.from('finance_states').upsert({user_id:user.id,data:state,updated_at:new Date().toISOString()});el('syncStatus').textContent=res.error?'Salvo neste aparelho':'Sincronizado'}
+async function saveNow(){if(!user||!state||appAccess.allowed===false||state.ui&&state.ui.demoMode)return;localStorage.setItem('cockpit_state_'+user.id,JSON.stringify(state));el('syncStatus').textContent='Salvando...';var res=await sb.from('finance_states').upsert({user_id:user.id,data:state,updated_at:new Date().toISOString()});el('syncStatus').textContent=res.error?'Salvo neste aparelho':'Sincronizado'}
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,500)}
 function selectedMonth(){return state.ui.selectedMonth||month()}
 
