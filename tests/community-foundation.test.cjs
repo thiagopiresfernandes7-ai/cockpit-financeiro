@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const sql=fs.readFileSync('supabase/migrations/202607280001_community_foundation.sql','utf8');
+const mobile=fs.readFileSync('community-mobile.js','utf8');
 const tables=['community_profiles','community_follows','community_blocks','community_posts','community_post_media','community_comments','community_post_likes','community_comment_likes','community_saved_posts','community_reposts','community_notifications','community_mutes','community_hidden_posts','community_reports','community_moderation_actions','community_admin_roles','community_audit_logs','community_topics','community_post_topics','community_challenges','community_challenge_progress','community_user_settings'];
 for(const table of tables){assert.ok(sql.includes('table if not exists public.'+table),table+' ausente');assert.ok(sql.includes("'"+table+"'")||sql.includes('table public.'+table+' enable row level security'),table+' fora da lista RLS')}
 for(const helper of ['community_is_admin','community_is_blocked','community_can_view_post'])assert.ok(sql.includes('function public.'+helper),helper+' ausente');
@@ -13,4 +14,7 @@ assert.ok(!sql.includes('finance_states'),'comunidade não pode ler estado finan
 assert.ok(sql.includes("visibility in('public','followers','private')"),'visibilidade incompleta');
 assert.ok(sql.includes("status in('pending','accepted')"),'solicitações de acompanhamento ausentes');
 for(const feature of ['community_create_notification','community_follow_privacy','community_social_rate_limit','archived_at'])assert.ok(sql.includes(feature),feature+' ausente');
+assert.ok(mobile.includes('postShareFile')&&mobile.includes("navigator.canShare({files:[file]})"),'publicação deve ser compartilhada como cartão visual');
+assert.ok(mobile.includes('communityProfileAvatar')&&mobile.includes('Foto de perfil atualizada.'),'troca independente de foto ausente');
+assert.ok(mobile.includes('data-community-mobile="achievements"'),'conquistas precisam aparecer na comunidade');
 console.log('Fundação social, RLS, privacidade e Storage: OK');

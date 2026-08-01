@@ -10,4 +10,5 @@ assert.ok(html.includes("cardId: el('txCard')")&&js.includes('window.monthTransa
 assert.ok(html.includes("d.comandoPrincipal")&&html.includes("d.explicacao"),'Plano semanal não consome decisão central');
 assert.ok(js.includes('function startDemo(')&&js.includes('demoBackup'),'demonstração isolada ausente');
 assert.ok(html.includes('state.ui&&state.ui.demoMode'),'demonstração não está protegida contra salvamento');
+assert.ok(html.includes('localReset>remoteReset')&&js.includes('resetAt')&&js.includes('await window.saveNow()'),'reinício precisa vencer dados antigos e sincronizar imediatamente');
 console.log('Contratos de Reset, metas, fechamento e cartões: OK');

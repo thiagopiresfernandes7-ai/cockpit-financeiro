@@ -48,7 +48,7 @@ const server = http.createServer((req, res) => {
       }));
       assert.equal(metrics.active, 'community');
       assert.equal(metrics.scrollWidth, metrics.width, `overflow horizontal em ${width}px`);
-      assert.deepEqual(metrics.tabs, ['Para você', 'Seguindo']);
+      assert.deepEqual(metrics.tabs, ['Para você', 'Seguindo', 'Conquistas']);
       assert.equal(metrics.compact, true);
       assert.ok(metrics.bottomPadding >= metrics.navHeight, `conteúdo encoberto em ${width}px`);
       assert.equal(metrics.nativeFileHidden, true);
