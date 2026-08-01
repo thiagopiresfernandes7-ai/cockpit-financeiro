@@ -1587,7 +1587,7 @@ function currentInvestorProfile(){var p=(state&&state.profile)||{},saved=p.inves
 function calculateInvestorProfile(){var ids=['riskHorizon','riskReaction','riskKnowledge','riskReserve','riskDebt'],answers={},score=0;ids.forEach(function(id){var v=num(el(id).value);answers[id]=v;score+=v});var profile=score>=10?'Arrojado':score>=7?'Moderado':'Conservador';return {profile:profile,score:score,answers:answers,message:investorMessage(profile),updatedAt:new Date().toISOString()}}
 function calculatePortfolioProfileAlignment(st){st=st||state||{};var p=(st.profile&&((st.profile.investorProfile&&st.profile.investorProfile.profile)||st.profile.risk))||'Conservador';var total=(st.investments||[]).reduce(function(a,i){return a+projectedInvestment(i,selectedMonth())},0);var risky=(st.investments||[]).filter(function(i){return ['Ação','FII','ETF','Cripto'].includes(i.type)}).reduce(function(a,i){return a+projectedInvestment(i,selectedMonth())},0);var pct=total?risky/total:0;var typeTotals={};(st.investments||[]).forEach(function(i){var t=i.type||'Outro';typeTotals[t]=(typeTotals[t]||0)+projectedInvestment(i,selectedMonth())});var dominantClass='',dominant=0;Object.keys(typeTotals).forEach(function(k){if(typeTotals[k]>dominant){dominant=typeTotals[k];dominantClass=k}});var concentration=total?dominant/total:0;var riskMismatch=(p==='Conservador'&&pct>.35)||(p==='Moderado'&&pct>.70);var concentrationRisk=concentration>.80?'high':concentration>.60?'medium':'low';var status=(riskMismatch||concentrationRisk==='high')?'attention':'aligned';var reasons=[];if(riskMismatch)reasons.push('Carteira com risco acima do perfil informado.');if(concentrationRisk==='high')reasons.push('Carteira muito concentrada em '+dominantClass+'.');if(!reasons.length)reasons.push('Carteira aparentemente coerente com os dados cadastrados.');return {status:status,reasons:reasons,concentrationRisk:concentrationRisk,dominantClass:dominantClass,riskMismatch:riskMismatch,riskyPercent:pct,total:total}}
 function portfolioProfileAlignment(){var a=calculatePortfolioProfileAlignment(state);var p=currentInvestorProfile().profile;var pct=Math.round((a.riskyPercent||0)*100);var msg=a.reasons&&a.reasons.length?a.reasons.join(' '):'Sem carteira suficiente para comparar com o perfil.';var cls=a.status==='attention'?'warn':'neutral';return item('Perfil '+p,'Parcela em ativos de maior oscilação: '+pct+'%',msg,cls)}
-function generateWeeklyFinancialPlan(){var ym=selectedMonth(),s=summary(ym),plan=[],m=byCat(s.tx);var g=state.profile&&state.profile.computedGoal;if(g)plan.push({p:0,title:g.title,msg:g.description,sev:g.type==='reduce_debt'||g.type==='stabilize_cashflow'?'warn':'neutral'});state.budgets.forEach(function(b){var name=categoryNameById(b.categoryId,b.category),used=m[name]||0,p=b.value?used/b.value*100:0;if(p>=100)plan.push({p:1,title:'Orçamento estourado',msg:name+' passou do limite. Priorize revisar próximos gastos.',sev:'err'});else if(p>=80)plan.push({p:2,title:'Orçamento perto do limite',msg:name+' já passou de 80% do limite mensal.',sev:'warn'})});var debtRatio=state.profile.income?s.debtPayments/state.profile.income*100:0;if(debtRatio>=35)plan.push({p:1,title:'Dívidas exigem atenção',msg:'Parcelas acima de 35% da renda comprometem o mês.',sev:'err'});else if(debtRatio>=25)plan.push({p:2,title:'Comprometimento alto',msg:'Dívidas acima de 25% da renda merecem revisão.',sev:'warn'});if(!currentInvestorProfile().updatedAt)plan.push({p:3,title:'Descubra seu perfil',msg:'Responda ao questionário para ajustar melhor as orientações do app.',sev:'warn'});if(s.cash>0)plan.push({p:5,title:'Aporte sugerido',msg:'Há saldo positivo. Avalie separar uma parte para reserva, dívidas ou investimentos.',sev:'ok'});if(!plan.length)plan.push({p:9,title:'Sem alertas importantes no momento.',msg:'',sev:'ok'});return plan.sort(function(a,b){return a.p-b.p}).slice(0,5)}
+function generateWeeklyFinancialPlan(){var ym=selectedMonth(),s=summary(ym),plan=[],m=byCat(s.tx),d=state.ui&&state.ui.lastDecision;if(d)plan.push({p:0,title:d.comandoPrincipal,msg:d.explicacao,sev:d.nivelDeUrgencia==='crítica'||d.nivelDeUrgencia==='alta'?'warn':d.nivelDeUrgencia==='média'?'neutral':'ok'});state.budgets.forEach(function(b){var name=categoryNameById(b.categoryId,b.category),used=m[name]||0,p=b.value?used/b.value*100:0;if(p>=100)plan.push({p:1,title:'Revisar '+name,msg:'A categoria passou do limite definido para o mês.',sev:'err'});else if(p>=80)plan.push({p:2,title:'Acompanhar '+name,msg:'A categoria já usou mais de 80% do limite mensal.',sev:'warn'})});if(!currentInvestorProfile().updatedAt)plan.push({p:4,title:'Complete seu perfil',msg:'O perfil melhora as explicações sem gerar recomendação de ativo.',sev:'neutral'});if(!plan.length)plan.push({p:9,title:'Continue acompanhando o mês.',msg:'Nenhum risco adicional foi identificado.',sev:'ok'});return plan.sort(function(a,b){return a.p-b.p}).slice(0,5)}
 
 function daysInMonth(ym){var p=String(ym||month()).split('-');return new Date(Number(p[0]),Number(p[1]),0).getDate()}
 function monthEndDate(ym){return String(ym||month())+'-'+String(daysInMonth(ym)).padStart(2,'0')}
@@ -2111,9 +2111,13 @@ migrate=function(raw){
   var s=cockpitHabitMigrate(raw);
   s.quickTemplates=Array.isArray(s.quickTemplates)?s.quickTemplates:[];
   s.dailyReviews=Array.isArray(s.dailyReviews)?s.dailyReviews:[];
+  s.goals=Array.isArray(s.goals)?s.goals:[];
+  s.resetPlans=Array.isArray(s.resetPlans)?s.resetPlans:[];
+  s.monthlyClosings=Array.isArray(s.monthlyClosings)?s.monthlyClosings:[];
+  s.cards=Array.isArray(s.cards)?s.cards:[];
   s.accounts=Array.isArray(s.accounts)&&s.accounts.length?s.accounts:[{id:'account_main',name:'Conta principal',isDefault:true,isArchived:false}];
   s.transactions=(s.transactions||[]).map(function(t){if(t.reviewedAt==null)t.reviewedAt='';if(!t.accountId)t.accountId='account_main';return t});
-  s.schemaVersion=Math.max(11,Number(s.schemaVersion||0));
+  s.schemaVersion=Math.max(12,Number(s.schemaVersion||0));
   return s;
 };
 
@@ -2225,6 +2229,7 @@ var cockpitPersistRender=render;
 render=function(){
   cockpitPersistRender();
   try{if(user&&state)scheduleSave()}catch(e){}
+  try{document.dispatchEvent(new CustomEvent('norteia:render',{detail:{state:state}}))}catch(e){}
 };
 
 function setupFinancialCrudEnhancements(){
@@ -2239,7 +2244,7 @@ function setupFinancialCrudEnhancements(){
   if(el('markDayReviewed'))el('markDayReviewed').onclick=markTodayReviewed;
   if(el('addForgottenPurchase'))el('addForgottenPurchase').onclick=function(){openQuickExpense(null,{date:today()})};
 }
-Object.assign(window,{setView:setView,summary:summary,calculateFinancialPosition:calculateFinancialPosition,calculateDailySpendAllowance:calculateDailySpendAllowance,cockpitFinancialEngine:cockpitFinancialEngine,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openQuickExpense:openQuickExpense,closeQuickExpense:closeQuickExpense,saveQuickExpense:saveQuickExpense,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,duplicateTx:duplicateTx,reviewTx:reviewTx,undoDeleteTx:undoDeleteTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,deleteDebtAmortization:deleteDebtAmortization,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editInvestmentMovement:editInvestmentMovement,deleteInvestmentMovement:deleteInvestmentMovement,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend});
+Object.assign(window,{setView:setView,summary:summary,calculateFinancialPosition:calculateFinancialPosition,calculateDailySpendAllowance:calculateDailySpendAllowance,cockpitFinancialEngine:cockpitFinancialEngine,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openQuickExpense:openQuickExpense,closeQuickExpense:closeQuickExpense,saveQuickExpense:saveQuickExpense,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,duplicateTx:duplicateTx,reviewTx:reviewTx,undoDeleteTx:undoDeleteTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,deleteDebtAmortization:deleteDebtAmortization,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editInvestmentMovement:editInvestmentMovement,deleteInvestmentMovement:deleteInvestmentMovement,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend,norteiaApp:{getState:function(){return state},render:function(){render()},save:function(){return saveNow()},selectedMonth:selectedMonth,money:money,toast:toast,uid:uid}});
 setupEvents();setupFinancialCrudEnhancements();load();
 })();
 }catch(e){console.error('Cockpit init error',e&&e.stack?e.stack:e)}
@@ -2251,5 +2256,7 @@ setupEvents();setupFinancialCrudEnhancements();load();
 <script src="gamification.js"></script>
 <link rel="stylesheet" href="norteia-v2.css"/>
 <script src="norteia-v2.js"></script>
+<link rel="stylesheet" href="norteia-completion.css"/>
+<script src="norteia-completion.js"></script>
 </body>
 </head></html>
