@@ -15,4 +15,7 @@ assert.ok(html.includes('financial-decision-engine.js'),'motor não carregado');
 assert.ok(html.includes('norteia-completion.js'),'módulos de conclusão não carregados');
 assert.ok(!html.includes('Cockpit'),'a marca antiga ainda aparece na interface principal');
 assert.ok(html.includes("localStorage.getItem('norteia_last_user')")&&html.includes("localStorage.removeItem('norteia_last_user')"),'sessão local offline incompleta');
+const a11y=fs.readFileSync('norteia-v2.js','utf8'),design=fs.readFileSync('norteia-v2.css','utf8');
+assert.ok(a11y.includes("event.key==='Escape'")&&a11y.includes("event.key!=='Tab'"),'controle de foco dos modais ausente');
+assert.ok(design.includes(':focus-visible'),'foco visível ausente');
 console.log('Build estático e integração da tela Hoje: OK');

@@ -79,10 +79,20 @@ function normalizePrimaryNavigation(){
   if(plans){plans.dataset.view='plan';plans.innerHTML='<span class="ico" aria-hidden="true"></span>Planos'}
   if(!document.getElementById('mobilePrimaryAdd')){var add=document.createElement('button');add.id='mobilePrimaryAdd';add.type='button';add.className='mobile-primary-add';add.innerHTML='<span aria-hidden="true">+</span><small>Adicionar</small>';add.addEventListener('click',function(){if(window.openRegisterSheet)window.openRegisterSheet()});var community=mobile.querySelector('[data-view="community"]');mobile.insertBefore(add,community||plans&&plans.nextSibling||null)}
 }
+function addAccessibilityGuards(){
+  if(document.documentElement.dataset.norteiaA11y)return;document.documentElement.dataset.norteiaA11y='true';var returnFocus=null;
+  document.addEventListener('click',function(event){var opener=event.target.closest('#globalAddBtn,#desktopGlobalAddBtn,#topGlobalAddBtn,[data-community-mobile="compose"],[data-community-mobile="search"],[data-action="my-profile"]');if(opener)returnFocus=opener},true);
+  document.addEventListener('keydown',function(event){
+    var overlays=Array.from(document.querySelectorAll('dialog[open],.community-full-screen:not(.hidden),.community-bottom-sheet:not(.hidden),.community-image-viewer:not(.hidden),#launchWorkspace:not(.hidden),#registerActionSheet:not(.hidden)')),overlay=overlays[overlays.length-1];if(!overlay)return;
+    if(event.key==='Escape'){var close=overlay.querySelector('[data-action="close-dialog"],[data-community-mobile^="close-"],[data-community-mobile="cancel-compose"],#closeLaunchWorkspace,#closeRegisterSheet');if(close){event.preventDefault();close.click();setTimeout(function(){if(returnFocus&&returnFocus.isConnected)returnFocus.focus()},0)}return}
+    if(event.key!=='Tab')return;var focusable=Array.from(overlay.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(function(element){return element.getClientRects().length});if(!focusable.length)return;var first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+  });
+}
 function watch(){
   cleanCopy();
   addThemePreference();
   normalizePrimaryNavigation();
+  addAccessibilityGuards();
   var observer=new MutationObserver(function(records){
     if(records.some(function(record){return record.type==='childList'||record.type==='characterData'}))cleanCopy();
   });
