@@ -8,7 +8,7 @@ create table if not exists public.community_interests(slug text primary key,labe
 create table if not exists public.community_user_interests(user_id uuid references auth.users(id) on delete cascade,interest_slug text references public.community_interests(slug) on delete cascade,created_at timestamptz not null default now(),primary key(user_id,interest_slug));
 create table if not exists public.community_follows(follower_id uuid references auth.users(id) on delete cascade,following_id uuid references auth.users(id) on delete cascade,status text not null default 'accepted' check(status in('pending','accepted')),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),primary key(follower_id,following_id),check(follower_id<>following_id));
 create table if not exists public.community_blocks(blocker_id uuid references auth.users(id) on delete cascade,blocked_id uuid references auth.users(id) on delete cascade,created_at timestamptz not null default now(),primary key(blocker_id,blocked_id),check(blocker_id<>blocked_id));
-create table if not exists public.community_posts(id uuid primary key default gen_random_uuid(),author_id uuid not null references public.community_profiles(user_id) on delete cascade,category_slug text references public.community_categories(label),text text not null check(length(text) between 1 and 1000),visibility text not null default 'public' check(visibility in('public','followers','private')),image_url text,achievement_snapshot jsonb,like_count int not null default 0 check(like_count>=0),comment_count int not null default 0 check(comment_count>=0),save_count int not null default 0 check(save_count>=0),repost_count int not null default 0 check(repost_count>=0),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),deleted_at timestamptz);
+create table if not exists public.community_posts(id uuid primary key default gen_random_uuid(),author_id uuid not null references public.community_profiles(user_id) on delete cascade,category_slug text references public.community_categories(label),text text not null check(length(text) between 1 and 1000),visibility text not null default 'public' check(visibility in('public','followers','private')),image_url text,achievement_snapshot jsonb,like_count int not null default 0 check(like_count>=0),comment_count int not null default 0 check(comment_count>=0),save_count int not null default 0 check(save_count>=0),repost_count int not null default 0 check(repost_count>=0),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),archived_at timestamptz,deleted_at timestamptz);
 create table if not exists public.community_post_media(id uuid primary key default gen_random_uuid(),post_id uuid not null references public.community_posts(id) on delete cascade,owner_id uuid not null references auth.users(id) on delete cascade,storage_path text not null unique,alt_text text not null check(length(alt_text) between 1 and 300),width int check(width>0),height int check(height>0),sort_order int not null default 0,created_at timestamptz not null default now());
 create table if not exists public.community_comments(id uuid primary key default gen_random_uuid(),post_id uuid not null references public.community_posts(id) on delete cascade,author_id uuid not null references public.community_profiles(user_id) on delete cascade,parent_id uuid references public.community_comments(id) on delete cascade,body text not null check(length(body) between 1 and 500),like_count int not null default 0 check(like_count>=0),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),deleted_at timestamptz);
 create table if not exists public.community_post_likes(post_id uuid references public.community_posts(id) on delete cascade,user_id uuid references auth.users(id) on delete cascade,created_at timestamptz not null default now(),primary key(post_id,user_id));
@@ -32,6 +32,7 @@ create table if not exists public.community_post_hashtags(post_id uuid reference
 create table if not exists public.community_mentions(id uuid primary key default gen_random_uuid(),post_id uuid references public.community_posts(id) on delete cascade,comment_id uuid references public.community_comments(id) on delete cascade,mentioned_user_id uuid not null references auth.users(id) on delete cascade,created_at timestamptz not null default now(),check((post_id is not null)::int+(comment_id is not null)::int=1));
 create table if not exists public.community_report_reasons(slug text primary key,label text not null unique,active boolean not null default true,sort_order int not null default 0);
 create table if not exists public.community_rules(slug text primary key,title text not null,description text not null,active boolean not null default true,sort_order int not null default 0);
+alter table public.community_posts add column if not exists archived_at timestamptz;
 
 insert into public.community_categories(slug,label,sort_order) values ('aprendi','Aprendi',1),('duvida','Dúvida',2),('organizacao','Organização financeira',3),('dividas','Dívidas',4),('meta','Meta',5),('conquista','Conquista',6),('opiniao','Opinião',7) on conflict do nothing;
 insert into public.community_interests(slug,label,sort_order) values ('organizar-minhas-financas','Organizar minhas finanças',1),('sair-das-dividas','Sair das dívidas',2),('criar-uma-reserva','Criar uma reserva',3),('comecar-a-investir','Começar a investir',4),('compartilhar-conhecimento','Compartilhar conhecimento',5) on conflict do nothing;
@@ -51,7 +52,7 @@ create or replace function public.community_is_admin() returns boolean language 
 revoke all on function public.community_is_admin() from public,anon;grant execute on function public.community_is_admin() to authenticated;
 create or replace function public.community_is_blocked(other_user uuid) returns boolean language sql stable security definer set search_path='' as $$select exists(select 1 from public.community_blocks where (blocker_id=(select auth.uid()) and blocked_id=other_user) or (blocker_id=other_user and blocked_id=(select auth.uid())))$$;
 revoke all on function public.community_is_blocked(uuid) from public,anon;grant execute on function public.community_is_blocked(uuid) to authenticated;
-create or replace function public.community_can_view_post(target public.community_posts) returns boolean language sql stable security definer set search_path='' as $$select target.deleted_at is null and not public.community_is_blocked(target.author_id) and (target.author_id=(select auth.uid()) or target.visibility='public' or (target.visibility='followers' and exists(select 1 from public.community_follows where follower_id=(select auth.uid()) and following_id=target.author_id and status='accepted')))$$;
+create or replace function public.community_can_view_post(target public.community_posts) returns boolean language sql stable security definer set search_path='' as $$select target.deleted_at is null and (target.archived_at is null or target.author_id=(select auth.uid())) and not public.community_is_blocked(target.author_id) and not exists(select 1 from public.community_hidden_posts where user_id=(select auth.uid()) and post_id=target.id) and not exists(select 1 from public.community_mutes where user_id=(select auth.uid()) and muted_user_id=target.author_id) and (target.author_id=(select auth.uid()) or target.visibility='public' or (target.visibility='followers' and exists(select 1 from public.community_follows where follower_id=(select auth.uid()) and following_id=target.author_id and status='accepted')))$$;
 revoke all on function public.community_can_view_post(public.community_posts) from public,anon;grant execute on function public.community_can_view_post(public.community_posts) to authenticated;
 
 do $$declare t text;begin foreach t in array array['community_admin_roles','community_profiles','community_categories','community_interests','community_user_interests','community_follows','community_blocks','community_posts','community_post_media','community_comments','community_post_likes','community_comment_likes','community_saved_posts','community_reposts','community_notifications','community_mutes','community_hidden_posts','community_reports','community_moderation_actions','community_audit_logs','community_topics','community_post_topics','community_challenges','community_challenge_progress','community_user_settings','community_specialist_requests','community_hashtags','community_post_hashtags','community_mentions','community_report_reasons','community_rules'] loop execute format('alter table public.%I enable row level security',t);end loop;end$$;
@@ -64,7 +65,7 @@ create policy "report reasons read" on public.community_report_reasons for selec
 create policy "rules read" on public.community_rules for select using(active or public.community_is_admin());
 create policy "profiles view" on public.community_profiles for select using(status='active' and (privacy='public' or user_id=(select auth.uid()) or exists(select 1 from public.community_follows where follower_id=(select auth.uid()) and following_id=user_id and status='accepted')) and not public.community_is_blocked(user_id) or public.community_is_admin());
 create policy "profiles create own" on public.community_profiles for insert to authenticated with check(user_id=(select auth.uid()) and is_admin=false and specialist_verified=false and status='active');
-create policy "profiles update own" on public.community_profiles for update to authenticated using(user_id=(select auth.uid())) with check(user_id=(select auth.uid()) and is_admin=false);
+create policy "profiles update own or admin" on public.community_profiles for update to authenticated using(user_id=(select auth.uid()) or public.community_is_admin()) with check((user_id=(select auth.uid()) and is_admin=false) or public.community_is_admin());
 create policy "posts view permitted" on public.community_posts for select to authenticated using(public.community_can_view_post(community_posts));
 create policy "posts own insert" on public.community_posts for insert to authenticated with check(author_id=(select auth.uid()) and not public.community_is_blocked(author_id));
 create policy "posts own update" on public.community_posts for update to authenticated using(author_id=(select auth.uid()) or public.community_is_admin()) with check(author_id=(select auth.uid()) or public.community_is_admin());
@@ -149,6 +150,21 @@ create trigger community_posts_rate before insert on public.community_posts for 
 create trigger community_comments_rate before insert on public.community_comments for each row execute function public.community_rate_limit();
 create trigger community_reports_rate before insert on public.community_reports for each row execute function public.community_rate_limit();
 
+create or replace function public.community_social_rate_limit() returns trigger language plpgsql security invoker set search_path='' as $$
+declare amount int;action_limit int;
+begin
+  if tg_table_name='community_post_likes' then action_limit=30;select count(*) into amount from public.community_post_likes where user_id=(select auth.uid()) and created_at>now()-interval '1 minute';
+  elsif tg_table_name='community_follows' then action_limit=20;select count(*) into amount from public.community_follows where follower_id=(select auth.uid()) and created_at>now()-interval '10 minutes';
+  elsif tg_table_name='community_reposts' then action_limit=20;select count(*) into amount from public.community_reposts where user_id=(select auth.uid()) and created_at>now()-interval '10 minutes';
+  else return new;end if;
+  if amount>=action_limit then raise exception 'Limite temporário atingido. Aguarde antes de tentar novamente.' using errcode='P0001';end if;
+  return new;
+end$$;
+revoke all on function public.community_social_rate_limit() from public,anon;grant execute on function public.community_social_rate_limit() to authenticated;
+create trigger community_support_rate before insert on public.community_post_likes for each row execute function public.community_social_rate_limit();
+create trigger community_follow_rate before insert on public.community_follows for each row execute function public.community_social_rate_limit();
+create trigger community_repost_rate before insert on public.community_reposts for each row execute function public.community_social_rate_limit();
+
 create or replace function private.community_create_notification() returns trigger language plpgsql security definer set search_path='' as $$
 declare
   recipient uuid;
@@ -193,6 +209,24 @@ begin
 end$$;
 revoke all on function private.community_follow_privacy() from public,anon,authenticated;
 create trigger community_follow_privacy before insert on public.community_follows for each row execute function private.community_follow_privacy();
+
+create or replace function private.community_normalize_moderation() returns trigger language plpgsql security invoker set search_path='' as $$
+begin
+  new.action=case upper(new.action) when 'REMOVER' then 'hide' when 'RESTAURAR' then 'restore' when 'ADVERTIR' then 'warn' when 'LIMITAR' then 'limit' when 'SUSPENDER' then 'suspend' when 'BANIR' then 'ban' when 'DESCARTAR' then 'dismiss' else lower(new.action) end;
+  return new;
+end$$;
+revoke all on function private.community_normalize_moderation() from public,anon,authenticated;
+create trigger community_moderation_normalize before insert or update of action on public.community_moderation_actions for each row execute function private.community_normalize_moderation();
+
+create or replace function private.community_specialist_review() returns trigger language plpgsql security definer set search_path='' as $$
+begin
+  if new.status<>old.status and new.status in('approved','refused') then new.reviewed_at=now();end if;
+  if new.status='approved' then update public.community_profiles set specialist_verified=true,updated_at=now() where user_id=new.user_id;
+  elsif old.status='approved' and new.status<>'approved' then update public.community_profiles set specialist_verified=false,updated_at=now() where user_id=new.user_id;end if;
+  return new;
+end$$;
+revoke all on function private.community_specialist_review() from public,anon,authenticated;
+create trigger community_specialist_review before update of status on public.community_specialist_requests for each row execute function private.community_specialist_review();
 
 create or replace function private.community_block_cleanup() returns trigger language plpgsql security definer set search_path='' as $$begin delete from public.community_follows where (follower_id=new.blocker_id and following_id=new.blocked_id) or (follower_id=new.blocked_id and following_id=new.blocker_id);return new;end$$;
 revoke all on function private.community_block_cleanup() from public,anon,authenticated;

@@ -185,10 +185,9 @@ async function deletePost(article){
  var button=article.querySelector('[data-community-delete]'),id=article.dataset.post;
  if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
  try{
-  var result=await window.cockpitSupabase.from('community_posts').update({deleted_at:new Date().toISOString()}).eq('id',id).eq('author_id',window.cockpitUser.id);
-  if(result.error)throw result.error;
-  var image=article.querySelector('.community-image'),url=image&&image.src||'',marker='/object/public/community-media/',pos=url.indexOf(marker);
-  if(pos>=0)await window.cockpitSupabase.storage.from('community-media').remove([decodeURIComponent(url.slice(pos+marker.length))]);
+  var media=await window.cockpitSupabase.from('community_post_media').select('storage_path').eq('post_id',id),paths=(media.data||[]).map(function(x){return x.storage_path});
+  if(media.error)throw media.error;if(paths.length){var removed=await window.cockpitSupabase.storage.from('community-media').remove(paths);if(removed.error)throw removed.error}
+  var result=await window.cockpitSupabase.from('community_posts').delete().eq('id',id).eq('author_id',window.cockpitUser.id);if(result.error)throw result.error;
   article.remove();toast('Publicação excluída.');
  }catch(e){
   if(button){button.disabled=false;button.removeAttribute('aria-busy')}
