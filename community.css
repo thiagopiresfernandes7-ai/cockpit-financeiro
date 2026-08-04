@@ -121,9 +121,9 @@ body.community-mode .content{padding-bottom:calc(84px + env(safe-area-inset-bott
 @media(prefers-reduced-motion:reduce){.community-mobile-layer *,.community-full-screen,.community-mobile-toast{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 /* Feed de atividades: hierarquia social inspirada em apps de jornada e progresso. */
-.community-mobile-layer{--community-activity:#c64200;--community-activity-soft:#fff0e8;max-width:1180px;background:transparent}
+.community-mobile-layer{--community-activity:#087a64;--community-activity-soft:#e5f5ef;max-width:1180px;background:transparent}
 .community-mobile-layer,.community-mobile-layer *{box-sizing:border-box}
-html[data-theme="dark"] .community-mobile-layer{--community-activity:#ff7a38;--community-activity-soft:#352116}
+html[data-theme="dark"] .community-mobile-layer{--community-activity:#55d5b3;--community-activity-soft:#17342a}
 .community-feed-heading span{display:block;margin-bottom:2px;color:var(--community-activity);font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
 .community-feed-heading h1{font-size:25px}
 .community-strava-layout{display:grid;grid-template-columns:220px minmax(0,620px) 250px;align-items:start;justify-content:center;gap:20px;padding-top:20px}

@@ -23,6 +23,9 @@ assert.ok(html.includes('mobileExpenseDonut')&&html.includes('mobileInvestmentDo
 assert.ok(html.includes('mobileSpendToday'),'quanto posso gastar hoje desapareceu do mobile');
 assert.ok(html.includes('id="mobilePrivacyBtn"')&&a11y.includes('addMobilePrivacyControl'),'controle de privacidade mobile ausente');
 assert.ok(html.includes('id="investmentCreatePanel"')&&html.includes('id="investmentUpdatePanel"')&&a11y.includes('addWalletEditorControls'),'editores compactos da carteira ausentes');
+const mobileCommunity=fs.readFileSync('community-mobile.js','utf8'),communityCss=fs.readFileSync('community.css','utf8');
+assert.ok(!mobileCommunity.includes('<span>Comunidade Norteia</span>'),'rótulo redundante da comunidade ainda aparece');
+assert.ok(!communityCss.includes('#c64200')&&!communityCss.includes('#ff7a38'),'laranja alheio à marca ainda aparece na comunidade');
 assert.ok(html.includes('dashboard-command-rail'),'central integrada do desktop ausente');
 assert.ok(a11y.includes("event.key==='Escape'")&&a11y.includes("event.key!=='Tab'"),'controle de foco dos modais ausente');
 assert.ok(design.includes(':focus-visible'),'foco visível ausente');
