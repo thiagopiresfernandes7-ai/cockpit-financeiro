@@ -88,6 +88,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 [hidden]{display:none!important}
 [data-money],.value,.amount{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important;font-variant-numeric:tabular-nums}
 .mark:before,.mark:after,.search-wrap:before{content:none!important}
+
+/* Painel inicial compacto: mantém a orientação sem dominar a primeira dobra. */
+#dashboard .today-heading{margin-bottom:8px}
+#dashboard .today-heading h1{font-size:clamp(26px,2.5vw,34px);line-height:1;margin:2px 0}
+#dashboard .today-heading p{font-size:13px}
+#dashboard .today-decision{padding:0;border-radius:18px;margin-bottom:14px;box-shadow:0 8px 24px rgba(11,113,92,.08)}
+#dashboard .today-decision-main,#dashboard .today-safe{padding:17px 20px}
+#dashboard .today-decision-main h2{font-size:clamp(19px,2vw,25px);line-height:1.12;margin:2px 0 6px;max-width:none}
+#dashboard .today-decision-main p{font-size:13px;line-height:1.4;margin:0 0 11px}
+#dashboard .today-decision-main .btn{min-height:34px;padding:0 12px}
+#dashboard .today-safe b{font-size:clamp(23px,2.3vw,31px);margin:4px 0}
+#dashboard .today-safe p{font-size:12px;line-height:1.35;margin:0}
+#dashboard .today-formula{padding:11px 20px 13px;font-size:12px}
+#dashboard .today-formula[open]{padding-bottom:16px}
+#dashboard .today-impact{gap:10px;margin-top:10px}
+#dashboard .today-impact>div{padding:10px}
 .sheet-head .icon-btn{width:auto;min-width:44px;padding:0 12px}
 *{scrollbar-color:#c8d5cf transparent}
 html{background:#f4f6f5}
