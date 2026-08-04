@@ -5,7 +5,7 @@ function cleanCopy(){
     'Início / Dashboard':'Visão geral',
     'Análise':'Análises',
     'Extrato':'Movimentações',
-    'Investimentos':'Carteira',
+    'Investimentos':'Investimentos',
     'Plano da Semana':'Plano semanal',
     'Decisões de compra':'Comprar ou esperar',
     'Income stream':'Renda recorrente',
