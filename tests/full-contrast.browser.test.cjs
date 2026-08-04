@@ -33,6 +33,13 @@ const {chromium}=require('playwright');
  }
  await page.setViewportSize({width:390,height:844});
  for(const theme of ['light','dark']){await page.evaluate(t=>{document.documentElement.dataset.theme=t;window.setView('dashboard')},theme);assert.equal(await page.locator('#mobileSpendToday').isVisible(),true)}
+ await page.setViewportSize({width:1440,height:900});
+ for(const theme of ['light','dark']){
+  await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.locator('#topGlobalAddBtn').click();
+  const modal=await page.locator('#registerActionSheet .bottom-sheet').evaluate(el=>({background:getComputedStyle(el).backgroundColor,button:getComputedStyle(el.querySelector('.sheet-grid button')).backgroundColor}));
+  assert.deepEqual(modal,theme==='dark'?{background:'rgb(13, 29, 23)',button:'rgb(20, 38, 31)'}:{background:'rgb(247, 250, 248)',button:'rgb(238, 245, 242)'});
+  await page.locator('#closeRegisterSheet').click();
+ }
  assert.deepEqual(errors,[],'erros no navegador: '+errors.join(' | '));
  assert.deepEqual(failures,[],'contrastes insuficientes:\n'+JSON.stringify(failures,null,2));
  await browser.close();console.log('Contraste integral: 16 telas, claro/escuro e mobile: OK');
