@@ -47,7 +47,7 @@ const {chromium}=require('playwright');
     results.push(metrics);
   }
   const desktopLabels=await page.locator('.desktop-nav button[data-view]:visible').allTextContents();
-  assert.deepEqual(desktopLabels.map(x=>x.trim()),['Hoje','Recursos','Conta','Comunidade']);
+  assert.deepEqual(desktopLabels.map(x=>x.trim()),['Hoje','Recursos','Comunidade','Conta']);
   await page.locator('[data-view="dashboard"]:visible').first().click();
   assert.equal(await page.locator('#dashboard>.dashboard-grid-12').isVisible(),true,'o dashboard desktop não iniciou completo');
   assert.equal(await page.locator('.dashboard-command-rail').isVisible(),true,'a central de comandos desktop não apareceu');
