@@ -77,7 +77,7 @@ function normalizePrimaryNavigation(){
   if(!mobile)return;
   var analysis=mobile.querySelector('[data-view="analysis"]'),more=mobile.querySelector('[data-view="more"]'),plans=mobile.querySelector('[data-view="wallet"]');
   if(analysis)analysis.hidden=true;if(more){more.hidden=false;more.innerHTML='<span class="ico" aria-hidden="true"></span>Mais'};
-  if(plans){plans.dataset.view='plan';plans.innerHTML='<span class="ico" aria-hidden="true"></span>Planos'}
+  if(plans){plans.dataset.view='plan';plans.innerHTML='<span class="ico" aria-hidden="true"></span>Planos';plans.hidden=true}
   if(!document.getElementById('mobilePrimaryAdd')){var add=document.createElement('button');add.id='mobilePrimaryAdd';add.type='button';add.className='mobile-primary-add';add.innerHTML='<span aria-hidden="true">+</span><small>Adicionar</small>';add.addEventListener('click',function(){if(window.openRegisterSheet)window.openRegisterSheet()});var community=mobile.querySelector('[data-view="community"]');mobile.insertBefore(add,community||plans&&plans.nextSibling||null)}
 }
 function addEssentialShortcuts(){

@@ -18,6 +18,8 @@ assert.ok(html.includes("localStorage.getItem('norteia_last_user')")&&html.inclu
 const a11y=fs.readFileSync('norteia-v2.js','utf8'),design=fs.readFileSync('norteia-v2.css','utf8');
 assert.ok(a11y.includes("'decisions','plan','community','settings'"),'atalhos essenciais foram ocultados');
 assert.ok(a11y.includes('dashboardExpandBtn'),'controle de detalhes da tela Hoje ausente');
+assert.ok(html.includes('mobileExpenseDonut')&&html.includes('mobileInvestmentDonut'),'gráficos essenciais mobile ausentes');
+assert.ok(html.includes('dashboard-command-rail'),'central integrada do desktop ausente');
 assert.ok(a11y.includes("event.key==='Escape'")&&a11y.includes("event.key!=='Tab'"),'controle de foco dos modais ausente');
 assert.ok(design.includes(':focus-visible'),'foco visível ausente');
 console.log('Build estático e integração da tela Hoje: OK');

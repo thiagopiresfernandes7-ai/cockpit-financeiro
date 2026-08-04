@@ -49,12 +49,34 @@
 .dashboard-disclosure{display:flex;justify-content:center;margin:4px 0 0}.dashboard-disclosure .btn{background:transparent}
 .more-card-featured{border-color:#80c8b5!important;background:linear-gradient(135deg,#e8f7f2,#fff)!important}
 html[data-theme="dark"] .more-card-featured{background:linear-gradient(135deg,#15382e,#10201a)!important}
+.mobile-money-compass{display:none}
+.dashboard-command-rail{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:0 0 14px}
+.dashboard-command-rail button{min-width:0;text-align:left;padding:12px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,#fff,#f5f8f6);color:var(--text);box-shadow:0 8px 24px rgba(23,40,32,.06)}
+.dashboard-command-rail button:first-child{background:linear-gradient(145deg,#0d876f,#096654);color:#fff;border-color:transparent}
+.dashboard-command-rail b,.dashboard-command-rail small{display:block}.dashboard-command-rail b{font-size:12px}.dashboard-command-rail small{font-size:9px;margin-top:4px;color:inherit;opacity:.72}
+html[data-theme="dark"] .dashboard-command-rail button{background:linear-gradient(145deg,#14261f,#10201a)}
+html[data-theme="dark"] .dashboard-command-rail button:first-child{background:linear-gradient(145deg,#15977d,#0d6555)}
+@media(min-width:921px){
+  #dashboard .dashboard-kpis .kpi:nth-child(n+5){display:flex}
+  #dashboard>.dashboard-grid-12{display:grid}
+  #dashboard .dashboard-disclosure{display:none}
+  #dashboard .today-decision{grid-template-columns:minmax(0,1.6fr) minmax(260px,.7fr)}
+}
 @media(max-width:920px){
-  #dashboard .today-heading h1{font-size:28px}
-  #dashboard .today-decision{padding:17px}
-  #dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-  #dashboard .dashboard-kpis .kpi{min-height:88px;padding:12px}
-  #dashboard .dashboard-kpis .kpi b{font-size:18px}
+  #dashboard>.today-heading,#dashboard>.today-decision,#dashboard>.habit-mobile-only,#dashboard>.dashboard-kpis,#dashboard>.dashboard-disclosure,#dashboard>.dashboard-grid-12,#dashboard>.dashboard-command-rail{display:none!important}
+  .mobile-money-compass{display:block}
+  .mobile-compass-head{padding:4px 2px 15px}.mobile-compass-head small{color:#0d876f;font-weight:900;text-transform:uppercase;letter-spacing:.12em;font-size:10px}.mobile-compass-head h2{font-size:28px;line-height:1.04;letter-spacing:-.045em;margin:5px 0 7px}.mobile-compass-head p{font-size:13px;color:var(--soft);margin:0}
+  .mobile-donut-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .mobile-donut-card{min-width:0;margin:0;padding:14px 10px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(23,40,32,.07)}
+  .mobile-donut{width:min(27vw,104px);aspect-ratio:1;margin:0 auto 10px;border-radius:50%;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.03)}
+  .mobile-donut:after{content:"";position:absolute;inset:24%;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(23,40,32,.04)}
+  .mobile-donut-card h3{font-size:14px;margin:0 0 4px}.mobile-donut-card p{font-size:10px;line-height:1.35;margin:0;color:var(--soft)}
+  .mobile-compass-routes{display:grid;gap:8px;margin-top:12px}
+  .mobile-compass-routes button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:11px 14px;text-align:left;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--text)}
+  .mobile-compass-routes button:after{content:"›";font-size:24px;color:#7a9086}.mobile-compass-routes span,.mobile-compass-routes small{display:block}.mobile-compass-routes span{font-size:14px;font-weight:900}.mobile-compass-routes small{font-size:10px;color:var(--soft);margin-left:auto}
+  .mobile-compass-routes .route-surprise{background:linear-gradient(135deg,#0d876f,#096654);color:#fff;border:0;box-shadow:0 12px 30px rgba(13,135,111,.22)}.mobile-compass-routes .route-surprise small,.mobile-compass-routes .route-surprise:after{color:#d7fff4}
+  html[data-theme="dark"] .mobile-donut-card,html[data-theme="dark"] .mobile-compass-routes button{background:#10201a;border-color:#263c33}html[data-theme="dark"] .mobile-donut:after{background:#10201a}
+  html[data-theme="dark"] .mobile-compass-routes .route-surprise{background:linear-gradient(135deg,#15977d,#0d6555)}
 }
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid color-mix(in srgb,var(--color-primary,#087a64) 34%,transparent)!important;outline-offset:3px!important}
 [hidden]{display:none!important}
