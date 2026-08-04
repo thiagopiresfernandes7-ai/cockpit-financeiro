@@ -26,6 +26,9 @@ assert.ok(html.includes('id="investmentCreatePanel"')&&html.includes('id="invest
 const mobileCommunity=fs.readFileSync('community-mobile.js','utf8'),communityCss=fs.readFileSync('community.css','utf8');
 assert.ok(!mobileCommunity.includes('<span>Comunidade Norteia</span>'),'rótulo redundante da comunidade ainda aparece');
 assert.ok(!communityCss.includes('#c64200')&&!communityCss.includes('#ff7a38'),'laranja alheio à marca ainda aparece na comunidade');
+const brandIcon=fs.readFileSync('assets/brand/norteia-icon.svg','utf8');
+assert.ok(brandIcon.includes('#064E42')&&!brandIcon.includes('#0B1D33'),'fundo azul ainda aparece no ícone da marca');
+assert.ok(html.includes('norteia-icon.svg?v=39')&&html.includes('apple-touch-icon.png?v=39'),'cache dos ícones não foi renovado');
 assert.ok(html.includes('dashboard-command-rail'),'central integrada do desktop ausente');
 assert.ok(a11y.includes("event.key==='Escape'")&&a11y.includes("event.key!=='Tab'"),'controle de foco dos modais ausente');
 assert.ok(design.includes(':focus-visible'),'foco visível ausente');
