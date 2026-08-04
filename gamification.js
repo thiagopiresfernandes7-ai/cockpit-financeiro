@@ -32,7 +32,7 @@ function evaluate(){
  var data=ensureData();if(!data)return[];
  var justUnlocked=[];
  DEFINITIONS.forEach(function(def){if(def.test(state)&&!data.unlocked[def.id]){data.unlocked[def.id]=new Date().toISOString();justUnlocked.push(def)}});
- if(justUnlocked.length)setTimeout(function(){celebrate(justUnlocked[0])},200);
+ if(justUnlocked.length){if(typeof window.norteiaScheduleSave==='function')window.norteiaScheduleSave();setTimeout(function(){celebrate(justUnlocked[0])},200)}
  return DEFINITIONS.map(function(def){var p=def.progress(state);return Object.assign({},def,{unlockedAt:data.unlocked[def.id]||'',current:p[0],goal:p[1]})});
 }
 function score(items){return items.reduce(function(total,item){return total+(item.unlockedAt?item.points:0)},0)}
@@ -92,7 +92,7 @@ async function share(channel){
   if(channel==='x')popup('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url));
   if(channel==='instagram'){downloadCard();notify('Cartão baixado. Abra o Instagram e adicione a imagem ao Story.')}
   if(channel==='copy'){await navigator.clipboard.writeText(text+' '+url);notify('Texto e link copiados.')}
-  var data=ensureData();if(data)data.shared[def.id]=new Date().toISOString();
+  var data=ensureData();if(data){data.shared[def.id]=new Date().toISOString();if(typeof window.norteiaScheduleSave==='function')window.norteiaScheduleSave()}
  }catch(e){if(e&&e.name!=='AbortError')notify('Não foi possível compartilhar. Tente novamente.')}
 }
 function downloadCard(){var a=document.createElement('a');a.href=shareState.url;a.download=shareState.file.name;a.click()}

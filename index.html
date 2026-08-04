@@ -2090,7 +2090,7 @@ setText=function(id,value){cockpitOriginalSetText(id,cockpitFixEncodingText(valu
 var cockpitOriginalItem=item;
 item=function(title,sub,value,cls){return cockpitOriginalItem(cockpitFixEncodingText(title),cockpitFixEncodingText(sub),value,cls)};
 var cockpitOriginalRender=render;
-render=function(){if(window.state)cockpitRepairDataStrings(window.state||state);cockpitOriginalRender();cockpitFixVisibleText(document.body)};
+render=function(){window.state=state;window.norteiaScheduleSave=scheduleSave;if(window.state)cockpitRepairDataStrings(window.state);cockpitOriginalRender();cockpitFixVisibleText(document.body)};
 var cockpitOriginalExportExcel=exportExcel;
 exportExcel=function(){
   var oldBlob=window.Blob;
