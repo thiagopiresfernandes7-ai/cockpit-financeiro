@@ -85,3 +85,11 @@ html[data-theme="dark"] #decisions #decisionPreview>div b,
 html[data-theme="dark"] #decisions #decisionCoach>div b,
 html[data-theme="dark"] #decisions #decisionMissionList>div b{color:#eef7f3!important}
 html[data-theme="dark"] #decisions .decision-metrics>div{background:#14261f!important;border-color:#31483e!important}
+
+/* Missões de decisão: as cores antigas pressupunham sempre um tema escuro. */
+#decisions .mission-card{background:#eef3f0!important;background-image:none!important;border-color:#c8d5cf!important;color:#173027!important}
+#decisions .mission-card b{color:#173027!important}
+#decisions .mission-card small{color:#52675e!important}
+html[data-theme="dark"] #decisions .mission-card{background:#14261f!important;border-color:#3a5248!important;color:#eef7f3!important}
+html[data-theme="dark"] #decisions .mission-card b{color:#eef7f3!important}
+html[data-theme="dark"] #decisions .mission-card small{color:#b8cbc2!important}
