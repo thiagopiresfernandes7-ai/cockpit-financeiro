@@ -74,7 +74,7 @@ const server = http.createServer((req, res) => {
         assert.equal(await page.locator('#communitySearchScreen').evaluate(x => !x.classList.contains('hidden')), true);
         await page.locator('[data-community-mobile="close-search"]').click();
 
-        await page.locator('#globalAddBtn').click();
+        await page.locator('.community-compact-composer').click();
         assert.equal(await page.locator('#communityComposerScreen').evaluate(x => !x.classList.contains('hidden')), true);
         await page.locator('[data-community-mobile="cancel-compose"]').click();
         assert.equal(await page.locator('[data-community-share]').count(), 1);
