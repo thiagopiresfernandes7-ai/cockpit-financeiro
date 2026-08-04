@@ -97,12 +97,19 @@ function addAccessibilityGuards(){
     if(event.key!=='Tab')return;var focusable=Array.from(overlay.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(function(element){return element.getClientRects().length});if(!focusable.length)return;var first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
   });
 }
+function addMobilePrivacyControl(){
+  var mobile=document.getElementById('mobilePrivacyBtn'),desktop=document.getElementById('privacyBtn'),label=document.getElementById('mobilePrivacyLabel');
+  if(!mobile||!desktop||mobile.dataset.ready)return;mobile.dataset.ready='true';
+  function sync(){var visible=document.getElementById('eyeClosed')&&document.getElementById('eyeClosed').classList.contains('hidden');var action=visible?'Ocultar':'Mostrar';label.textContent=action;mobile.setAttribute('aria-label',action+' valores')}
+  mobile.addEventListener('click',function(){desktop.click();setTimeout(sync,0)});desktop.addEventListener('click',function(){setTimeout(sync,0)});sync();
+}
 function watch(){
   cleanCopy();
   addThemePreference();
   normalizePrimaryNavigation();
   addEssentialShortcuts();
   addAccessibilityGuards();
+  addMobilePrivacyControl();
   var observer=new MutationObserver(function(records){
     if(records.some(function(record){return record.type==='childList'||record.type==='characterData'}))cleanCopy();
   });
