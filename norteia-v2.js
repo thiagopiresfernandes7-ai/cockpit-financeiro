@@ -103,6 +103,17 @@ function addMobilePrivacyControl(){
   function sync(){var visible=document.getElementById('eyeClosed')&&document.getElementById('eyeClosed').classList.contains('hidden');var action=visible?'Ocultar':'Mostrar';label.textContent=action;mobile.setAttribute('aria-label',action+' valores')}
   mobile.addEventListener('click',function(){desktop.click();setTimeout(sync,0)});desktop.addEventListener('click',function(){setTimeout(sync,0)});sync();
 }
+function addWalletEditorControls(){
+  var create=document.getElementById('investmentCreatePanel'),update=document.getElementById('investmentUpdatePanel'),openCreate=document.getElementById('openInvestmentCreate'),openUpdate=document.getElementById('openInvestmentUpdate');
+  if(!create||!update||!openCreate||!openUpdate||openCreate.dataset.ready)return;openCreate.dataset.ready='true';
+  function show(panel){create.classList.toggle('hidden',panel!==create);update.classList.toggle('hidden',panel!==update);panel.scrollIntoView({behavior:'smooth',block:'nearest'})}
+  function close(panel){panel.classList.add('hidden')}
+  openCreate.addEventListener('click',function(){show(create)});openUpdate.addEventListener('click',function(){show(update)});
+  var cancel=document.getElementById('cancelInvEdit');if(cancel)cancel.addEventListener('click',function(){close(create)});
+  var save=document.getElementById('saveInv');if(save)save.addEventListener('click',function(){setTimeout(function(){var ticker=document.getElementById('invTicker');if(ticker&&!ticker.value)close(create)},0)});
+  var price=document.getElementById('savePrice');if(price)price.addEventListener('click',function(){setTimeout(function(){var value=document.getElementById('updateInvPrice');if(value&&!value.value)close(update)},0)});
+  document.addEventListener('click',function(event){var edit=event.target.closest('#investmentList .investment-card .btn:not(.danger)');if(edit)setTimeout(function(){show(create)},0)},true);
+}
 function watch(){
   cleanCopy();
   addThemePreference();
@@ -110,6 +121,7 @@ function watch(){
   addEssentialShortcuts();
   addAccessibilityGuards();
   addMobilePrivacyControl();
+  addWalletEditorControls();
   var observer=new MutationObserver(function(records){
     if(records.some(function(record){return record.type==='childList'||record.type==='characterData'}))cleanCopy();
   });

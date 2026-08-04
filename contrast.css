@@ -148,3 +148,14 @@ html[data-theme="dark"] .bottom-sheet .sheet-grid button:hover,html[data-theme="
 #analysis .analysis-score span{font-size:16px!important}
 #analysis .analysis-score small{display:none!important}
 @media(max-width:900px){#analysis .analysis-hero>div:first-child{display:block!important}#analysis .analysis-hero h2{margin-bottom:3px!important}#analysis .analysis-hero p{white-space:normal!important}}
+
+/* Editores da carteira aparecem somente sob demanda. */
+#wallet .wallet-editor-actions{align-self:center!important}
+#wallet .wallet-editor-grid{margin-bottom:14px!important}
+#wallet .wallet-editor{grid-column:1/-1!important;padding:18px!important}
+#wallet .wallet-editor .form-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+#wallet #investmentUpdatePanel .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-width:720px!important}
+#wallet .wallet-editor h2{margin-bottom:12px!important}
+#wallet .wallet-editor textarea{min-height:44px!important}
+@media(max-width:1100px){#wallet .wallet-editor .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:720px){#wallet .wallet-editor-actions{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important;margin-top:12px!important}#wallet .wallet-editor-actions .btn{width:100%!important}#wallet .wallet-editor .form-grid,#wallet #investmentUpdatePanel .form-grid{grid-template-columns:1fr!important}}
