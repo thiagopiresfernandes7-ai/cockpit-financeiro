@@ -93,3 +93,19 @@ html[data-theme="dark"] #decisions .decision-metrics>div{background:#14261f!impo
 html[data-theme="dark"] #decisions .mission-card{background:#14261f!important;border-color:#3a5248!important;color:#eef7f3!important}
 html[data-theme="dark"] #decisions .mission-card b{color:#eef7f3!important}
 html[data-theme="dark"] #decisions .mission-card small{color:#b8cbc2!important}
+
+/* Direção visual do dashboard: uma faixa única, premium e independente do tema. */
+#dashboard .today-heading .overline,#dashboard .today-heading p{display:none!important}
+#dashboard .today-decision{background:linear-gradient(135deg,#10251e 0%,#0b1c17 58%,#12382d 100%)!important;border:1px solid #315246!important;color:#f4fbf8!important;box-shadow:0 14px 38px rgba(4,24,18,.18)!important}
+#dashboard .today-decision-main h2{color:#f4fbf8!important}
+#dashboard .today-decision-main p,#dashboard .today-decision-main small{color:#bfd1c9!important}
+#dashboard .today-safe{background:#15382e!important;border-color:#315246!important}
+#dashboard .today-safe small{color:#bcd2c9!important}
+#dashboard .today-safe b{color:#72dfc3!important}
+#dashboard .today-safe p{color:#c7d8d1!important}
+#dashboard .today-formula{border-color:rgba(180,220,207,.18)!important}
+#dashboard .today-formula summary{color:#72dfc3!important}
+#dashboard .today-formula p{color:#c7d8d1!important}
+#dashboard .today-impact>div{background:#14261f!important;border:1px solid #315246!important}
+#dashboard .today-impact>div small{color:#a9c1b7!important}
+#dashboard .today-decision-main .btn.primary{background:#08725f!important;background-color:#08725f!important;background-image:none!important;color:#fff!important;box-shadow:none!important}
