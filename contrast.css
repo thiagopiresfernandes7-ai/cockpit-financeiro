@@ -39,3 +39,49 @@ html[data-theme="dark"] .habit-summary-card{background:#10201a!important;border-
 .community-choices label input{flex:0 0 auto!important;width:18px!important;height:18px!important;margin:0!important}
 
 @media (forced-colors:active){*{forced-color-adjust:auto}.card,.panel,.btn,input,select,textarea{border:1px solid CanvasText!important}}
+/* Auditoria final WCAG: superfícies e controles que mantinham cores do tema oposto. */
+#dashboard .today-decision-main .btn.primary{color:#fff;background:#08725f}
+#dashboard .goal-mini-card .btn{color:#0b4f43;background:#fff;border-color:#d6e4de}
+.theme-picker button small{color:#52645c!important}
+html[data-theme="dark"] #dashboard .today-decision{background:#10201a;border-color:#31483e}
+html[data-theme="dark"] #dashboard .today-decision-main h2{color:#eef7f3}
+html[data-theme="dark"] #dashboard .today-safe{background:#15382e;border-color:#31483e}
+html[data-theme="dark"] #dashboard .today-safe b{color:#8de1cc}
+html[data-theme="dark"] #dashboard .today-formula{border-color:#31483e}
+html[data-theme="dark"] #dashboard .goal-mini-card .btn{color:#d9f7ef;background:#173329;border-color:#416157}
+html[data-theme="dark"] #register .filter-chips button,
+html[data-theme="dark"] #register .chip{color:#d9e8e1!important;background:#14261f!important;border-color:#3a554a!important}
+html[data-theme="dark"] #register .filter-chips button.active,
+html[data-theme="dark"] #register .chip.active{color:#fff!important;background:#0d725f!important;border-color:#55bda5!important}
+html[data-theme="dark"] #plan [data-plan-tab]{color:#d9e8e1!important;background:#14261f!important;border-color:#3a554a!important}
+html[data-theme="dark"] #plan [data-plan-tab].active{color:#fff!important;background:#0d725f!important}
+html[data-theme="dark"] #decisions .decision-preview,
+html[data-theme="dark"] #decisions .hero-stat,
+html[data-theme="dark"] #decisions .mission-card,
+html[data-theme="dark"] #decisions .coach-line{color:#eaf5f0;background:#14261f!important;border-color:#31483e!important}
+html[data-theme="dark"] #decisions .decision-preview b,
+html[data-theme="dark"] #decisions .hero-stat b,
+html[data-theme="dark"] #decisions .mission-card b,
+html[data-theme="dark"] #decisions .coach-line b{color:#eef7f3!important}
+html[data-theme="dark"] #help .phone-step{color:#eaf5f0;background:#14261f;border-color:#31483e}
+html[data-theme="dark"] #help .phone-step b{color:#eef7f3!important}
+html[data-theme="dark"] #help .phone-step small{color:#b8cbc2!important}
+
+/* Fechamento da auditoria: vence regras legadas mais específicas. */
+#dashboard .today-decision-main .btn.primary{background:#08725f!important;background-color:#08725f!important;background-image:none!important;color:#fff!important}
+html[data-theme="dark"] #dashboard .today-decision-main p,
+html[data-theme="dark"] #dashboard .today-safe p,
+html[data-theme="dark"] #dashboard .today-safe small,
+html[data-theme="dark"] #dashboard .today-formula p{color:#c5d7cf!important}
+html[data-theme="dark"] #dashboard .today-impact>div{background:#14261f!important;border-color:#31483e!important}
+html[data-theme="dark"] #dashboard .today-impact>div small{color:#b8cbc2!important}
+html[data-theme="dark"] .theme-picker button small{color:#b8cbc2!important}
+html[data-theme="dark"] #decisions .decision-preview>div,
+html[data-theme="dark"] #decisions #decisionPreview>div,
+html[data-theme="dark"] #decisions #decisionCoach>div,
+html[data-theme="dark"] #decisions #decisionMissionList>div{background:#14261f!important;color:#eef7f3!important;border-color:#31483e!important}
+html[data-theme="dark"] #decisions .decision-preview>div b,
+html[data-theme="dark"] #decisions #decisionPreview>div b,
+html[data-theme="dark"] #decisions #decisionCoach>div b,
+html[data-theme="dark"] #decisions #decisionMissionList>div b{color:#eef7f3!important}
+html[data-theme="dark"] #decisions .decision-metrics>div{background:#14261f!important;border-color:#31483e!important}
