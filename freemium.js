@@ -127,7 +127,13 @@ function markPremiumPreviews(){
   var map={weekly:"weeklyPlan",analysis:"advancedAnalysis",projection:"futureCashflowExtended",decisions:"decisionLab",dividends:"dividends",simulator:"investmentsAdvanced"};
   Object.keys(map).forEach(function(view){document.querySelectorAll('[data-view="'+view+'"],[data-more-target="'+view+'"],[data-menu-view="'+view+'"]').forEach(function(btn){if(!btn.querySelector(".premium-lock-note"))btn.insertAdjacentHTML("beforeend",' <span class="premium-lock-note">Premium</span>')})});
 }
-function registerServiceWorker(){if("serviceWorker"in navigator&&location.protocol==="https:")navigator.serviceWorker.register("./service-worker.js").catch(function(err){console.warn("Service worker indisponível:",err)})}
+function registerServiceWorker(){
+ if(!("serviceWorker"in navigator)||location.protocol!=="https:")return;
+ navigator.serviceWorker.register("./service-worker.js",{updateViaCache:"none"}).then(function(registration){
+  registration.update().catch(function(){});
+  navigator.serviceWorker.addEventListener("controllerchange",function(){if(sessionStorage.getItem("norteia_sw_reloaded")==="1")return;sessionStorage.setItem("norteia_sw_reloaded","1");location.reload()},{once:true});
+ }).catch(function(err){console.warn("Service worker indisponível:",err)});
+}
 ensureModal();installGates();markPremiumPreviews();registerServiceWorker();
 var originalRender=typeof render==="function"?render:null;
 if(originalRender){render=function(){var out=originalRender.apply(this,arguments);renderPlanPanel();return out}}
