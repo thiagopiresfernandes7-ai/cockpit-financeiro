@@ -4,7 +4,6 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
-<meta content="#061425" name="theme-color"/>
 <link href="manifest.json" rel="manifest"/>
 <meta content="#07111f" name="theme-color"/>
 <meta content="Organize gastos, dívidas e investimentos com o Norteia. Controle seu dinheiro, acompanhe seu mês e tome decisões financeiras com mais clareza." name="description"/>
@@ -430,6 +429,7 @@ h1,h2,h3,.brand,.headline{font-family:Sora,Inter,system-ui,sans-serif}
 .norteia-button{border-radius:16px;font-weight:800}.norteia-button-primary{background:linear-gradient(135deg,var(--norteia-teal-400),var(--norteia-teal-500));color:var(--norteia-navy-950)}.norteia-button-secondary{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)}.norteia-button-danger{border:1px solid rgba(255,138,128,.28);background:rgba(255,138,128,.08);color:var(--norteia-red-400)}.norteia-kpi{border-radius:22px}.norteia-badge{color:var(--norteia-teal-400)}.norteia-empty-state{border:1px dashed var(--line);border-radius:16px}.norteia-input{border-color:var(--line)}.norteia-page-header{margin-bottom:22px}
 @media(max-width:820px){.top{position:relative}.norteia-brand-logo{max-width:126px}.mobile-nav{background:rgba(6,20,38,.93);padding-bottom:max(9px,env(safe-area-inset-bottom))}}
 </style>
+</head>
 <body class="auth-mode">
 <div class="auth hidden" id="authView">
 <div class="auth-card">
@@ -839,7 +839,7 @@ async function load(){try{var r=await sb.auth.getSession();user=r.data.session&&
 
 function showAuth(){document.body.classList.add('auth-mode');document.body.classList.remove('app-mode');el('authView').classList.remove('hidden');el('appView').classList.add('hidden');if(el('paywallView'))el('paywallView').classList.add('hidden')}
 function showApp(){document.body.classList.remove('auth-mode');document.body.classList.add('app-mode');el('authView').classList.add('hidden');if(el('paywallView'))el('paywallView').classList.add('hidden');el('appView').classList.remove('hidden')}
-async function saveNow(){if(!user||!state||appAccess.allowed===false||state.ui&&state.ui.demoMode)return;localStorage.setItem('cockpit_state_'+user.id,JSON.stringify(state));el('syncStatus').textContent='Salvando...';var res=await sb.from('finance_states').upsert({user_id:user.id,data:state,updated_at:new Date().toISOString()});el('syncStatus').textContent=sb.__offline||res.error?'Salvo neste aparelho':'Sincronizado'}
+async function saveNow(){if(!user||!state||appAccess.allowed===false||state.ui&&state.ui.demoMode)return null;localStorage.setItem('cockpit_state_'+user.id,JSON.stringify(state));el('syncStatus').textContent='Salvando...';var res=await sb.from('finance_states').upsert({user_id:user.id,data:state,updated_at:new Date().toISOString()});el('syncStatus').textContent=sb.__offline||res.error?'Salvo neste aparelho':'Sincronizado';return res}
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,500)}
 function selectedMonth(){return state.ui.selectedMonth||month()}
 
@@ -2236,7 +2236,17 @@ function setupFinancialCrudEnhancements(){
   if(el('addForgottenPurchase'))el('addForgottenPurchase').onclick=function(){openQuickExpense(null,{date:today()})};
 }
 Object.assign(window,{setView:setView,summary:summary,calculateFinancialPosition:calculateFinancialPosition,calculateDailySpendAllowance:calculateDailySpendAllowance,cockpitFinancialEngine:cockpitFinancialEngine,openRegisterSheet:openRegisterSheet,closeRegisterSheet:closeRegisterSheet,openQuickExpense:openQuickExpense,closeQuickExpense:closeQuickExpense,saveQuickExpense:saveQuickExpense,openDebtFromGlobal:openDebtFromGlobal,openDividendFromGlobal:openDividendFromGlobal,showTxDetails:showTxDetails,editTx:editTx,duplicateTx:duplicateTx,reviewTx:reviewTx,undoDeleteTx:undoDeleteTx,deleteTx:deleteTx,editDebt:editDebt,deleteDebt:deleteDebt,settleDebt:settleDebt,amortizeDebt:amortizeDebt,deleteDebtAmortization:deleteDebtAmortization,editInvestment:editInvestment,deleteInvestment:deleteInvestment,editInvestmentMovement:editInvestmentMovement,deleteInvestmentMovement:deleteInvestmentMovement,editCategory:editCategory,deleteCategory:deleteCategory,editFutureItem:editFutureItem,deleteFutureItem:deleteFutureItem,deleteDividend:deleteDividend,norteiaApp:{getState:function(){return state},render:function(){render()},save:function(){return saveNow()},selectedMonth:selectedMonth,money:money,toast:toast,uid:uid}});
-setupEvents();setupFinancialCrudEnhancements();load();
+async function resetFinancialData(){
+ if(prompt('Digite REINICIAR para apagar dados financeiros desta conta:')!=='REINICIAR')return;
+ var resetAt=new Date().toISOString(),keep={profile:Object.assign({},state.profile||{}),settings:Object.assign({},state.settings||{}),ui:Object.assign({},state.ui||{},{demoMode:false}),meta:{resetAt:resetAt}};
+ state=migrate(Object.assign(seed(),keep,{transactions:[],budgets:[],investments:[],investmentMovements:[],dividends:[],debts:[],debtAmortizations:[],futureCashflowItems:[],purchaseDecisions:[],dailyReviews:[],goals:[],resetPlans:[],monthlyClosings:[],cards:[],gamification:{unlocked:{},shared:{},lastCelebrated:''}}));
+ localStorage.setItem('cockpit_state_'+user.id,JSON.stringify(state));
+ render();
+ var result=await saveNow();
+ toast(result&&result.error?'Dados reiniciados neste aparelho. A sincronização será tentada novamente.':'Dados financeiros reiniciados e sincronizados.');
+}
+function installResetFinancialData(){var button=el('resetDataBtn');if(button)button.onclick=resetFinancialData}
+setupEvents();installResetFinancialData();setupFinancialCrudEnhancements();load();
 })();
 }catch(e){console.error('Norteia init error',e&&e.stack?e.stack:e)}
 </script>
@@ -2251,4 +2261,4 @@ setupEvents();setupFinancialCrudEnhancements();load();
 <link rel="stylesheet" href="contrast.css"/>
 <script src="norteia-completion.js"></script>
 </body>
-</head></html>
+</html>

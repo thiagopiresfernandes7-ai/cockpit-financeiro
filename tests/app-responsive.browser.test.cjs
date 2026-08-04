@@ -22,6 +22,20 @@ const {chromium}=require('playwright');
   assert.match(await page.locator('#todayGreeting').textContent(),/Marina/);
   await page.locator('#exitNorteiaDemo').click();
   assert.equal(await page.locator('#norteiaDemoBanner').isVisible(),false);
+  await page.evaluate(()=>{var s=window.norteiaApp.getState();s.transactions.push({id:'reset-proof',type:'expense',date:'2026-08-01',description:'Teste',category:'Outros',value:10});s.goals.push({id:'goal-proof',title:'Teste',target:100,current:0})});
+  await page.evaluate(()=>window.setView('profile'));
+  page.once('dialog',dialog=>dialog.accept('REINICIAR'));
+  await page.evaluate(()=>document.getElementById('resetDataBtn').click());
+  await page.waitForFunction(()=>window.norteiaApp.getState().meta&&window.norteiaApp.getState().meta.resetAt);
+  const resetState=await page.evaluate(()=>window.norteiaApp.getState());
+  assert.equal(resetState.transactions.length,0,'reinício não apagou movimentações');
+  assert.equal(resetState.goals.length,0,'reinício não apagou metas');
+  assert.ok(resetState.meta.resetAt,'reinício não registrou marcador de sincronização');
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('body.app-mode').waitFor({timeout:10000});
+  await page.waitForFunction(()=>window.norteiaApp.getState().meta&&window.norteiaApp.getState().meta.resetAt);
+  assert.equal(await page.evaluate(()=>window.norteiaApp.getState().transactions.length),0,'dados apagados voltaram após novo login/carregamento');
+  await page.evaluate(()=>document.getElementById('tutorial').classList.add('hidden'));
 
   const results=[];
   for(const width of [320,375,430,1024,1440]){
