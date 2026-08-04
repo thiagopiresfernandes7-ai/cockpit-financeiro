@@ -72,13 +72,21 @@ function addThemePreference(){
 function normalizePrimaryNavigation(){
   document.querySelectorAll('[data-view="dashboard"]').forEach(function(button){var label=button.querySelector('.ico');button.textContent='';if(label)button.appendChild(label);button.appendChild(document.createTextNode('Hoje'))});
   document.querySelectorAll('[data-view="register"]').forEach(function(button){var label=button.querySelector('.ico');button.textContent='';if(label)button.appendChild(label);button.appendChild(document.createTextNode('Movimentos'))});
-  var desktop=document.querySelector('.desktop-nav'),official=new Set(['dashboard','register','plan','community']);if(desktop){desktop.querySelectorAll('button[data-view]').forEach(function(button){button.hidden=!official.has(button.dataset.view);if(button.dataset.view==='plan'){var icon=button.querySelector('.ico');button.textContent='';if(icon)button.appendChild(icon);button.appendChild(document.createTextNode('Planos'))}});desktop.querySelectorAll('.nav-section').forEach(function(section){section.hidden=!section.querySelector('button[data-view]:not([hidden])')})}
+  var desktop=document.querySelector('.desktop-nav'),official=new Set(['dashboard','register','decisions','plan','community','settings']);if(desktop){desktop.querySelectorAll('button[data-view]').forEach(function(button){button.hidden=!official.has(button.dataset.view);if(button.dataset.view==='plan'){var icon=button.querySelector('.ico');button.textContent='';if(icon)button.appendChild(icon);button.appendChild(document.createTextNode('Planos'))}if(button.dataset.view==='decisions'){var decisionIcon=button.querySelector('.ico');button.textContent='';if(decisionIcon)button.appendChild(decisionIcon);button.appendChild(document.createTextNode('Comprar ou esperar'))}});desktop.querySelectorAll('.nav-section').forEach(function(section){section.hidden=!section.querySelector('button[data-view]:not([hidden])')})}
   var mobile=document.querySelector('.mobile-nav');
   if(!mobile)return;
   var analysis=mobile.querySelector('[data-view="analysis"]'),more=mobile.querySelector('[data-view="more"]'),plans=mobile.querySelector('[data-view="wallet"]');
-  if(analysis)analysis.hidden=true;if(more)more.hidden=true;
+  if(analysis)analysis.hidden=true;if(more){more.hidden=false;more.innerHTML='<span class="ico" aria-hidden="true"></span>Mais'};
   if(plans){plans.dataset.view='plan';plans.innerHTML='<span class="ico" aria-hidden="true"></span>Planos'}
   if(!document.getElementById('mobilePrimaryAdd')){var add=document.createElement('button');add.id='mobilePrimaryAdd';add.type='button';add.className='mobile-primary-add';add.innerHTML='<span aria-hidden="true">+</span><small>Adicionar</small>';add.addEventListener('click',function(){if(window.openRegisterSheet)window.openRegisterSheet()});var community=mobile.querySelector('[data-view="community"]');mobile.insertBefore(add,community||plans&&plans.nextSibling||null)}
+}
+function addEssentialShortcuts(){
+  var moreGrid=document.querySelector('#more .more-grid');
+  if(moreGrid&&!moreGrid.querySelector('[data-more-target="decisions"]'))moreGrid.insertAdjacentHTML('afterbegin','<button class="panel more-card more-card-featured" data-more-target="decisions" type="button"><span class="ico" aria-hidden="true"></span><b>Comprar ou esperar</b><small>Descubra o impacto de uma compra antes de gastar.</small></button>');
+  var menu=document.getElementById('userMenu'),help=menu&&menu.querySelector('[data-menu-view="help"]');
+  if(help&&!menu.querySelector('[data-menu-view="settings"]'))help.insertAdjacentHTML('beforebegin','<button data-menu-view="decisions" type="button">Comprar ou esperar</button><button data-menu-view="settings" type="button">Configurações</button>');
+  var dashboard=document.getElementById('dashboard'),kpis=dashboard&&dashboard.querySelector('.dashboard-kpis');
+  if(kpis&&!document.getElementById('dashboardExpandBtn')){var actions=document.createElement('div');actions.className='dashboard-disclosure';actions.innerHTML='<button class="btn" id="dashboardExpandBtn" type="button" aria-expanded="false">Ver visão completa</button>';kpis.insertAdjacentElement('afterend',actions);actions.querySelector('button').onclick=function(){var expanded=dashboard.classList.toggle('dashboard-expanded');this.setAttribute('aria-expanded',String(expanded));this.textContent=expanded?'Ocultar detalhes':'Ver visão completa'};}
 }
 function addAccessibilityGuards(){
   if(document.documentElement.dataset.norteiaA11y)return;document.documentElement.dataset.norteiaA11y='true';var returnFocus=null;
@@ -93,6 +101,7 @@ function watch(){
   cleanCopy();
   addThemePreference();
   normalizePrimaryNavigation();
+  addEssentialShortcuts();
   addAccessibilityGuards();
   var observer=new MutationObserver(function(records){
     if(records.some(function(record){return record.type==='childList'||record.type==='characterData'}))cleanCopy();

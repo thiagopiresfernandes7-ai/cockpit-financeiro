@@ -9,6 +9,8 @@ assert.ok(html.includes("rpc('claim_my_entitlement')"),'consulta de entitlement 
 assert.ok(premium.includes('https://pay.hotmart.com/'),'checkout Hotmart inválido');
 assert.ok(premium.includes('verifyNorteiaAccess'),'atualização de acesso aponta para função antiga');
 assert.ok(premium.includes('installGates()')&&premium.includes('hasPremiumAccess'),'gates freemium ausentes');
+assert.ok(premium.includes('appAccess.owner===true'),'acesso integral do proprietário ausente');
+assert.ok(html.includes("sb.rpc('app_is_owner')"),'verificação segura de proprietário ausente');
 assert.ok(sql.includes('enable row level security')&&sql.includes('revoke all on public.pending_entitlements'),'entitlements sem proteção');
 assert.ok(!html.toLowerCase().includes('service_role'),'chave administrativa exposta no cliente');
 console.log('Autenticação, sessão, sincronização e paywall: OK');

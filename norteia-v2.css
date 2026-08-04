@@ -28,6 +28,34 @@
   .mobile-nav button[data-view="plan"]{order:4!important}
   .mobile-nav button[data-view="community"]{order:5!important}
 }
+
+/* Prioridade primeiro; detalhes continuam disponíveis sob demanda. */
+@media(min-width:921px){
+  .app{grid-template-columns:252px minmax(0,1fr)}
+  .sidebar{padding:20px 16px 18px;gap:15px;overflow-y:auto}
+  .logo .mark{width:44px;height:44px;border-radius:14px}.logo .brand strong{font-size:25px}
+  .nav-hub button{height:42px;border-radius:13px}.desktop-nav{gap:4px}.nav-label{margin-top:5px}
+  .top{height:70px;padding:0 24px}.content{padding:22px 26px 36px;max-width:1240px}
+}
+#dashboard .today-heading{margin-bottom:12px}
+#dashboard .today-heading h1{font-size:clamp(27px,3vw,40px);margin:2px 0}
+#dashboard .today-decision{min-height:0;padding:22px;border-radius:22px;box-shadow:0 18px 55px rgba(11,113,92,.12)}
+#dashboard .today-decision-main h2{font-size:clamp(22px,2.4vw,34px);max-width:720px}
+#dashboard .dashboard-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0}
+#dashboard .dashboard-kpis .kpi{min-height:96px;padding:14px 16px}
+#dashboard .dashboard-kpis .kpi b{font-size:clamp(19px,1.8vw,25px)}
+#dashboard .dashboard-kpis .kpi:nth-child(n+5),#dashboard>.dashboard-grid-12{display:none}
+#dashboard.dashboard-expanded .dashboard-kpis .kpi:nth-child(n+5),#dashboard.dashboard-expanded>.dashboard-grid-12{display:grid}
+.dashboard-disclosure{display:flex;justify-content:center;margin:4px 0 0}.dashboard-disclosure .btn{background:transparent}
+.more-card-featured{border-color:#80c8b5!important;background:linear-gradient(135deg,#e8f7f2,#fff)!important}
+html[data-theme="dark"] .more-card-featured{background:linear-gradient(135deg,#15382e,#10201a)!important}
+@media(max-width:920px){
+  #dashboard .today-heading h1{font-size:28px}
+  #dashboard .today-decision{padding:17px}
+  #dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #dashboard .dashboard-kpis .kpi{min-height:88px;padding:12px}
+  #dashboard .dashboard-kpis .kpi b{font-size:18px}
+}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid color-mix(in srgb,var(--color-primary,#087a64) 34%,transparent)!important;outline-offset:3px!important}
 [hidden]{display:none!important}
 [data-money],.value,.amount{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important;font-variant-numeric:tabular-nums}

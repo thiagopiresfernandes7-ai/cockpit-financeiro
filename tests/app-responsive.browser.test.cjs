@@ -47,7 +47,13 @@ const {chromium}=require('playwright');
     results.push(metrics);
   }
   const desktopLabels=await page.locator('.desktop-nav button[data-view]:visible').allTextContents();
-  assert.deepEqual(desktopLabels.map(x=>x.trim()),['Hoje','Movimentos','Planos','Comunidade']);
+  assert.deepEqual(desktopLabels.map(x=>x.trim()),['Hoje','Movimentos','Planos','Comprar ou esperar','Configurações','Comunidade']);
+  await page.locator('[data-view="dashboard"]:visible').first().click();
+  assert.equal(await page.locator('#dashboard>.dashboard-grid-12').isVisible(),false,'a tela Hoje não iniciou compacta');
+  await page.locator('#dashboardExpandBtn').click();
+  assert.equal(await page.locator('#dashboard>.dashboard-grid-12').isVisible(),true,'os detalhes da tela Hoje não expandiram');
+  assert.equal(await page.locator('[data-view="decisions"]:visible').count()>0,true,'Comprar ou esperar não está acessível');
+  assert.equal(await page.locator('[data-view="settings"]:visible').count()>0,true,'Configurações não está acessível');
   await page.locator('.desktop-nav [data-view="plan"]').click();
   assert.equal(await page.locator('#norteiaPlanWorkspace').isVisible(),true);
   await page.locator('[data-plan-tab="reserve"]').click();
