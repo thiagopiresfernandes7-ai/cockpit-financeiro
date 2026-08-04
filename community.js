@@ -76,7 +76,7 @@ async function ownPostMenu(id){
   var archived=await sb.from('community_posts').update({archived_at:new Date().toISOString()}).eq('id',id).eq('author_id',currentUser().id);if(archived.error)throw archived.error;posts=posts.filter(function(x){return x.id!==id});render(false)
  }
  if(action==='EXCLUIR'&&confirm('Excluir esta publicação e suas imagens? Esta ação não poderá ser desfeita.')){
-  var d=await sb.from('community_posts').update({deleted_at:new Date().toISOString()}).eq('id',id).eq('author_id',currentUser().id);if(d.error)throw d.error;try{await removePostMedia(id)}catch(mediaError){console.warn('A publicação foi excluída, mas a limpeza da imagem será repetida depois.',mediaError)}posts=posts.filter(function(x){return x.id!==id});render(false)
+  var d=await sb.rpc('community_delete_own_post',{target_post_id:id});if(d.error)throw d.error;if(d.data!==true)throw new Error('A publicação não pertence à conta atual ou já foi excluída.');try{await removePostMedia(id)}catch(mediaError){console.warn('A publicação foi excluída, mas a limpeza da imagem será repetida depois.',mediaError)}posts=posts.filter(function(x){return x.id!==id});render(false)
  }
 }
 function rulesDialog(){showDialog('<h2>Regras da Comunidade</h2><ul><li>Sem spam, golpes, pirâmides ou promessas de rentabilidade.</li><li>Sem links de afiliados, captação agressiva ou grupos de sinais.</li><li>Não exponha documentos, dados pessoais ou finanças de terceiros.</li><li>Respeite as pessoas e mantenha as conversas no tema financeiro.</li><li>Conteúdo ilegal será removido.</li></ul><p class="community-disclaimer">Os conteúdos publicados representam opiniões dos usuários e não constituem recomendação de investimento.</p>')}

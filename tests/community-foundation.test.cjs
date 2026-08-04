@@ -2,6 +2,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const sql=fs.readFileSync('supabase/migrations/202607280001_community_foundation.sql','utf8');
+const deleteSql=fs.readFileSync('supabase/migrations/202608040002_community_delete_own_post.sql','utf8');
+assert.ok(deleteSql.includes('author_id = (select auth.uid())')&&deleteSql.includes('return affected = 1'),'exclusão segura do próprio post ausente');
 const mobile=fs.readFileSync('community-mobile.js','utf8');
 const tables=['community_profiles','community_follows','community_blocks','community_posts','community_post_media','community_comments','community_post_likes','community_comment_likes','community_saved_posts','community_reposts','community_notifications','community_mutes','community_hidden_posts','community_reports','community_moderation_actions','community_admin_roles','community_audit_logs','community_topics','community_post_topics','community_challenges','community_challenge_progress','community_user_settings'];
 for(const table of tables){assert.ok(sql.includes('table if not exists public.'+table),table+' ausente');assert.ok(sql.includes("'"+table+"'")||sql.includes('table public.'+table+' enable row level security'),table+' fora da lista RLS')}

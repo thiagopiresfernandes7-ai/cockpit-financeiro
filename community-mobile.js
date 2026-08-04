@@ -194,14 +194,14 @@ async function deletePost(article){
  var button=article.querySelector('[data-community-delete]'),id=article.dataset.post;
  if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
  try{
-  var media=await window.cockpitSupabase.from('community_post_media').select('storage_path').eq('post_id',id),paths=(media.data||[]).map(function(x){return x.storage_path});
-  if(media.error)throw media.error;
-  var result=await window.cockpitSupabase.from('community_posts').update({deleted_at:new Date().toISOString()}).eq('id',id).eq('author_id',window.cockpitUser.id);if(result.error)throw result.error;
+  var paths=[],deleted=await window.cockpitSupabase.rpc('community_delete_own_post',{target_post_id:id});
+  if(deleted.error)throw deleted.error;if(deleted.data!==true)throw new Error('A publicação não pertence à conta atual ou já foi excluída.');
+  try{var media=await window.cockpitSupabase.from('community_post_media').select('storage_path').eq('post_id',id);paths=(media.data||[]).map(function(x){return x.storage_path})}catch(mediaReadError){console.warn('A publicação foi excluída; a mídia será limpa depois.',mediaReadError)}
   if(paths.length){var removed=await window.cockpitSupabase.storage.from('community-media').remove(paths);if(removed.error)console.warn('A publicação foi excluída, mas a limpeza da imagem será repetida depois.',removed.error)}
   article.remove();toast('Publicação excluída.');
  }catch(e){
   if(button){button.disabled=false;button.removeAttribute('aria-busy')}
-  toast('Não foi possível excluir a publicação.','error');
+  console.error('Falha ao excluir publicação:',e);toast(e&&e.message||'Não foi possível excluir a publicação.','error');
  }
 }
 function transformPost(article){

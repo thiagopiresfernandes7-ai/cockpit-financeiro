@@ -67,6 +67,8 @@ html[data-theme="dark"] .dashboard-command-rail button:first-child{background:li
   .mobile-money-compass{display:block}
   .mobile-compass-head{padding:4px 2px 15px}.mobile-compass-head small{color:#0d876f;font-weight:900;text-transform:uppercase;letter-spacing:.12em;font-size:10px}.mobile-compass-head h2{font-size:28px;line-height:1.04;letter-spacing:-.045em;margin:5px 0 7px}.mobile-compass-head p{font-size:13px;color:var(--soft);margin:0}
   .mobile-donut-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .mobile-spend-today{margin:0 0 12px;padding:17px 18px;border-radius:20px;background:linear-gradient(135deg,#0d876f,#096654);color:#fff;box-shadow:0 14px 34px rgba(13,135,111,.24)}
+  .mobile-spend-today small,.mobile-spend-today strong,.mobile-spend-today p{display:block}.mobile-spend-today small{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#d7fff4}.mobile-spend-today strong{font-size:27px;line-height:1.05;letter-spacing:-.04em;margin:6px 0}.mobile-spend-today p{font-size:11px;line-height:1.4;margin:0;color:#e4fff8}
   .mobile-donut-card{min-width:0;margin:0;padding:14px 10px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(23,40,32,.07)}
   .mobile-donut{width:min(27vw,104px);aspect-ratio:1;margin:0 auto 10px;border-radius:50%;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.03)}
   .mobile-donut:after{content:"";position:absolute;inset:24%;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(23,40,32,.04)}
