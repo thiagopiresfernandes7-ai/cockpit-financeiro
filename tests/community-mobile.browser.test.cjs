@@ -116,6 +116,20 @@ const server = http.createServer((req, res) => {
     const composerBox = await desktop.locator('#communityComposerScreen').boundingBox();
     assert.ok(composerBox.width <= 680 && composerBox.height <= 780);
     await desktop.close();
+    const desktopStrava = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const desktopErrors = [];
+    desktopStrava.on('pageerror', error => desktopErrors.push(error.message));
+    await desktopStrava.goto(`http://127.0.0.1:${server.address().port}/tests/community-mobile-harness.html`, { waitUntil: 'networkidle' });
+    await desktopStrava.locator('.desktop-nav [data-view="community"]').evaluate(button => button.click());
+    await desktopStrava.waitForTimeout(500);
+    assert.equal(await desktopStrava.locator('.community-strava-layout').isVisible(), true);
+    assert.equal(await desktopStrava.locator('.community-profile-rail').isVisible(), true);
+    assert.equal(await desktopStrava.locator('.community-progress-rail').isVisible(), true);
+    assert.equal(await desktopStrava.locator('.community-activity-summary').count(), 1);
+    assert.equal(await desktopStrava.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth), true);
+    assert.deepEqual(desktopErrors, []);
+    await desktopStrava.close();
+
     const game = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const gameErrors = [];
     game.on('pageerror', error => gameErrors.push(error.message));

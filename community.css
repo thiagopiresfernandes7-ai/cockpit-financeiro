@@ -119,6 +119,59 @@ body.community-mode .content{padding-bottom:calc(84px + env(safe-area-inset-bott
  .community-bottom-sheet .community-sheet-panel{left:50%;right:auto;width:min(560px,calc(100vw - 40px));transform:translateX(-50%);border-radius:22px 22px 0 0}
 }
 @media(prefers-reduced-motion:reduce){.community-mobile-layer *,.community-full-screen,.community-mobile-toast{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Feed de atividades: hierarquia social inspirada em apps de jornada e progresso. */
+.community-mobile-layer{--community-activity:#c64200;--community-activity-soft:#fff0e8;max-width:1180px;background:transparent}
+.community-mobile-layer,.community-mobile-layer *{box-sizing:border-box}
+html[data-theme="dark"] .community-mobile-layer{--community-activity:#ff7a38;--community-activity-soft:#352116}
+.community-feed-heading span{display:block;margin-bottom:2px;color:var(--community-activity);font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+.community-feed-heading h1{font-size:25px}
+.community-strava-layout{display:grid;grid-template-columns:220px minmax(0,620px) 250px;align-items:start;justify-content:center;gap:20px;padding-top:20px}
+.community-feed-column{min-width:0}
+.community-profile-rail,.community-progress-rail section{overflow:hidden;border:1px solid var(--community-border);border-radius:6px;background:var(--community-surface);box-shadow:0 1px 2px rgba(20,35,29,.05)}
+.community-profile-rail{text-align:center;padding-bottom:16px}
+.community-profile-cover{width:100%;height:76px;margin:0 0 30px;border:0;background:linear-gradient(135deg,#183f35,#0b7965 56%,#8bd9c4);position:relative}
+.community-profile-cover .community-avatar{position:absolute;left:50%;bottom:-26px;width:58px!important;height:58px!important;transform:translateX(-50%);border:3px solid var(--community-surface);box-shadow:0 2px 8px rgba(0,0,0,.16)}
+.community-profile-rail h2{margin:0;padding:0 14px;color:var(--community-text);font-size:18px;line-height:1.2}
+.community-profile-rail>p{margin:4px 0 14px;color:var(--community-muted);font-size:12px}
+.community-rail-stats{display:grid;grid-template-columns:1fr 1fr;border-block:1px solid var(--community-border)}
+.community-rail-stats button{display:grid;gap:2px;min-height:65px;padding:10px;border:0;background:transparent;color:var(--community-text)}
+.community-rail-stats button+button{border-left:1px solid var(--community-border)}
+.community-rail-stats b{font-size:18px}.community-rail-stats span{color:var(--community-muted);font-size:11px}
+.community-rail-link{margin-top:14px;border:0;background:transparent;color:var(--community-activity);font-weight:750}
+.community-progress-rail{display:grid;gap:14px}
+.community-progress-rail section{padding:18px}
+.community-rail-eyebrow{color:var(--community-muted);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.community-progress-rail h2{margin:6px 0 14px;color:var(--community-text);font-size:17px}
+.community-progress-rail p{color:var(--community-secondary);font-size:12px;line-height:1.45}
+.community-progress-rail button{width:100%;min-height:44px;padding:10px 0;border:0;border-top:1px solid var(--community-border);background:transparent;color:var(--community-text);text-align:left;font-weight:650}
+.community-week-ring{width:92px;height:92px;margin:6px auto 14px;display:grid;place-content:center;border-radius:50%;text-align:center;background:radial-gradient(circle,var(--community-surface) 59%,transparent 61%),conic-gradient(var(--community-activity) 0 28%,var(--community-disabled-bg) 28%)}
+.community-week-ring b{font-size:25px;line-height:1}.community-week-ring span{color:var(--community-muted);font-size:10px;text-transform:uppercase}
+.community-compact-composer{border:1px solid var(--community-border);border-radius:6px;background:var(--community-surface);padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(20,35,29,.05)}
+.community-compact-composer>span:nth-child(2){display:grid;gap:2px}.community-compact-composer strong{color:var(--community-text);font-size:14px}.community-compact-composer small{color:var(--community-muted);font-size:11px}
+.community-compact-composer>b{border:0;border-radius:4px;background:var(--community-activity);color:#fff}
+.community-mobile-layer .community-post{grid-template-columns:50px minmax(0,1fr);margin-bottom:12px!important;padding:18px 18px 12px;border:1px solid var(--community-border);border-radius:6px;background:var(--community-surface)!important;box-shadow:0 1px 2px rgba(20,35,29,.05)!important}
+.community-mobile-layer .community-name{font-size:15px}.community-mobile-layer .community-body{font-size:16px;font-weight:520;margin-top:12px}
+.community-mobile-layer .community-image{grid-column:1/-1;width:calc(100% + 36px);max-width:none;margin:4px -18px 0;border-width:1px 0;border-radius:0;max-height:620px}
+.community-activity-summary{grid-column:1/-1;grid-row:4;display:grid;grid-template-columns:1.25fr 1fr .7fr;gap:8px;padding:15px 0 13px;border-bottom:1px solid var(--community-border)}
+.community-activity-summary div{display:grid;gap:4px;min-width:0}.community-activity-summary span{color:var(--community-muted);font-size:9px;font-weight:750;letter-spacing:.08em}.community-activity-summary b{overflow:hidden;color:var(--community-text);font-size:14px;text-overflow:ellipsis;white-space:nowrap}
+.community-mobile-layer .community-actions{grid-column:1/-1;grid-row:5;margin:0;padding-top:4px}
+.community-mobile-layer .community-comments{grid-row:6}
+.community-mobile-layer .community-actions button:first-child.active{color:var(--community-activity);background:var(--community-activity-soft)}
+.community-mobile-layer .community-actions button:first-child:hover{color:var(--community-activity);background:var(--community-activity-soft)}
+.community-mobile-layer .community-badge{background:var(--community-activity-soft);color:var(--community-activity)}
+
+@media(max-width:1100px){.community-strava-layout{grid-template-columns:minmax(0,650px) 240px}.community-profile-rail{display:none}}
+@media(max-width:820px){
+ .community-strava-layout{display:block;padding-top:0}.community-progress-rail{display:none}
+ .community-mobile-layer{max-width:none}.community-feed-heading span{display:none}.community-feed-heading h1{font-size:23px}
+ .community-mobile-layer .community-post{grid-template-columns:44px minmax(0,1fr);margin:8px 0!important;padding:14px 12px 8px;border-radius:5px}
+ .community-mobile-layer .community-image{width:calc(100% + 24px);max-height:min(62vh,520px);margin-inline:-12px;object-fit:cover}
+ .community-compact-composer{margin:8px 0;padding:12px;border-radius:5px}
+ .community-compact-composer small{display:none}.community-activity-summary{grid-template-columns:1.2fr 1fr .65fr}
+ .community-activity-summary b{font-size:12px}.community-mobile-layer .community-actions{justify-content:flex-start}
+ .community-mobile-layer .community-actions .community-save-action{margin-left:auto}
+}
 .community-compose-field{display:grid;gap:6px;margin-top:14px;color:var(--community-muted);font-size:13px;font-weight:600}
 .community-compose-field input,.community-compose-field select{min-height:46px;padding:10px 12px;border:1px solid var(--community-border);border-radius:12px;background:var(--community-surface);color:var(--community-text);font:inherit}
 .community-compose-field input:focus-visible,.community-compose-field select:focus-visible{outline:3px solid color-mix(in srgb,var(--community-primary) 28%,transparent);outline-offset:2px}

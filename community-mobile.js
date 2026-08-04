@@ -61,10 +61,11 @@ function buildLayer(){
  var legacyShell=section.querySelector('.community-shell'),feed=byId('communityFeed');
  legacyShell.classList.add('community-legacy-shell');
  var layer=document.createElement('div');layer.id='communityMobileLayer';layer.className='community-mobile-layer';
- layer.innerHTML='<header class="community-mobile-header"><h1>Comunidade</h1><div><button data-community-mobile="search" aria-label="Pesquisar">'+icon('search')+'</button><button data-community-mobile="notifications" aria-label="Notificações">'+icon('bell')+'</button><button data-community-mobile="profile" class="community-mini-avatar" aria-label="Abrir meu perfil">N</button></div></header>'+
+ layer.innerHTML='<header class="community-mobile-header"><div class="community-feed-heading"><span>Comunidade Norteia</span><h1>Feed</h1></div><div><button data-community-mobile="search" aria-label="Pesquisar">'+icon('search')+'</button><button data-community-mobile="notifications" aria-label="Notificações">'+icon('bell')+'</button><button data-community-mobile="profile" class="community-mini-avatar" aria-label="Abrir meu perfil">N</button></div></header>'+
  '<nav class="community-primary-tabs" aria-label="Feed da Comunidade"><button class="active" data-community-tab="for_you">Para você</button><button data-community-tab="following">Seguindo</button><button data-community-mobile="achievements">Conquistas</button></nav>'+
- '<button class="community-compact-composer" data-community-mobile="compose"><span class="community-avatar">N</span><span>Compartilhe algo sobre sua jornada financeira…</span><b>Publicar</b></button>'+
- '<div id="communityMobileFeed"></div><p class="community-mobile-disclaimer">Conteúdo educativo. Não constitui recomendação de investimento.</p>';
+ '<div class="community-strava-layout"><aside class="community-profile-rail"><button class="community-profile-cover" data-community-mobile="profile"><span class="community-avatar">N</span></button><h2 id="communityRailName">Sua jornada</h2><p id="communityRailUsername">@pessoa</p><div class="community-rail-stats"><button data-community-mobile="profile"><b id="communityRailFollowing">0</b><span>Seguindo</span></button><button data-community-mobile="profile"><b id="communityRailFollowers">0</b><span>Seguidores</span></button></div><button class="community-rail-link" data-community-mobile="profile">Ver perfil completo</button></aside>'+
+ '<main class="community-feed-column"><button class="community-compact-composer" data-community-mobile="compose"><span class="community-avatar">N</span><span><strong>Compartilhe uma atividade financeira</strong><small>Uma conquista, meta ou aprendizado da sua jornada</small></span><b>Publicar</b></button><div id="communityMobileFeed"></div><p class="community-mobile-disclaimer">Conteúdo educativo. Não constitui recomendação de investimento.</p></main>'+
+ '<aside class="community-progress-rail"><section><span class="community-rail-eyebrow">Seu progresso</span><h2>Semana financeira</h2><div class="community-week-ring"><b id="communityWeekProgress">0</b><span>ações</span></div><p>Registre, revise e compartilhe pequenos avanços.</p></section><section><span class="community-rail-eyebrow">Destaques</span><button data-community-mobile="achievements">🏆 Ver suas conquistas</button><button data-community-tab="following">👥 Atividades de quem você segue</button></section></aside></div>';
  section.insertBefore(layer,legacyShell);
  byId('communityMobileFeed').appendChild(feed);
  section.insertAdjacentHTML('beforeend',
@@ -122,6 +123,12 @@ function updateProfile(){
  document.querySelectorAll('#communityMobileLayer .community-avatar,.community-mini-avatar,#communityComposerScreen .community-avatar').forEach(function(element){element.innerHTML=avatarMarkup(profile)});
  byId('communityComposeName').textContent=profile.display_name||'Você';
  byId('communityComposeUsername').textContent='@'+friendlyUsername(profile);
+ if(byId('communityRailName'))byId('communityRailName').textContent=profile.display_name||'Sua jornada';
+ if(byId('communityRailUsername'))byId('communityRailUsername').textContent='@'+friendlyUsername(profile);
+ if(byId('communityRailFollowers'))byId('communityRailFollowers').textContent=Number(profile.follower_count||0);
+ if(byId('communityRailFollowing'))byId('communityRailFollowing').textContent=Number(profile.following_count||0);
+ var financial=window.norteiaApp&&window.norteiaApp.getState&&window.norteiaApp.getState(),weekActions=financial?(financial.dailyReviews||[]).filter(function(item){return Date.now()-Date.parse(item.date||item.createdAt||0)<604800000}).length:0;
+ if(byId('communityWeekProgress'))byId('communityWeekProgress').textContent=weekActions;
 }
 async function loadProfile(){
  var user=window.cockpitUser;if(!user||!window.cockpitSupabase)return;
@@ -217,6 +224,7 @@ function transformPost(article){
   if(menu&&menu.dataset.action==='post-menu'&&!actions.querySelector('[data-community-delete]'))actions.insertAdjacentHTML('beforeend','<button class="community-delete-action" data-community-delete aria-label="Excluir publicação">'+icon('trash')+'<span class="community-action-label">Excluir</span></button>');
   if(!actions.querySelector('[data-community-share]'))actions.insertAdjacentHTML('beforeend','<button class="community-share-action" data-community-share aria-label="Compartilhar publicação">'+icon('share')+'<span class="community-action-label">Compartilhar</span></button>');
   buttons.forEach(function(button){if(!button.getAttribute('aria-label'))button.setAttribute('aria-label',button.dataset.action==='like'?'Curtir':button.dataset.action==='comment'?'Comentar':button.dataset.action==='save'?'Salvar':'Republicar')});
+  if(!article.querySelector('.community-activity-summary')){var badge=article.querySelector('.community-badge'),category=cleanLabel(badge&&badge.textContent||'Jornada'),counts=Array.from(buttons).slice(0,4).reduce(function(total,button){return total+Number((button.textContent.match(/\d+/)||['0'])[0])},0),summary=document.createElement('div');summary.className='community-activity-summary';summary.innerHTML='<div><span>ATIVIDADE</span><b>Progresso financeiro</b></div><div><span>TEMA</span><b>'+esc(category)+'</b></div><div><span>INTERAÇÕES</span><b>'+counts+'</b></div>';actions.parentNode.insertBefore(summary,actions)}
  }
  if(location.hash==='#'+article.id)setTimeout(function(){article.scrollIntoView({block:'center'});article.classList.add('community-shared-post')},80);
 }
