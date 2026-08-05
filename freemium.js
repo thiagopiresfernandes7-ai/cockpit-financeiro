@@ -34,7 +34,7 @@ function normalizeSubscription(input){
   return result;
 }
 function hasPremiumAccess(financialState){
-  if(typeof appAccess!=="undefined"&&appAccess&&appAccess.owner===true)return true;
+  if(typeof appAccess!=="undefined"&&appAccess&&(appAccess.owner===true||appAccess.lifetime===true))return true;
   var sub=normalizeSubscription(financialState&&financialState.subscription);
   if(sub.plan!=="premium")return false;
   if(!["active","trialing"].includes(sub.status))return false;
@@ -80,8 +80,8 @@ function syncEntitlement(){
   if(typeof state==="undefined"||!state)return;
   state.subscription=normalizeSubscription(state.subscription);
   var ent=typeof appAccess!=="undefined"&&appAccess&&appAccess.entitlement?appAccess.entitlement:{};
-  if(typeof appAccess!=="undefined"&&appAccess&&appAccess.owner===true){
-    state.subscription=normalizeSubscription(Object.assign({},state.subscription,{plan:"premium",status:"active",provider:"owner",providerUserId:(typeof user!=="undefined"&&user&&user.id)||state.subscription.providerUserId,startedAt:state.subscription.startedAt||new Date().toISOString(),expiresAt:""}));
+  if(typeof appAccess!=="undefined"&&appAccess&&(appAccess.owner===true||appAccess.lifetime===true)){
+    state.subscription=normalizeSubscription(Object.assign({},state.subscription,{plan:"premium",status:"active",provider:appAccess.owner===true?"owner":"lifetime",providerUserId:(typeof user!=="undefined"&&user&&user.id)||state.subscription.providerUserId,startedAt:state.subscription.startedAt||new Date().toISOString(),expiresAt:""}));
   }
   if(ent&&ent.has_access){
     state.subscription=normalizeSubscription(Object.assign({},state.subscription,{plan:"premium",status:ent.status==="trialing"?"trialing":"active",provider:ent.provider||"hotmart",providerSubscriptionId:ent.provider_subscription_id||state.subscription.providerSubscriptionId,startedAt:ent.started_at||state.subscription.startedAt,expiresAt:ent.expires_at||state.subscription.expiresAt,renewedAt:ent.renewed_at||state.subscription.renewedAt,lastWebhookAt:ent.last_webhook_at||state.subscription.lastWebhookAt}));
@@ -91,6 +91,7 @@ function syncEntitlement(){
 function planMessage(){
   var sub=normalizeSubscription(state&&state.subscription);
   if(typeof appAccess!=="undefined"&&appAccess&&appAccess.owner===true)return"Acesso integral de proprietário e desenvolvedor.";
+  if(typeof appAccess!=="undefined"&&appAccess&&appAccess.lifetime===true)return"Norteia Premium vitalício.";
   if(hasPremiumAccess(state))return"Norteia Premium ativo"+(sub.expiresAt?" até "+formatDate(sub.expiresAt):".");
   if(sub.status==="cancelled")return"Seu Premium foi cancelado"+(sub.expiresAt?" e ficará disponível até "+formatDate(sub.expiresAt):".");
   if(sub.status==="expired")return"Seu Premium expirou. Seus dados permanecem preservados.";
