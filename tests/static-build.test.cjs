@@ -16,7 +16,7 @@ assert.ok(html.includes('norteia-completion.js'),'módulos de conclusão não ca
 assert.ok(!html.includes('Cockpit'),'a marca antiga ainda aparece na interface principal');
 assert.ok(html.includes("localStorage.getItem('norteia_last_user')")&&html.includes("localStorage.removeItem('norteia_last_user')"),'sessão local offline incompleta');
 const a11y=fs.readFileSync('norteia-v2.js','utf8'),design=fs.readFileSync('norteia-v2.css','utf8');
-for(const view of ['dashboard','analysis','register','wallet','debts','dividends','simulator','plan','projection','decisions','weekly','community','profile','categories','settings','help'])assert.ok(a11y.includes("['"+view+"',"),'função ausente da barra lateral desktop: '+view);
+assert.ok(a11y.includes("'dashboard','more','community','settings'"),'navegação principal não foi consolidada');
 for(const target of ['register','decisions','analysis','projection','plan','wallet','debts','dividends','simulator','weekly'])assert.ok(a11y.includes('data-more-target="'+target+'"'),'função não integrada em Recursos: '+target);
 assert.ok(a11y.includes('dashboardExpandBtn'),'controle de detalhes da tela Hoje ausente');
 assert.ok(html.includes('mobileExpenseDonut')&&html.includes('mobileInvestmentDonut'),'gráficos essenciais mobile ausentes');
