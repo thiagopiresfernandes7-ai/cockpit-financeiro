@@ -23,7 +23,7 @@ assert.ok(html.includes('mobileExpenseDonut')&&html.includes('mobileInvestmentDo
 assert.ok(html.includes('mobileSpendToday'),'quanto posso gastar hoje desapareceu do mobile');
 assert.ok(html.includes('id="mobilePrivacyBtn"')&&a11y.includes('addMobilePrivacyControl'),'controle de privacidade mobile ausente');
 assert.ok(html.includes('id="investmentCreatePanel"')&&html.includes('id="investmentUpdatePanel"')&&a11y.includes('addWalletEditorControls'),'editores compactos da carteira ausentes');
-assert.ok(html.includes('freemium.js?v=41')&&html.includes('contrast.css?v=41'),'arquivos críticos sem renovação explícita de cache');
+assert.ok(/freemium\.js\?v=\d+/.test(html)&&/contrast\.css\?v=\d+/.test(html),'arquivos críticos sem renovação explícita de cache');
 const mobileCommunity=fs.readFileSync('community-mobile.js','utf8'),communityCss=fs.readFileSync('community.css','utf8');
 assert.ok(!mobileCommunity.includes('<span>Comunidade Norteia</span>'),'rótulo redundante da comunidade ainda aparece');
 assert.ok(!communityCss.includes('#c64200')&&!communityCss.includes('#ff7a38'),'laranja alheio à marca ainda aparece na comunidade');

@@ -122,13 +122,12 @@ function watch(){
   addAccessibilityGuards();
   addMobilePrivacyControl();
   addWalletEditorControls();
-  var observer=new MutationObserver(function(records){
-    if(records.some(function(record){return record.type==='childList'||record.type==='characterData'}))cleanCopy();
+  var scheduled=false;
+  window.addEventListener('norteia:rendered',function(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(function(){scheduled=false;cleanCopy()});
   });
-  var nav=document.getElementById('nav');
-  if(nav)observer.observe(nav,{subtree:true,childList:true,characterData:true});
-  var content=document.querySelector('.content');
-  if(content)observer.observe(content,{subtree:true,childList:true,characterData:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
 })();
