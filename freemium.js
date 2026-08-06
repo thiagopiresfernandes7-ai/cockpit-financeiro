@@ -145,10 +145,7 @@ function markPremiumPreviews(){
 }
 function registerServiceWorker(){
  if(!("serviceWorker"in navigator)||location.protocol!=="https:")return;
- navigator.serviceWorker.register("./service-worker.js",{updateViaCache:"none"}).then(function(registration){
-  registration.update().catch(function(){});
-  navigator.serviceWorker.addEventListener("controllerchange",function(){if(sessionStorage.getItem("norteia_sw_reloaded")==="1")return;sessionStorage.setItem("norteia_sw_reloaded","1");location.reload()},{once:true});
- }).catch(function(err){console.warn("Service worker indisponível:",err)});
+ navigator.serviceWorker.register("./service-worker.js",{updateViaCache:"none"}).catch(function(err){console.warn("Service worker indisponível:",err)});
 }
 ensureModal();installGates();markPremiumPreviews();registerServiceWorker();
 window.addEventListener('norteia:rendered',renderPlanPanel);
