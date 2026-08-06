@@ -20,12 +20,11 @@ function detectPlatform(){
   return {isWeb:true,isPwa:standalone,isAndroid:/Android/i.test(ua),isIOS:/iPhone|iPad|iPod/i.test(ua),isNative:false};
 }
 var platform=detectPlatform();
-var APP_ENV={platform:platform.isPwa?"pwa":"web",paymentProvider:"free"};
+var APP_ENV={platform:platform.isPwa?"pwa":"web",paymentProvider:"hotmart"};
 var PaymentProviders={
   hotmart:{startCheckout:function(){window.open(HOTMART_CHECKOUT_URL,"_blank","noopener,noreferrer")}},
   googlePlay:{startCheckout:function(){return false}},
-  appStore:{startCheckout:function(){return false}},
-  free:{startCheckout:function(){return true}}
+  appStore:{startCheckout:function(){return false}}
 };
 function blankSubscription(){return{plan:"free",status:"inactive",provider:"none",providerUserId:"",providerSubscriptionId:"",startedAt:"",expiresAt:"",renewedAt:"",cancelledAt:"",lastWebhookAt:""}}
 function currentAccess(){return typeof window.getNorteiaAccess==="function"?(window.getNorteiaAccess()||{}):{}}
@@ -40,7 +39,6 @@ function normalizeSubscription(input){
 }
 function hasPremiumAccess(financialState){
   var access=currentAccess();if(access.owner===true||access.lifetime===true)return true;
-  if(APP_ENV.paymentProvider==="free")return true;
   var sub=normalizeSubscription(financialState&&financialState.subscription);
   if(sub.plan!=="premium")return false;
   if(!["active","trialing"].includes(sub.status))return false;
@@ -99,7 +97,6 @@ function planMessage(){
   var access=currentAccess();
   if(access.owner===true)return"Acesso integral de proprietário e desenvolvedor.";
   if(access.lifetime===true)return"Norteia Premium vitalício.";
-  if(APP_ENV.paymentProvider==="free")return"Todas as funções estão liberadas gratuitamente.";
   if(hasPremiumAccess(state))return"Norteia Premium ativo"+(sub.expiresAt?" até "+formatDate(sub.expiresAt):".");
   if(sub.status==="cancelled")return"Seu Premium foi cancelado"+(sub.expiresAt?" e ficará disponível até "+formatDate(sub.expiresAt):".");
   if(sub.status==="expired")return"Seu Premium expirou. Seus dados permanecem preservados.";
@@ -112,8 +109,8 @@ function renderPlanPanel(){
   var panel=document.getElementById("subscriptionPlanPanel");
   if(!panel){panel=document.createElement("div");panel.id="subscriptionPlanPanel";panel.className="panel";panel.style.marginTop="14px";var head=settings.querySelector(".page-head");if(head)head.insertAdjacentElement("afterend",panel);else settings.prepend(panel)}
   var sub=normalizeSubscription(state.subscription),premium=hasPremiumAccess(state);
-  var access=currentAccess(),badge=access.owner||access.lifetime?"PREMIUM VITALÍCIO":"ACESSO GRATUITO";
-  panel.innerHTML='<div class="plan-panel-grid"><div><span class="premium-badge">'+badge+'</span><h2 style="margin:8px 0 4px">Plano</h2><p>'+planMessage()+'</p><div class="label">Todas as telas, análises, exportações e recursos avançados estão disponíveis.</div></div><div class="split"><button class="btn" id="planRefreshBtn" type="button">Atualizar status</button></div></div>';
+  panel.innerHTML='<div class="plan-panel-grid"><div><span class="premium-badge">'+(premium?"PREMIUM":"PLANO GRATUITO")+'</span><h2 style="margin:8px 0 4px">Plano</h2><p>'+planMessage()+'</p><div class="label">Status: '+sub.status+' • Provedor: '+sub.provider+' • Início: '+formatDate(sub.startedAt)+' • Validade: '+formatDate(sub.expiresAt)+'</div></div><div class="split"><button class="btn primary" id="planSubscribeBtn" type="button">'+(premium?"Ver benefícios":"Assinar Premium")+'</button><button class="btn" id="planRefreshBtn" type="button">Atualizar status</button></div></div>';
+  document.getElementById("planSubscribeBtn").onclick=function(){openPremiumModal("advancedAnalysis")};
   document.getElementById("planRefreshBtn").onclick=async function(){this.disabled=true;try{if(typeof verifyNorteiaAccess==="function")await verifyNorteiaAccess();syncEntitlement();renderPlanPanel();if(typeof scheduleSave==="function")scheduleSave();if(typeof toast==="function")toast("Status da assinatura atualizado.")}finally{this.disabled=false}};
 }
 function limitReached(kind,count){
@@ -139,7 +136,6 @@ function installGates(){
   },true);
 }
 function markPremiumPreviews(){
-  if(APP_ENV.paymentProvider==="free"){document.querySelectorAll('.premium-lock-note').forEach(function(x){x.remove()});return}
   var map={weekly:"weeklyPlan",analysis:"advancedAnalysis",projection:"futureCashflowExtended",decisions:"decisionLab",dividends:"dividends",simulator:"investmentsAdvanced"};
   Object.keys(map).forEach(function(view){document.querySelectorAll('[data-view="'+view+'"],[data-more-target="'+view+'"],[data-menu-view="'+view+'"]').forEach(function(btn){if(!btn.querySelector(".premium-lock-note"))btn.insertAdjacentHTML("beforeend",' <span class="premium-lock-note">Premium</span>')})});
 }

@@ -17,7 +17,6 @@ const {chromium}=require('playwright');
   await page.locator('body.app-mode').waitFor({timeout:10000});
   assert.equal(await page.evaluate(()=>window.hasPremiumAccess({})),true,'usuário vitalício não recebeu acesso Premium no cliente');
   assert.match(await page.locator('#subscriptionPlanPanel').innerText(),/Premium vitalício/i,'o plano vitalício não apareceu na conta');
-  assert.equal(await page.locator('.premium-lock-note').count(),0,'rótulos de bloqueio apareceram apesar do acesso global');
   await page.locator('#mobileMoneyCompass').waitFor({state:'visible'});
   assert.equal(await page.locator('#tutorial').isVisible(),true);
   await page.locator('#startNorteiaDemo').click();

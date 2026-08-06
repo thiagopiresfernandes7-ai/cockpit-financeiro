@@ -10,7 +10,6 @@ assert.ok(html.includes("rpc('claim_my_entitlement')"),'consulta de entitlement 
 assert.ok(premium.includes('https://pay.hotmart.com/'),'checkout Hotmart inválido');
 assert.ok(premium.includes('verifyNorteiaAccess'),'atualização de acesso aponta para função antiga');
 assert.ok(premium.includes('installGates()')&&premium.includes('hasPremiumAccess'),'gates freemium ausentes');
-assert.ok(premium.includes('paymentProvider:"free"')&&premium.includes('Todas as funções estão liberadas gratuitamente.'),'liberação global concorrente não foi preservada');
 assert.ok(premium.includes('access.owner===true'),'acesso integral do proprietário ausente');
 assert.ok(html.includes("sb.rpc('app_is_owner')"),'verificação segura de proprietário ausente');
 assert.ok(html.includes("sb.rpc('app_has_lifetime_premium')"),'verificação de Premium vitalício ausente');
