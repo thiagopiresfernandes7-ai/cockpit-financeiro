@@ -27,10 +27,6 @@ var PaymentProviders={
   appStore:{startCheckout:function(){return false}}
 };
 function blankSubscription(){return{plan:"free",status:"inactive",provider:"none",providerUserId:"",providerSubscriptionId:"",startedAt:"",expiresAt:"",renewedAt:"",cancelledAt:"",lastWebhookAt:""}}
-function currentAccess(){return typeof window.getNorteiaAccess==="function"?(window.getNorteiaAccess()||{}):{}}
-function currentState(){return typeof window.getNorteiaState==="function"?window.getNorteiaState():null}
-function currentUser(){return typeof window.getNorteiaUser==="function"?window.getNorteiaUser():null}
-function editing(kind){return typeof window.getNorteiaEditing==="function"?window.getNorteiaEditing(kind):null}
 function normalizeSubscription(input){
   var result=Object.assign(blankSubscription(),input||{});
   if(!["free","premium"].includes(result.plan))result.plan="free";
@@ -38,7 +34,7 @@ function normalizeSubscription(input){
   return result;
 }
 function hasPremiumAccess(financialState){
-  var access=currentAccess();if(access.owner===true||access.lifetime===true)return true;
+  if(typeof appAccess!=="undefined"&&appAccess&&(appAccess.owner===true||appAccess.lifetime===true))return true;
   var sub=normalizeSubscription(financialState&&financialState.subscription);
   if(sub.plan!=="premium")return false;
   if(!["active","trialing"].includes(sub.status))return false;
@@ -48,7 +44,7 @@ function hasPremiumAccess(financialState){
 function canUseFeature(featureId){
   var feature=FEATURES[featureId];
   if(!feature||feature.plan==="free")return true;
-  return hasPremiumAccess(currentState());
+  return hasPremiumAccess(window.state||state);
 }
 function formatDate(value){
   if(!value)return"Não informada";
@@ -81,11 +77,11 @@ function openPremiumModal(featureId,message){
 function closePremiumModal(){var modal=document.getElementById("premiumFeatureModal");if(modal){modal.classList.add("hidden");modal.setAttribute("aria-hidden","true")}}
 function requirePremium(featureId,callback){if(canUseFeature(featureId)){if(typeof callback==="function")callback();return true}openPremiumModal(featureId);return false}
 function syncEntitlement(){
-  var state=currentState();if(!state)return;
+  if(typeof state==="undefined"||!state)return;
   state.subscription=normalizeSubscription(state.subscription);
-  var access=currentAccess(),ent=access.entitlement||{};
-  if(access.owner===true||access.lifetime===true){
-    var user=currentUser();state.subscription=normalizeSubscription(Object.assign({},state.subscription,{plan:"premium",status:"active",provider:access.owner===true?"owner":"lifetime",providerUserId:(user&&user.id)||state.subscription.providerUserId,startedAt:state.subscription.startedAt||new Date().toISOString(),expiresAt:""}));
+  var ent=typeof appAccess!=="undefined"&&appAccess&&appAccess.entitlement?appAccess.entitlement:{};
+  if(typeof appAccess!=="undefined"&&appAccess&&(appAccess.owner===true||appAccess.lifetime===true)){
+    state.subscription=normalizeSubscription(Object.assign({},state.subscription,{plan:"premium",status:"active",provider:appAccess.owner===true?"owner":"lifetime",providerUserId:(typeof user!=="undefined"&&user&&user.id)||state.subscription.providerUserId,startedAt:state.subscription.startedAt||new Date().toISOString(),expiresAt:""}));
   }
   if(ent&&ent.has_access){
     state.subscription=normalizeSubscription(Object.assign({},state.subscription,{plan:"premium",status:ent.status==="trialing"?"trialing":"active",provider:ent.provider||"hotmart",providerSubscriptionId:ent.provider_subscription_id||state.subscription.providerSubscriptionId,startedAt:ent.started_at||state.subscription.startedAt,expiresAt:ent.expires_at||state.subscription.expiresAt,renewedAt:ent.renewed_at||state.subscription.renewedAt,lastWebhookAt:ent.last_webhook_at||state.subscription.lastWebhookAt}));
@@ -93,17 +89,16 @@ function syncEntitlement(){
   if(state.subscription.expiresAt&&new Date(state.subscription.expiresAt)<new Date()&&state.subscription.status==="active")state.subscription.status="expired";
 }
 function planMessage(){
-  var state=currentState(),sub=normalizeSubscription(state&&state.subscription);
-  var access=currentAccess();
-  if(access.owner===true)return"Acesso integral de proprietário e desenvolvedor.";
-  if(access.lifetime===true)return"Norteia Premium vitalício.";
+  var sub=normalizeSubscription(state&&state.subscription);
+  if(typeof appAccess!=="undefined"&&appAccess&&appAccess.owner===true)return"Acesso integral de proprietário e desenvolvedor.";
+  if(typeof appAccess!=="undefined"&&appAccess&&appAccess.lifetime===true)return"Norteia Premium vitalício.";
   if(hasPremiumAccess(state))return"Norteia Premium ativo"+(sub.expiresAt?" até "+formatDate(sub.expiresAt):".");
   if(sub.status==="cancelled")return"Seu Premium foi cancelado"+(sub.expiresAt?" e ficará disponível até "+formatDate(sub.expiresAt):".");
   if(sub.status==="expired")return"Seu Premium expirou. Seus dados permanecem preservados.";
   return"Você está no plano gratuito.";
 }
 function renderPlanPanel(){
-  var state=currentState();if(!state)return;
+  if(typeof state==="undefined"||!state)return;
   syncEntitlement();
   var settings=document.getElementById("settings");if(!settings)return;
   var panel=document.getElementById("subscriptionPlanPanel");
@@ -114,7 +109,7 @@ function renderPlanPanel(){
   document.getElementById("planRefreshBtn").onclick=async function(){this.disabled=true;try{if(typeof verifyNorteiaAccess==="function")await verifyNorteiaAccess();syncEntitlement();renderPlanPanel();if(typeof scheduleSave==="function")scheduleSave();if(typeof toast==="function")toast("Status da assinatura atualizado.")}finally{this.disabled=false}};
 }
 function limitReached(kind,count){
-  if(hasPremiumAccess(currentState()))return false;
+  if(hasPremiumAccess(state))return false;
   var limit=FREE_LIMITS[kind];return Number(count||0)>=limit;
 }
 function installGates(){
@@ -129,9 +124,8 @@ function installGates(){
     if(target.id==="exportJsonBtn"||target.id==="importJsonBtn"){if(!canUseFeature("jsonBackup")){e.preventDefault();e.stopImmediatePropagation();openPremiumModal("jsonBackup");return}}
     if(target.id==="recalculateGoal"||target.id==="useComputedGoal"){if(!canUseFeature("smartGoal")){e.preventDefault();e.stopImmediatePropagation();openPremiumModal("smartGoal");return}}
     if(target.id==="registerAutoYields"||target.id==="saveDividend"){if(!canUseFeature("dividends")){e.preventDefault();e.stopImmediatePropagation();openPremiumModal("dividends");return}}
-    var state=currentState()||{};
-    if(target.id==="saveInv"&&!editing('investment')&&limitReached("investments",(state.investments||[]).length)){e.preventDefault();e.stopImmediatePropagation();openPremiumModal("investmentsAdvanced","Você já cadastrou 3 investimentos no plano gratuito. Seus dados continuam visíveis; o Premium libera novos ativos e análises avançadas.");return}
-    if(target.id==="saveDebt"&&!editing('debt')&&limitReached("debts",(state.debts||[]).length)){e.preventDefault();e.stopImmediatePropagation();openPremiumModal("debtsAdvanced","O plano gratuito permite acompanhar 1 dívida. Seus registros não serão apagados; o Premium libera novos financiamentos e projeções.");return}
+    if(target.id==="saveInv"&&!editingInvestmentId&&limitReached("investments",(state.investments||[]).length)){e.preventDefault();e.stopImmediatePropagation();openPremiumModal("investmentsAdvanced","Você já cadastrou 3 investimentos no plano gratuito. Seus dados continuam visíveis; o Premium libera novos ativos e análises avançadas.");return}
+    if(target.id==="saveDebt"&&!editingDebtId&&limitReached("debts",(state.debts||[]).length)){e.preventDefault();e.stopImmediatePropagation();openPremiumModal("debtsAdvanced","O plano gratuito permite acompanhar 1 dívida. Seus registros não serão apagados; o Premium libera novos financiamentos e projeções.");return}
     if(target.id==="saveBudget"&&limitReached("budgets",(state.budgets||[]).length)){e.preventDefault();e.stopImmediatePropagation();openPremiumModal("advancedAnalysis","O plano gratuito permite 5 orçamentos simples. O Premium libera planejamento ampliado.");return}
   },true);
 }
@@ -147,8 +141,8 @@ function registerServiceWorker(){
  }).catch(function(err){console.warn("Service worker indisponível:",err)});
 }
 ensureModal();installGates();markPremiumPreviews();registerServiceWorker();
-window.addEventListener('norteia:rendered',renderPlanPanel);
-renderPlanPanel();
+var originalRender=typeof render==="function"?render:null;
+if(originalRender){render=function(){var out=originalRender.apply(this,arguments);renderPlanPanel();return out}}
 window.HOTMART_CHECKOUT_URL=HOTMART_CHECKOUT_URL;
 window.FREE_LIMITS=FREE_LIMITS;
 window.FEATURES=FEATURES;
