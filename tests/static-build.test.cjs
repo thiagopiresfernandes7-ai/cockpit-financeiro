@@ -16,13 +16,14 @@ assert.ok(html.includes('norteia-completion.js'),'módulos de conclusão não ca
 assert.ok(!html.includes('Cockpit'),'a marca antiga ainda aparece na interface principal');
 assert.ok(html.includes("localStorage.getItem('norteia_last_user')")&&html.includes("localStorage.removeItem('norteia_last_user')"),'sessão local offline incompleta');
 const a11y=fs.readFileSync('norteia-v2.js','utf8'),design=fs.readFileSync('norteia-v2.css','utf8');
-assert.ok(a11y.includes("'dashboard','more','community','settings'"),'navegação principal não foi consolidada');
+for(const view of ['dashboard','analysis','register','wallet','debts','dividends','simulator','plan','projection','decisions','weekly','community','profile','categories','settings','help'])assert.ok(a11y.includes("['"+view+"',"),'função ausente da barra lateral desktop: '+view);
 for(const target of ['register','decisions','analysis','projection','plan','wallet','debts','dividends','simulator','weekly'])assert.ok(a11y.includes('data-more-target="'+target+'"'),'função não integrada em Recursos: '+target);
 assert.ok(a11y.includes('dashboardExpandBtn'),'controle de detalhes da tela Hoje ausente');
 assert.ok(html.includes('mobileExpenseDonut')&&html.includes('mobileInvestmentDonut'),'gráficos essenciais mobile ausentes');
 assert.ok(html.includes('mobileSpendToday'),'quanto posso gastar hoje desapareceu do mobile');
 assert.ok(html.includes('id="mobilePrivacyBtn"')&&a11y.includes('addMobilePrivacyControl'),'controle de privacidade mobile ausente');
 assert.ok(html.includes('id="investmentCreatePanel"')&&html.includes('id="investmentUpdatePanel"')&&a11y.includes('addWalletEditorControls'),'editores compactos da carteira ausentes');
+assert.ok(html.includes('freemium.js?v=41')&&html.includes('contrast.css?v=41'),'arquivos críticos sem renovação explícita de cache');
 const mobileCommunity=fs.readFileSync('community-mobile.js','utf8'),communityCss=fs.readFileSync('community.css','utf8');
 assert.ok(!mobileCommunity.includes('<span>Comunidade Norteia</span>'),'rótulo redundante da comunidade ainda aparece');
 assert.ok(!communityCss.includes('#c64200')&&!communityCss.includes('#ff7a38'),'laranja alheio à marca ainda aparece na comunidade');
