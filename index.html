@@ -13,7 +13,7 @@
 <link rel="icon" href="assets/brand/norteia-icon.svg?v=39" type="image/svg+xml" sizes="any"/>
 <link rel="alternate icon" href="icon-192.png?v=39" type="image/png" sizes="192x192"/>
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=39"/>
-<link rel="stylesheet" href="community.css"/>
+<link rel="stylesheet" href="community.css?v=41"/>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('norteia_theme')||'light'}catch(e){}</script>
 <title>Norteia | Seu dinheiro com direção</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -756,6 +756,10 @@ function cockpitCreateOfflineSupabase(){
 var sb=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):cockpitCreateOfflineSupabase();window.cockpitSupabase=sb;
 if(!sb.__offline&&sb.auth){var norteiaGetSession=sb.auth.getSession.bind(sb.auth),norteiaSignOut=sb.auth.signOut.bind(sb.auth);sb.auth.getSession=async function(){var result=await norteiaGetSession();var session=result&&result.data&&result.data.session;if(session&&session.user)localStorage.setItem('norteia_last_user',JSON.stringify({id:session.user.id,email:session.user.email,user_metadata:session.user.user_metadata||{}}));return result};sb.auth.signOut=async function(){localStorage.removeItem('norteia_last_user');return norteiaSignOut()}}
 var user=null,state=null,saveTimer=null,visibleMoney=true,editingInvestmentId=null,editingTxId=null,editingDebtId=null,editingCategoryId=null,editingFutureId=null,toastTimer=null,txFilter="all",txSearch="",selectedTxDetailId=null,appConfig={},appAccess={allowed:true,technical:false};
+window.getNorteiaAccess=function(){return appAccess};
+window.getNorteiaState=function(){return state};
+window.getNorteiaUser=function(){return user};
+window.getNorteiaEditing=function(kind){return kind==='investment'?editingInvestmentId:kind==='debt'?editingDebtId:null};
 function el(id){return document.getElementById(id)}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -1314,7 +1318,7 @@ function setupDecisionEvents(){if(!el('saveDecision'))return;['decisionAmount','
 
 function ensureComputedGoal(reason,force){if(!state||!state.profile)return null;var old=state.profile.computedGoal;if(!force&&old&&old.type&&old.title)return old;var goal=calculateComputedFinancialGoal(state);state.profile.computedGoal=goal;if(!state.profile.activeGoalSource)state.profile.activeGoalSource='computed';if(!state.profile.goal||state.profile.activeGoalSource==='computed')state.profile.goal=goal.title;state.profile.computedGoalReason=reason||'initial';return goal}
 function recalculateComputedGoal(reason){if(!state||!state.profile)return null;var goal=calculateComputedFinancialGoal(state);var old=state.profile.computedGoal||{};var changed=JSON.stringify({type:old.type,title:old.title,confidence:old.confidence,metrics:old.metrics})!==JSON.stringify({type:goal.type,title:goal.title,confidence:goal.confidence,metrics:goal.metrics});state.profile.computedGoal=goal;if(!state.profile.activeGoalSource)state.profile.activeGoalSource='computed';if(!state.profile.goal||state.profile.activeGoalSource==='computed')state.profile.goal=goal.title;state.profile.computedGoalReason=reason||'manual';if(changed)scheduleSave();return goal}
-function render(){if(!state)return;cleanupInvestmentAccounting();var ym=selectedMonth();if(el('monthPicker'))el('monthPicker').value=ym;if(el('monthHint'))el('monthHint').textContent='Visualizando '+monthName(ym);var s=summary(ym);var goal=ensureComputedGoal('render',false);setText('netWorth',money(s.net));setText('netWorthStatus','Saldo + carteira - dívidas');setText('cashBalance',money(s.cash));setText('monthExpense',money(s.expense));setText('suggestedSave',money(s.aporte));renderTodayGuidance(ym,s);renderMobileCompass(ym,s);renderActions(s,ym);renderFlow(s);renderCategories(s.tx);renderDashboardExtras(ym,s);renderComputedGoalUI(goal);renderTxList(ym);renderBudgets(s.tx);renderForecast(ym,s);renderFutureCashflow();renderInvestments(ym);renderDebts(ym);renderDividends(ym);renderCategorySelects();renderCategoryManager();renderAnalysis(ym);renderWeeklyPlan();renderWeeklyStandalone();renderInvestmentSimulator(ym);renderFreedom(ym);renderProfile();renderInvestorProfile();renderAdvancedSettings();renderNotifications();renderPurchaseDecisions();updateUserIdentity()}
+function render(){if(!state)return;cleanupInvestmentAccounting();var ym=selectedMonth();if(el('monthPicker'))el('monthPicker').value=ym;if(el('monthHint'))el('monthHint').textContent='Visualizando '+monthName(ym);var s=summary(ym);var goal=ensureComputedGoal('render',false);setText('netWorth',money(s.net));setText('netWorthStatus','Saldo + carteira - dívidas');setText('cashBalance',money(s.cash));setText('monthExpense',money(s.expense));setText('suggestedSave',money(s.aporte));renderTodayGuidance(ym,s);renderMobileCompass(ym,s);renderActions(s,ym);renderFlow(s);renderCategories(s.tx);renderDashboardExtras(ym,s);renderComputedGoalUI(goal);renderTxList(ym);renderBudgets(s.tx);renderForecast(ym,s);renderFutureCashflow();renderInvestments(ym);renderDebts(ym);renderDividends(ym);renderCategorySelects();renderCategoryManager();renderAnalysis(ym);renderWeeklyPlan();renderWeeklyStandalone();renderInvestmentSimulator(ym);renderFreedom(ym);renderProfile();renderInvestorProfile();renderAdvancedSettings();renderNotifications();renderPurchaseDecisions();updateUserIdentity();window.dispatchEvent(new CustomEvent('norteia:rendered'))}
 function mobileConic(parts){parts=(parts||[]).filter(function(p){return Number(p.value||0)>0}).sort(function(a,b){return b.value-a.value}).slice(0,5);var total=parts.reduce(function(sum,p){return sum+Number(p.value||0)},0),colors=['#0d876f','#45bea3','#84d6c2','#e6ad61','#ef7f83'];if(!total)return{background:'conic-gradient(#e5ece8 0 100%)',total:0,top:''};var cursor=0,segments=parts.map(function(p,index){var start=cursor,end=cursor+Number(p.value||0)/total*100;cursor=end;return colors[index]+' '+start.toFixed(2)+'% '+end.toFixed(2)+'%'});return{background:'conic-gradient('+segments.join(',')+')',total:total,top:parts[0]&&parts[0].label||''}}
 function renderMobileCompass(ym,s){if(!el('mobileMoneyCompass'))return;var allowance=calculateDailySpendAllowance(state,ym),expenses=byCat((s&&s.tx)||[]),expenseParts=Object.keys(expenses).map(function(label){return{label:label,value:expenses[label]}}),investments={};(state.investments||[]).forEach(function(inv){var label=inv.type||'Outros';investments[label]=(investments[label]||0)+projectedInvestment(inv,ym)});var investmentParts=Object.keys(investments).map(function(label){return{label:label,value:investments[label]}}),expense=mobileConic(expenseParts),investment=mobileConic(investmentParts);setText('mobileSpendToday',allowance.confidence==='low'?'Complete seus dados':money(allowance.amount));setText('mobileSpendTodayReason',allowance.reason);el('mobileExpenseDonut').style.background=expense.background;el('mobileInvestmentDonut').style.background=investment.background;setText('mobileExpenseDonutCaption',expense.total?(expense.top+' lidera · '+money(expense.total)):'Sem gastos neste mês.');setText('mobileInvestmentDonutCaption',investment.total?(investment.top+' lidera · '+money(investment.total)):'Sem investimentos cadastrados.');var situation=s&&s.cash<0?'Seu caixa está negativo. Priorize corrigir o mês.':s&&s.expense>s.income&&s.income>0?'Você gastou mais do que recebeu neste mês.':investment.total?'Seu dinheiro está mapeado. Escolha o próximo passo.':'Comece registrando uma movimentação ou investimento.';setText('mobileCompassSummary',situation)}
 function renderTodayGuidance(ym,s){
@@ -2257,15 +2261,15 @@ setupEvents();installResetFinancialData();setupFinancialCrudEnhancements();load(
 })();
 }catch(e){console.error('Norteia init error',e&&e.stack?e.stack:e)}
 </script>
-<script src="freemium.js"></script>
-<script src="community.js"></script>
-<script src="community-mobile.js"></script>
-<link rel="stylesheet" href="gamification.css"/>
-<script src="gamification.js"></script>
-<link rel="stylesheet" href="norteia-v2.css"/>
-<script src="norteia-v2.js"></script>
-<link rel="stylesheet" href="norteia-completion.css"/>
-<link rel="stylesheet" href="contrast.css"/>
-<script src="norteia-completion.js"></script>
+<script src="freemium.js?v=41"></script>
+<script src="community.js?v=41"></script>
+<script src="community-mobile.js?v=41"></script>
+<link rel="stylesheet" href="gamification.css?v=41"/>
+<script src="gamification.js?v=41"></script>
+<link rel="stylesheet" href="norteia-v2.css?v=41"/>
+<script src="norteia-v2.js?v=41"></script>
+<link rel="stylesheet" href="norteia-completion.css?v=41"/>
+<link rel="stylesheet" href="contrast.css?v=41"/>
+<script src="norteia-completion.js?v=41"></script>
 </body>
 </html>
