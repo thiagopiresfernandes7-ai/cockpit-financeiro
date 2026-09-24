@@ -21,7 +21,27 @@ function detectPlatform(){
 }
 var platform=detectPlatform();
 var APP_ENV={platform:platform.isPwa?"pwa":"web",paymentProvider:"free"};
+function appConfig(){return typeof window.getNorteiaAppConfig==="function"?(window.getNorteiaAppConfig()||{}):{}}
+// Mesmo aviso visual do app (#toast). window.toast aponta para o elemento, não para uma função.
+var notifyTimer=null;
+function notify(msg){
+  var t=document.getElementById("toast");
+  if(!t){window.alert(msg);return}
+  t.textContent=msg;t.classList.remove("hidden");clearTimeout(notifyTimer);
+  notifyTimer=setTimeout(function(){t.classList.add("hidden")},3200);
+}
+// Link de pagamento da Stripe (criado no painel da Stripe e salvo em app_config.stripe_payment_link).
+// client_reference_id leva o id do usuário: o webhook libera o Premium para a conta certa sem depender do e-mail.
+function startStripeCheckout(){
+  var link=String(appConfig().stripe_payment_link||""),user=currentUser();
+  if(!/^https:\/\/(buy|checkout)\.stripe\.com\//.test(link)){notify("O pagamento ainda não foi configurado.");return false}
+  if(!user||!user.id){notify("Entre na sua conta para assinar.");return false}
+  var url=new URL(link);url.searchParams.set("client_reference_id",user.id);if(user.email)url.searchParams.set("prefilled_email",user.email);
+  window.location.href=url.toString();return true;
+}
+function checkoutProvider(){return ["stripe","hotmart"].includes(APP_ENV.paymentProvider)?APP_ENV.paymentProvider:(appConfig().payment_provider==="hotmart"?"hotmart":"stripe")}
 var PaymentProviders={
+  stripe:{startCheckout:startStripeCheckout},
   hotmart:{startCheckout:function(){window.open(HOTMART_CHECKOUT_URL,"_blank","noopener,noreferrer")}},
   googlePlay:{startCheckout:function(){return false}},
   appStore:{startCheckout:function(){return false}},
@@ -69,17 +89,17 @@ function ensureModal(){
   document.head.appendChild(style);
   var modal=document.createElement("div");
   modal.id="premiumFeatureModal";modal.className="premium-feature-modal hidden";modal.setAttribute("aria-hidden","true");
-  modal.innerHTML='<div class="premium-card" role="dialog" aria-modal="true" aria-labelledby="premiumModalTitle"><span class="premium-badge">Norteia Premium</span><h2 id="premiumModalTitle">Desbloqueie o Norteia Premium</h2><p id="premiumModalText">Planeje dívidas, investimentos e seu futuro financeiro com mais clareza.</p><ul><li>Fluxo de caixa futuro</li><li>Dívidas e financiamentos</li><li>Investimentos e dividendos</li><li>Análise anual e objetivo inteligente</li><li>Plano da Semana e fechamento mensal</li></ul><div class="premium-price">7 dias grátis, depois R$ 19,90 por ano</div><div class="premium-actions"><button class="btn primary" id="premiumCheckoutBtn" type="button">Assinar pela Hotmart</button><button class="btn" id="premiumCloseBtn" type="button">Continuar no gratuito</button></div><p class="notice tiny">O plano gratuito continua disponível. A liberação Premium depende da confirmação segura do pagamento.</p></div>';
+  modal.innerHTML='<div class="premium-card" role="dialog" aria-modal="true" aria-labelledby="premiumModalTitle"><span class="premium-badge">Norteia Premium</span><h2 id="premiumModalTitle">Desbloqueie o Norteia Premium</h2><p id="premiumModalText">Planeje dívidas, investimentos e seu futuro financeiro com mais clareza.</p><ul><li>Fluxo de caixa futuro</li><li>Dívidas e financiamentos</li><li>Investimentos e dividendos</li><li>Análise anual e objetivo inteligente</li><li>Plano da Semana e fechamento mensal</li></ul><div class="premium-price">7 dias grátis, depois R$ 19,90 por ano</div><div class="premium-actions"><button class="btn primary" id="premiumCheckoutBtn" type="button">Assinar agora</button><button class="btn" id="premiumCloseBtn" type="button">Continuar no gratuito</button></div><p class="notice tiny">O plano gratuito continua disponível. A liberação Premium depende da confirmação segura do pagamento.</p></div>';
   document.body.appendChild(modal);
   document.getElementById("premiumCloseBtn").onclick=closePremiumModal;
-  document.getElementById("premiumCheckoutBtn").onclick=function(){PaymentProviders[APP_ENV.paymentProvider].startCheckout()};
+  document.getElementById("premiumCheckoutBtn").onclick=function(){PaymentProviders[checkoutProvider()].startCheckout()};
   modal.onclick=function(e){if(e.target===modal)closePremiumModal()};
 }
 function openPremiumModal(featureId,message){
   ensureModal();
   var modal=document.getElementById("premiumFeatureModal");
   document.getElementById("premiumModalText").textContent=message||("“"+featureCopy(featureId)+"” está disponível no Norteia Premium. O plano gratuito continua funcionando normalmente.");
-  document.getElementById("premiumCheckoutBtn").style.display=APP_ENV.paymentProvider==="hotmart"&&!platform.isNative?"":"none";
+  document.getElementById("premiumCheckoutBtn").style.display=["stripe","hotmart"].includes(APP_ENV.paymentProvider)&&!platform.isNative?"":"none";
   modal.classList.remove("hidden");modal.setAttribute("aria-hidden","false");
 }
 function closePremiumModal(){var modal=document.getElementById("premiumFeatureModal");if(modal){modal.classList.add("hidden");modal.setAttribute("aria-hidden","true")}}
@@ -119,7 +139,13 @@ function renderPlanPanel(){
   if(!panel){panel=document.createElement("div");panel.id="subscriptionPlanPanel";panel.className="panel";panel.style.marginTop="14px";var head=settings.querySelector(".page-head");if(head)head.insertAdjacentElement("afterend",panel);else settings.prepend(panel)}
   var sub=normalizeSubscription(state.subscription),premium=hasPremiumAccess(state);
   var access=currentAccess(),badge=access.owner||access.lifetime?"Premium vitalício":"Acesso gratuito";
-  panel.innerHTML='<div class="plan-panel-grid"><div><span class="premium-badge">'+badge+'</span><h2 style="margin:8px 0 4px">Plano</h2><p>'+planMessage()+'</p><div class="label">Todas as telas, análises, exportações e recursos avançados estão disponíveis.</div></div><div class="split"><button class="btn" id="planRefreshBtn" type="button">Atualizar status</button></div></div>';
+  panel.innerHTML='<div class="plan-panel-grid"><div><span class="premium-badge">'+badge+'</span><h2 style="margin:8px 0 4px">Plano</h2><p>'+planMessage()+'</p><div class="label">Todas as telas, análises, exportações e recursos avançados estão disponíveis.</div></div><div class="split"><button class="btn" id="planRefreshBtn" type="button">Atualizar status</button><button class="btn hidden" id="planManageBtn" type="button">Gerenciar assinatura</button></div></div>';
+  // Portal da Stripe: o cliente troca o cartão ou cancela sozinho, sem falar com suporte.
+  var portal=String(appConfig().stripe_portal_link||""),ent=access.entitlement||{};
+  if((sub.provider==="stripe"||ent.provider==="stripe")&&/^https:\/\/billing\.stripe\.com\//.test(portal)){
+    var manage=document.getElementById("planManageBtn");manage.classList.remove("hidden");
+    manage.onclick=function(){var url=new URL(portal),user=currentUser();if(user&&user.email)url.searchParams.set("prefilled_email",user.email);window.open(url.toString(),"_blank","noopener,noreferrer")};
+  }
   document.getElementById("planRefreshBtn").onclick=async function(){this.disabled=true;try{if(typeof verifyNorteiaAccess==="function")await verifyNorteiaAccess();syncEntitlement();renderPlanPanel();if(typeof scheduleSave==="function")scheduleSave();if(typeof toast==="function")toast("Status da assinatura atualizado.")}finally{this.disabled=false}};
 }
 function limitReached(kind,count){
@@ -153,7 +179,21 @@ function registerServiceWorker(){
  if(!("serviceWorker"in navigator)||location.protocol!=="https:")return;
  navigator.serviceWorker.register("./service-worker.js",{updateViaCache:"none"}).then(function(registration){registration.update().catch(function(){})}).catch(function(err){console.warn("Service worker indisponível:",err)});
 }
-ensureModal();installGates();markPremiumPreviews();registerServiceWorker();
+// Volta do link de pagamento (configure na Stripe: "após o pagamento, redirecionar para ...?assinatura=ok").
+// O aviso da Stripe pode levar alguns segundos: confere o acesso algumas vezes e recarrega quando liberar.
+function handleCheckoutReturn(){
+  var params=new URLSearchParams(location.search);if(params.get("assinatura")!=="ok")return;
+  params.delete("assinatura");history.replaceState(null,"",location.pathname+(params.toString()?"?"+params:"")+location.hash);
+  notify("Pagamento recebido! Estamos liberando seu Premium.");
+  var tries=0;(function check(){
+    tries++;if(typeof window.verifyNorteiaAccess!=="function"){if(tries<6)setTimeout(check,3000);return}
+    Promise.resolve(window.verifyNorteiaAccess()).then(function(access){
+      if(access&&access.entitlement&&access.entitlement.has_access){location.reload();return}
+      if(tries<6)setTimeout(check,3000);else notify("Seu pagamento está sendo confirmado. Toque em Atualizar status em Configurações em instantes.");
+    }).catch(function(){if(tries<6)setTimeout(check,3000)});
+  })();
+}
+ensureModal();installGates();markPremiumPreviews();registerServiceWorker();handleCheckoutReturn();
 window.addEventListener('norteia:rendered',renderPlanPanel);
 renderPlanPanel();
 window.HOTMART_CHECKOUT_URL=HOTMART_CHECKOUT_URL;
@@ -166,4 +206,5 @@ window.hasPremiumAccess=hasPremiumAccess;
 window.canUseFeature=canUseFeature;
 window.requirePremium=requirePremium;
 window.openPremiumModal=openPremiumModal;
+window.NorteiaCheckout={start:function(){return PaymentProviders[checkoutProvider()].startCheckout()},provider:checkoutProvider};
 })();
