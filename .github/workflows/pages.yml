@@ -3,19 +3,43 @@ name: Publicar Norteia
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
+  testar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Rodar testes
+        # Os testes *.browser.test.cjs dependem de Playwright/Edge e continuam locais.
+        run: |
+          set -e
+          node cockpit-decision-engine.test.js
+          for f in tests/*.test.cjs; do
+            case "$f" in *.browser.test.cjs) continue;; esac
+            echo "Rodando $f"
+            node "$f"
+          done
+
   publicar:
+    needs: testar
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -23,6 +47,17 @@ jobs:
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
+      - name: Montar site (somente arquivos do app)
+        # docs/, supabase/, tests/ e materiais de marketing ficam fora do site público.
+        run: |
+          set -e
+          mkdir -p _site/assets
+          cp .nojekyll *.html *.css *.png *.svg manifest.json _site/
+          for f in *.js; do
+            case "$f" in *.test.js) continue;; esac
+            cp "$f" _site/
+          done
+          cp -r assets/brand _site/assets/brand
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
         with:
@@ -30,7 +65,7 @@ jobs:
       - name: Preparar site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - name: Publicar
         id: deployment
         uses: actions/deploy-pages@v4

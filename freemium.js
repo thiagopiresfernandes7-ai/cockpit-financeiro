@@ -41,6 +41,8 @@ function normalizeSubscription(input){
 function hasPremiumAccess(financialState){
   var access=currentAccess();if(access.owner===true||access.lifetime===true)return true;
   if(APP_ENV.paymentProvider==="free")return true;
+  // Licença confirmada pelo servidor é a fonte de verdade; state.subscription é só cópia para uso offline.
+  if(access.verified===true)return !!(access.entitlement&&access.entitlement.has_access);
   var sub=normalizeSubscription(financialState&&financialState.subscription);
   if(sub.plan!=="premium")return false;
   if(!["active","trialing"].includes(sub.status))return false;
@@ -91,6 +93,10 @@ function syncEntitlement(){
   }
   if(ent&&ent.has_access){
     state.subscription=normalizeSubscription(Object.assign({},state.subscription,{plan:"premium",status:ent.status==="trialing"?"trialing":"active",provider:ent.provider||"hotmart",providerSubscriptionId:ent.provider_subscription_id||state.subscription.providerSubscriptionId,startedAt:ent.started_at||state.subscription.startedAt,expiresAt:ent.expires_at||state.subscription.expiresAt,renewedAt:ent.renewed_at||state.subscription.renewedAt,lastWebhookAt:ent.last_webhook_at||state.subscription.lastWebhookAt}));
+  }else if(access.verified===true&&access.owner!==true&&access.lifetime!==true&&state.subscription.plan==="premium"){
+    // O servidor negou o acesso: a cópia local não pode continuar dizendo que o Premium está ativo.
+    state.subscription=normalizeSubscription(Object.assign({},state.subscription,{status:ent.status||"inactive",expiresAt:ent.expires_at||state.subscription.expiresAt}));
+    if(["active","trialing"].includes(state.subscription.status))state.subscription.status="expired";
   }
   if(state.subscription.expiresAt&&new Date(state.subscription.expiresAt)<new Date()&&state.subscription.status==="active")state.subscription.status="expired";
 }
