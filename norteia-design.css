@@ -671,6 +671,58 @@ html body .plan-switcher{max-width:100%;scrollbar-width:none}
 html body .plan-switcher::-webkit-scrollbar{display:none}
 html body .plan-switcher>button{flex:0 0 auto}
 
+/* ---------- Onde seu dinheiro está escapando (norteia-waste.js) ---------- */
+html body .n-waste{margin:0 0 16px!important;padding:0!important}
+html body .n-waste-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px 14px;border-bottom:1px solid var(--n-border)}
+html body .n-waste-head h2{margin:0 0 3px!important}
+html body .n-waste-head p{margin:0!important;font-size:12.5px!important;color:var(--n-text-3)!important}
+html body .n-waste-total{text-align:right;flex:0 0 auto}
+html body .n-waste-total small{display:block;font-size:12px;color:var(--n-text-3)}
+html body .n-waste-total b{display:block;font-size:22px;font-weight:650;letter-spacing:-.02em;color:var(--n-positive);font-variant-numeric:tabular-nums;white-space:nowrap}
+html body .n-waste-total span{font-size:12px;color:var(--n-text-3)}
+html body .n-waste-list{list-style:none;margin:0;padding:0}
+html body .n-waste-item{border-bottom:1px solid var(--n-border)}
+html body .n-waste-item:last-child{border-bottom:0}
+html body .n-waste-item summary{
+  display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:14px 20px;cursor:pointer;list-style:none;
+}
+html body .n-waste-item summary::-webkit-details-marker{display:none}
+html body .n-waste-item summary:hover{background:var(--n-surface-2)}
+html body .n-waste-dot{width:8px;height:8px;border-radius:50%;background:var(--n-text-3)}
+html body .sev-alta .n-waste-dot{background:var(--n-negative)}
+html body .sev-media .n-waste-dot{background:var(--n-warn)}
+html body .n-waste-main{min-width:0}
+html body .n-waste-main b{display:block;font-size:14px;font-weight:600;color:var(--n-text)}
+html body .n-waste-main small{display:block;font-size:12.5px;color:var(--n-text-3);margin-top:1px}
+html body .n-waste-value{text-align:right;white-space:nowrap}
+html body .n-waste-value b{display:block;font-size:14px;font-weight:650;color:var(--n-text);font-variant-numeric:tabular-nums}
+html body .n-waste-value small{display:block;font-size:12px;color:var(--n-text-3)}
+html body .n-waste-body{padding:0 20px 16px 42px}
+html body .n-waste-action{margin:0 0 10px!important;padding:10px 12px;border-radius:10px;background:var(--n-brand-soft);color:var(--n-text-2)!important;font-size:13px}
+html body .n-waste-action b{color:var(--n-brand-text)}
+html body .n-waste-txs{list-style:none;margin:0;padding:0}
+html body .n-waste-txs li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;padding:6px 0;font-size:13px;border-bottom:1px dashed var(--n-border)}
+html body .n-waste-txs li:last-child{border-bottom:0}
+html body .n-waste-tx-desc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--n-text-2)}
+html body .n-waste-tx-date{color:var(--n-text-3);font-variant-numeric:tabular-nums}
+html body .n-waste-tx-value{font-weight:600;font-variant-numeric:tabular-nums;color:var(--n-text)}
+html body .n-waste-tx-more{display:block!important;color:var(--n-text-3)}
+html body .n-waste-more{margin:4px 20px 0!important}
+html body .n-waste-note{margin:10px 20px 14px!important;font-size:12px!important;color:var(--n-text-3)!important}
+html body .n-waste-empty{display:grid;gap:4px;padding:18px 20px}
+html body .n-waste-empty b{font-size:14px;color:var(--n-text)}
+html body .n-waste-empty span{font-size:13px;color:var(--n-text-3)}
+@media(max-width:920px){
+  html body .n-waste{margin-top:12px!important}
+  html body .n-waste-head{flex-direction:column;gap:8px;padding:16px}
+  html body .n-waste-total{text-align:left}
+  html body .n-waste-item summary{padding:12px 16px}
+  html body .n-waste-body{padding:0 16px 14px 38px}
+  html body .n-waste-more{margin:4px 16px 0!important}
+  html body .n-waste-note{margin:10px 16px 14px!important}
+}
+
 /* ---------- Garantia final: nada que esteja marcado como oculto aparece ----------
    Algumas regras acima definem display com !important. :not(#n-nunca) dá peso de ID
    a esta regra, então .hidden e [hidden] vencem qualquer uma delas. */
