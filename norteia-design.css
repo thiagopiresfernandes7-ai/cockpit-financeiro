@@ -7,18 +7,20 @@
 
 /* ---------- Tokens ---------- */
 :root{
-  --n-bg:#f5f7f6;
+  /* Modo claro com separação nítida: fundo mais escuro que os cartões, bordas visíveis */
+  --n-bg:#e9eeeb;
   --n-surface:#ffffff;
-  --n-surface-2:#f2f5f3;
-  --n-surface-3:#e9eeeb;
-  --n-border:#e3e8e5;
-  --n-border-strong:#cfd8d3;
-  --n-text:#0f1a15;
-  --n-text-2:#45534c;
-  --n-text-3:#64716b;
+  --n-surface-2:#eef2f0;
+  --n-surface-3:#e1e7e4;
+  --n-border:#d3dcd7;
+  --n-border-strong:#b3c1b9;
+  --n-input-border:#849690;
+  --n-text:#0b1511;
+  --n-text-2:#34423b;
+  --n-text-3:#526059;
   --n-brand:#0b7a63;
   --n-brand-hover:#09654f;
-  --n-brand-soft:#e6f3ee;
+  --n-brand-soft:#d9efe6;
   --n-brand-text:#0a6b56;
   --n-positive:#0a7550;
   --n-negative:#bf3a2f;
@@ -28,8 +30,8 @@
   --n-radius-sm:8px;
   --n-radius:12px;
   --n-radius-lg:16px;
-  --n-shadow-sm:0 1px 2px rgba(15,26,21,.05);
-  --n-shadow:0 1px 2px rgba(15,26,21,.04),0 4px 16px rgba(15,26,21,.05);
+  --n-shadow-sm:0 1px 2px rgba(15,26,21,.07),0 1px 4px rgba(15,26,21,.04);
+  --n-shadow:0 1px 2px rgba(15,26,21,.06),0 4px 16px rgba(15,26,21,.07);
   --n-shadow-lg:0 12px 40px rgba(15,26,21,.14);
   --n-focus:0 0 0 3px rgba(11,122,99,.22);
   --n-font:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -41,6 +43,7 @@ html[data-theme="dark"]{
   --n-surface-3:#1e2b25;
   --n-border:#223029;
   --n-border-strong:#2f4037;
+  --n-input-border:#5b7266;
   --n-text:#e8f0ec;
   --n-text-2:#b4c3bc;
   --n-text-3:#8d9d96;
@@ -173,7 +176,7 @@ html body .nav-label{
 }
 html body .nav-hub button{
   height:36px!important;padding:0 10px!important;gap:10px!important;border-radius:8px!important;
-  font-size:13.5px!important;font-weight:500!important;letter-spacing:0!important;
+  font-size:13.5px!important;font-weight:550!important;letter-spacing:0!important;
   color:var(--n-text-2)!important;background:transparent!important;justify-content:flex-start!important;
   order:0!important;margin:0!important;box-shadow:none!important;
 }
@@ -239,8 +242,8 @@ html body .kpi,html body .kpi.green,html body .kpi.gold{
   border-top:1px solid var(--n-border)!important;background:var(--n-surface)!important;
 }
 html body .kpi span,html body .eyebrow{
-  font-size:12.5px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important;
-  color:var(--n-text-3)!important;
+  font-size:12.5px!important;font-weight:550!important;letter-spacing:0!important;text-transform:none!important;
+  color:var(--n-text-2)!important;
 }
 html body .kpi b{
   display:block;margin:6px 0 4px!important;
@@ -311,7 +314,7 @@ html body #topGlobalAddBtn{padding:0 16px!important}
 html body .field span{font-size:12.5px!important;font-weight:550!important;color:var(--n-text-2)!important;letter-spacing:0!important;text-transform:none!important}
 html body .field input,html body .field select,html body .field textarea,
 html body .community-search input,html body .community-composer select,html body .community-composer textarea{
-  min-height:40px;border-radius:10px!important;border:1px solid var(--n-border-strong)!important;
+  min-height:40px;border-radius:10px!important;border:1px solid var(--n-input-border)!important;
   background:var(--n-surface)!important;color:var(--n-text)!important;font-size:14px!important;box-shadow:none!important;
 }
 html body .field input:focus,html body .field select:focus,html body .field textarea:focus,

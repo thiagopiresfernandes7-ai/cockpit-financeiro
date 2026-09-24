@@ -16,7 +16,12 @@ assert.ok(html.includes('norteia-completion.js'),'módulos de conclusão não ca
 assert.ok(!html.includes('Cockpit'),'a marca antiga ainda aparece na interface principal');
 assert.ok(html.includes("localStorage.getItem('norteia_last_user')")&&html.includes("localStorage.removeItem('norteia_last_user')"),'sessão local offline incompleta');
 const a11y=fs.readFileSync('norteia-v2.js','utf8'),design=fs.readFileSync('norteia-v2.css','utf8');
-for(const view of ['dashboard','analysis','register','wallet','debts','dividends','simulator','plan','projection','decisions','weekly','community','profile','categories','settings','help'])assert.ok(a11y.includes("['"+view+"',"),'função ausente da barra lateral desktop: '+view);
+for(const view of ['dashboard','analysis','register','wallet','debts','dividends','simulator','plan','projection','decisions','weekly','profile','categories','settings','help'])assert.ok(a11y.includes("['"+view+"',"),'função ausente da barra lateral desktop: '+view);
+// Comunidade retirada do app (tabelas e arquivos preservados, mas sem nenhuma entrada).
+assert.ok(!a11y.includes("['community',"),'Comunidade ainda aparece na barra lateral');
+assert.ok(!/community(-mobile)?\.js|community\.css/.test(html),'módulos da Comunidade ainda são carregados');
+assert.ok(!html.includes('data-view="community"'),'botão da Comunidade ainda está no HTML');
+assert.ok(html.includes("function setView(v){if(v==='community')v='dashboard';"),'endereços antigos da Comunidade não são redirecionados');
 for(const target of ['register','decisions','analysis','projection','plan','wallet','debts','dividends','simulator','weekly'])assert.ok(a11y.includes('data-more-target="'+target+'"'),'função não integrada em Recursos: '+target);
 assert.ok(a11y.includes('dashboardExpandBtn'),'controle de detalhes da tela Hoje ausente');
 assert.ok(html.includes('mobileExpenseDonut')&&html.includes('mobileInvestmentDonut'),'gráficos essenciais mobile ausentes');

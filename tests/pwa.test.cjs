@@ -4,7 +4,7 @@ const manifest=JSON.parse(fs.readFileSync('manifest.json','utf8'));
 const sw=fs.readFileSync('service-worker.js','utf8');
 assert.equal(manifest.name,'Norteia');
 assert.equal(manifest.display,'standalone');
-for(const file of ['index.html','financial-decision-engine.js','norteia-v2.css','norteia-completion.js','community.css','community.js','community-mobile.js','gamification.js','maskable-icon-512.png']){
+for(const file of ['index.html','financial-decision-engine.js','norteia-v2.css','norteia-completion.js','norteia-design.css','norteia-design.js','gamification.js','maskable-icon-512.png']){
   assert.ok(fs.existsSync(file),file+' não existe');
   assert.ok(sw.includes('./'+file),file+' não está no shell offline');
 }
