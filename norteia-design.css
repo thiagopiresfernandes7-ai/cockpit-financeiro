@@ -110,12 +110,13 @@ html body .top .title #monthHint{display:none!important}
 html body .top .title{display:flex;align-items:center;min-width:0}
 html body .top .actions>*{flex:0 0 auto}
 html body .monthbar{
-  height:36px;padding:0!important;gap:0!important;overflow:hidden;
-  background:var(--n-surface)!important;border:1px solid var(--n-border-strong)!important;border-radius:10px!important;
+  height:36px;padding:0!important;gap:2px!important;align-items:center;
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
 }
 html body .monthbar .icon-btn{
-  width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;
-  border-radius:0!important;font-size:0!important;color:var(--n-text-2)!important;position:relative;
+  width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;
+  border:0!important;border-radius:50%!important;background:transparent!important;
+  font-size:0!important;color:var(--n-text-2)!important;position:relative;
 }
 html body .monthbar .icon-btn:before{
   content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;background:currentColor;
@@ -124,14 +125,15 @@ html body .monthbar .icon-btn:before{
 }
 html body .monthbar #nextMonth:before{transform:scaleX(-1)}
 html body .monthbar input{
-  position:relative;width:148px!important;height:34px!important;min-height:34px!important;
-  padding:0 4px!important;text-align:center;font-size:13.5px!important;font-weight:600!important;cursor:pointer;
-  border-left:1px solid var(--n-border)!important;border-right:1px solid var(--n-border)!important;border-radius:0!important;
+  position:relative;width:146px!important;height:32px!important;min-height:32px!important;
+  padding:0 6px!important;text-align:center;font-size:14px!important;font-weight:600!important;cursor:pointer;
+  border:0!important;border-radius:8px!important;background:transparent!important;color:var(--n-text)!important;
 }
+html body .monthbar input:hover{background:var(--n-surface-2)!important}
 /* O calendário nativo continua abrindo ao clicar em qualquer ponto do campo, mas sem o ícone */
 html body .monthbar input::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;margin:0;opacity:0;cursor:pointer}
 html body .monthbar input::-webkit-datetime-edit-month-field{text-transform:capitalize}
-html body .monthbar #todayBtn{height:34px!important;min-height:34px!important;border-radius:0!important;border-right:1px solid var(--n-border)!important;order:-1;font-size:12.5px!important}
+html body .monthbar #todayBtn{height:32px!important;min-height:32px!important;border:0!important;border-radius:8px!important;background:transparent!important;margin-right:4px;order:-1;font-size:13px!important}
 html body .monthbar .icon-btn:hover,html body .monthbar #todayBtn:hover{background:var(--n-surface-2)!important}
 /* Ações secundárias sem borda: o único botão com peso é "+ Novo lançamento" */
 html body #privacyBtn,html body #exportBtn{border-color:transparent!important;background:transparent!important;color:var(--n-text-2)!important}
