@@ -18,6 +18,14 @@ for(const file of ['norteia-design.css','norteia-design.js'])assert.ok(sw.includ
 for(const token of ['--n-bg','--n-surface','--n-text','--n-text-3','--n-brand','--n-border'])assert.ok(css.includes(token+':'),token+' ausente');
 assert.ok(/html\[data-theme="dark"\]\{[^}]*--n-surface:/.test(css),'tema escuro sem tokens próprios');
 
+// Regras de display com !important não podem reexibir elementos ocultos (ex.: faixa de demonstração).
+const guard=css.lastIndexOf(':is(.hidden,[hidden]):not(#');
+assert.ok(guard>0,'garantia de .hidden/[hidden] ausente');
+assert.ok(!/display:[a-z-]+!important/.test(css.slice(guard+60)),'há regra de display depois da garantia de .hidden');
+
+// Valores grandes nos KPIs não quebram linha.
+assert.ok(/\.kpi b\{[^}]*white-space:nowrap!important/.test(css),'valores dos KPIs podem quebrar linha');
+
 // Datas legíveis no resumo, não AAAA-MM-DD.
 assert.ok(!html.includes("'</b><small>'+esc(t.date||'')+' • '"),'últimas transações ainda mostram data ISO');
 assert.ok(html.includes("esc(t.date?dayLabel(t.date):'')"),'últimas transações sem data amigável');

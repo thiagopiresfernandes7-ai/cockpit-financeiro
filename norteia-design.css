@@ -526,3 +526,90 @@ html body .auth-form #loginBtn{order:0}
   html body .auth-hero .auth-badges{display:none!important}
   html body .auth-form{padding:28px 24px 40px!important}
 }
+
+/* ---------- KPIs com valores grandes ---------- */
+/* O valor encolhe com o cartão (unidades de contêiner) e nunca quebra linha. */
+html body .kpi{container-type:inline-size}
+html body .kpi b{white-space:nowrap!important;font-size:clamp(15px,11.5cqi,22px)!important;overflow:visible!important}
+@media(min-width:921px){
+  /* Resumo da tela Hoje: 3 por linha até telas largas, 6 só quando cabem com folga */
+  html body #dashboard .dashboard-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  /* Demais grades de resumo preenchem a linha inteira, sem colunas vazias */
+  html body .kpis:not(.dashboard-kpis){grid-template-columns:repeat(auto-fit,minmax(180px,1fr))!important}
+}
+@media(min-width:1600px){html body #dashboard .dashboard-kpis{grid-template-columns:repeat(6,minmax(0,1fr))!important}}
+html body #dashboard .today-impact small{font-size:12px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important}
+
+/* ---------- Títulos: sem trecho colorido ---------- */
+html body .page-title h1 span{color:inherit!important}
+
+/* ---------- Análise ---------- */
+html body #analysis .analysis-hero{background:var(--n-hero)!important;background-image:none!important;border:1px solid transparent!important;border-radius:var(--n-radius-lg)!important;box-shadow:none!important}
+html[data-theme="dark"] body #analysis .analysis-hero{border-color:var(--n-border-strong)!important}
+html body #analysis .analysis-hero h2{font-weight:650!important}
+html body #analysis .analysis-score span,html body #analysisScore{font-family:var(--n-font)!important;font-weight:650!important}
+/* O mesmo dado aparecia duas vezes (gráfico cortado + lista); fica só a lista */
+html body #analysisCategorySvg{display:none!important}
+html body #expenseCategoryChart{max-height:none!important;overflow:visible!important}
+/* Painéis da mesma linha com a mesma altura; o gráfico ocupa o espaço, centralizado */
+html body #analysis .analysis-grid{align-items:stretch!important}
+html body #analysis .analysis-grid>.chart-panel{display:flex!important;flex-direction:column}
+html body #analysis .analysis-grid>.chart-panel .chart-svg:not(#analysisCategorySvg){flex:1 1 auto;display:flex;flex-direction:column;justify-content:center}
+html body #analysis .analysis-grid #analysisCategorySvg{display:none!important}
+html body .panel-head p,html body #analysis .chart-panel .panel-head p,html body #dashboard .panel-head p{font-size:12.5px!important;color:var(--n-text-3)!important}
+html body #community .community-rail-stats span{font-size:12px!important}
+
+/* ---------- Gráficos ---------- */
+html body svg text,html body .chart-small,html body .chart-label{font-family:var(--n-font)!important;fill:var(--n-text-3)!important;letter-spacing:0!important}
+html body .chart-grid{stroke:var(--n-border)!important}
+html body .mono{font-family:var(--n-font)!important;font-variant-numeric:tabular-nums;letter-spacing:0!important}
+html body .chart-svg svg,html body .chart-panel svg{overflow:visible}
+html body .chart-blue{stroke:#1d9e82!important}
+html[data-theme="dark"] body .chart-blue{stroke:#3cc79f!important}
+html body .chart-list{gap:0!important}
+html body .chart-list>.chart-row{
+  background:transparent!important;border:0!important;border-bottom:1px solid var(--n-border)!important;
+  border-radius:0!important;padding:12px 2px!important;box-shadow:none!important;
+}
+html body .chart-list>.chart-row:last-child{border-bottom:0!important}
+html body .chart-bar{height:6px!important;border-radius:99px!important;background:var(--n-surface-3)!important;border:0!important}
+html body .chart-bar>span{background:var(--n-brand)!important;background-image:none!important;border-radius:99px!important}
+html body .chart-bar.negative>span{background:var(--n-negative)!important}
+html body .chart-bar.positive>span,html body .chart-bar.good>span{background:var(--n-positive)!important}
+
+/* ---------- Decidir ---------- */
+html body #decisions .decision-metrics span{font-size:12px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important;color:var(--n-text-3)!important}
+html body .decision-chip{font-size:12px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important}
+html body #decisions .mission-card small{font-size:12.5px!important}
+
+/* ---------- Comunidade ---------- */
+html body .community-rail-eyebrow{font-size:12px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important;color:var(--n-text-3)!important}
+html body .community-week-ring span{font-size:12px!important;text-transform:none!important;letter-spacing:0!important}
+html body #community small,html body .community-mobile-disclaimer{font-size:12px!important}
+html body .community-tabs button span,html body .community-tabs button{font-size:13px!important}
+
+/* ---------- Perfil, configurações e ajuda ---------- */
+html body #profileAvatar{background:var(--n-brand-soft)!important;background-image:none!important;color:var(--n-brand-text)!important;font-weight:650!important}
+html body #computedGoalConfidence{font-size:12px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important}
+html body #profileIdentityEmail,html body #profileGoogleSyncNote,html body .phone-step small{font-size:12.5px!important}
+html body .theme-picker button small{font-size:12px!important}
+html body .theme-picker button b{font-size:13px!important}
+html body .premium-badge{font-size:12px!important;font-weight:600!important;letter-spacing:0!important;padding:4px 10px!important;border-radius:999px!important;background:var(--n-brand-soft)!important;color:var(--n-brand-text)!important;border:0!important}
+
+/* ---------- Estados vazios ---------- */
+html body .empty:before{
+  content:"";display:block;width:28px;height:28px;margin:0 auto 8px;background:var(--n-text-3);opacity:.7;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+html body .empty{padding:24px 18px!important}
+
+/* ---------- Planos no celular: abas roláveis sem vazar da tela ---------- */
+html body .plan-switcher{max-width:100%;scrollbar-width:none}
+html body .plan-switcher::-webkit-scrollbar{display:none}
+html body .plan-switcher>button{flex:0 0 auto}
+
+/* ---------- Garantia final: nada que esteja marcado como oculto aparece ----------
+   Algumas regras acima definem display com !important. :not(#n-nunca) dá peso de ID
+   a esta regra, então .hidden e [hidden] vencem qualquer uma delas. */
+html body :is(.hidden,[hidden]):not(#n-nunca){display:none!important}
