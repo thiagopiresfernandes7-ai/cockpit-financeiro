@@ -49,8 +49,8 @@
     t.appendChild(body); wrap.appendChild(t); details.appendChild(wrap); parent.appendChild(details);
   }
   function latestSnapshot(pkg, invoiceId) {
-    var rows = (pkg.invoiceSnapshots || []).filter(function (r) { return r.invoiceId === invoiceId && !r.supersededBySnapshotId; });
-    rows.sort(function (a, b) { return String(b.asOfDate || '').localeCompare(String(a.asOfDate || '')); }); return rows[0] || null;
+    var rows = (pkg.invoiceSnapshots || []).filter(function (r) { return r.invoiceId === invoiceId; });
+    rows.sort(function (a, b) { return String(b.asOfDate || '').localeCompare(String(a.asOfDate || '')); }); return rows.find(function (r) { return !r.supersededBySnapshotId; }) || rows[0] || null;
   }
   function dueLabel(invoice) {
     var out = invoice.effectiveDueDate ? date(invoice.effectiveDueDate) + ' efetivo' : invoice.nominalDueDate ? date(invoice.nominalDueDate) + ' nominal' : 'Data não informada';
