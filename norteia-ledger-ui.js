@@ -28,7 +28,13 @@
     var n = document.getElementById(id); if (n) return n;
     var p = document.getElementById(parent); if (!p) return null;
     n = element('section', null, 'ledger-panel card'); n.id = id;
-    n.appendChild(element('h2', title)); n.appendChild(element('div', null, 'ledger-body')); p.appendChild(n); return n;
+    n.appendChild(element('h2', title)); n.appendChild(element('div', null, 'ledger-body'));
+    var anchor = p.querySelector('.page-head');
+    if (id === 'ledgerPending') p.appendChild(n);
+    else if (anchor) anchor.insertAdjacentElement('afterend', n);
+    else if (parent === 'dashboard' && p.firstElementChild) p.firstElementChild.insertAdjacentElement('afterend', n);
+    else p.prepend(n);
+    return n;
   }
   function notice(parent, text) { if (parent) parent.appendChild(element('p', text, 'ledger-notice')); }
   function table(parent, title, headings, rows) {
@@ -43,8 +49,8 @@
     t.appendChild(body); wrap.appendChild(t); details.appendChild(wrap); parent.appendChild(details);
   }
   function latestSnapshot(pkg, invoiceId) {
-    var rows = (pkg.invoiceSnapshots || []).filter(function (r) { return r.invoiceId === invoiceId && !r.supersededBySnapshotId; });
-    rows.sort(function (a, b) { return String(b.asOfDate || '').localeCompare(String(a.asOfDate || '')); }); return rows[0] || null;
+    var rows = (pkg.invoiceSnapshots || []).filter(function (r) { return r.invoiceId === invoiceId; });
+    rows.sort(function (a, b) { return String(b.asOfDate || '').localeCompare(String(a.asOfDate || '')); }); return rows.find(function (r) { return !r.supersededBySnapshotId; }) || rows[0] || null;
   }
   function dueLabel(invoice) {
     var out = invoice.effectiveDueDate ? date(invoice.effectiveDueDate) + ' efetivo' : invoice.nominalDueDate ? date(invoice.nominalDueDate) + ' nominal' : 'Data não informada';
@@ -114,7 +120,34 @@
     notice(o, 'Posição informada em ' + date(pkg.asOfDate) + '. Alguns valores de dívida e informações de caixa ainda dependem de confirmação.');
     var pendingHost = host('ledgerPending', 'settings', 'Pendências da importação'), pending = pendingHost && pendingHost.querySelector('.ledger-body'); clear(pending);
     (pkg.pendingItems || []).forEach(function (r) { notice(pending, r.description || 'Informação pendente de confirmação.'); });
+    renderIntegratedSummaries(s, pkg, ym, lsum);
     protectUnknownBalances(s);
+  }
+  function renderIntegratedSummaries(s, pkg, ym, lsum) {
+    var c = window.NorteiaLedger.commitments(s, ym), historical = ym <= String(pkg.asOfDate).slice(0, 7);
+    var monthly = historical ? lsum.cashOutflowCents + lsum.payrollDeductionsCents : c.cashOutflowCents + c.payrollDeductionsCents;
+    ['dashboardDebtMonth', 'debtMonthKpi'].forEach(function (id) { var n = document.getElementById(id); if (n) n.textContent = money(monthly); });
+    var liabilities = window.NorteiaLedger.liabilities(s), balance = document.getElementById('debtBalanceKpi');
+    if (balance) balance.textContent = money(liabilities.knownLiabilityCents) + (liabilities.hasUnknownBalances ? ' · parcial' : '');
+    var count = document.getElementById('debtActiveKpi'); if (count) count.textContent = String((s.debts || []).filter(function (r) { return r.status !== 'paid'; }).length + (pkg.debts || []).filter(function (r) { return r.lifecycleStatus === 'active'; }).length);
+    if (!(s.debts || []).length) { var oldDebts = document.getElementById('debtList'); if (oldDebts) oldDebts.replaceChildren(element('p', 'As faturas e dívidas importadas estão detalhadas nesta página.')); }
+    if (!window.NorteiaLedger.effectiveLegacyTransactions(s).length) {
+      var oldRows = document.getElementById('txList'); if (oldRows) oldRows.replaceChildren(element('p', 'Consulte o histórico importado acima para ver compras, encargos e pagamentos.'));
+      var next = document.getElementById('nextActions'); if (next) next.replaceChildren(element('p', 'Histórico importado. Complete renda e saldo atual para calcular sua margem.'));
+    }
+    var latest = document.getElementById('latestTransactions');
+    if (latest) {
+      var imported = (pkg.historicalTransactions || []).filter(function (r) { return String(r.purchaseDate).slice(0, 7) === ym; }).slice().sort(function (a, b) { return b.purchaseDate.localeCompare(a.purchaseDate); }).slice(0, 5);
+      if (imported.length && !window.NorteiaLedger.effectiveLegacyTransactions(s).length) {
+        clear(latest); imported.forEach(function (r) { var row = element('div', null, 'item'), body = element('div'); body.append(element('b', name(r)), element('small', date(r.purchaseDate) + ' · Fatura ' + period(r.billingPeriod))); row.append(body, element('strong', money(r.amountCents))); latest.appendChild(row); });
+      }
+    }
+    var due = document.getElementById('dashboardDueList');
+    if (due && !(s.debts || []).length) {
+      var items = c.items.filter(function (r) { return r.direction !== 'inflow'; });
+      if (!items.length) { var bits = ym.split('-'), nextMonth = new Date(Date.UTC(Number(bits[0]), Number(bits[1]), 1)).toISOString().slice(0, 7); items = window.NorteiaLedger.commitments(s, nextMonth).items.filter(function (r) { return r.direction !== 'inflow'; }); }
+      if (items.length) { clear(due); items.slice(0, 5).forEach(function (r) { var row = element('div', null, 'item'), body = element('div'); body.append(element('b', name(r)), element('small', r.dueDate ? date(r.dueDate) : period(r.billingPeriod) + ' · dia não informado')); row.append(body, element('strong', money(r.amountCents))); due.appendChild(row); }); }
+    }
   }
   function protectUnknownBalances(s) {
     if (!s.migrationLedger || !window.summary) return;
@@ -124,7 +157,7 @@
       n = document.getElementById('netWorthStatus'); if (n) n.textContent = 'Saldos devedores ainda incompletos';
     }
     if (sum.ledgerBalanceKnown) return;
-    ['cashBalance', 'statementNet', 'futureEndBalance', 'futureCanInvest'].forEach(function (id) { var item = document.getElementById(id); if (item) item.textContent = 'A informar'; });
+    ['cashBalance', 'statementNet', 'futureEndBalance', 'futureCanInvest', 'analysisCashYear'].forEach(function (id) { var item = document.getElementById(id); if (item) item.textContent = 'A informar'; });
     ['todaySafeValue', 'mobileSpendToday'].forEach(function (id) { var item = document.getElementById(id); if (item) item.textContent = 'Complete renda e saldo'; });
     n = document.getElementById('todayStatus'); if (n) n.textContent = 'Dados parciais';
     n = document.getElementById('todayCommand'); if (n) n.textContent = 'Informe renda e saldo para calcular sua margem.';
